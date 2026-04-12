@@ -493,9 +493,27 @@ app.get('/api/health', (req, res) => {
 // ==================== SERVE HTML ====================
 
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    const filePath = path.join(__dirname, 'public', 'index.html');
+    console.log('Serving:', filePath);
+    
+    // If public/index.html doesn't exist, serve a simple response
+    if (!require('fs').existsSync(filePath)) {
+        return res.status(200).send(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Salad Caffe</title>
+                <script>
+                    window.location.href = '/api/health';
+                </script>
+            </head>
+            <body>Loading...</body>
+            </html>
+        `);
+    }
+    
+    res.sendFile(filePath);
 });
-
 // ==================== ERROR HANDLING ====================
 
 app.use((err, req, res, next) => {
