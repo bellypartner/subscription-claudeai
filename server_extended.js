@@ -1,5 +1,5 @@
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
+const Database = require('better-sqlite3');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
@@ -18,20 +18,17 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Initialize Database
-const db = new sqlite3.Database('./salad_caffe.db', (err) => {
-    if (err) {
-        console.error('Database error:', err);
-    } else {
-        console.log('✓ Connected to database');
-        initializeDatabase();
-    }
-});
+const db = new Database('./salad_caffe.db');
+db.pragma('journal_mode = WAL');
+
+console.log('✓ Connected to database');
+initializeDatabase();
 
 // Initialize Database Tables
 function initializeDatabase() {
-    db.serialize(() => {
+    try {
         // Users Table
-        db.run(`
+        db.exec(`
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
@@ -52,7 +49,7 @@ function initializeDatabase() {
         `);
 
         // Kitchens Table
-        db.run(`
+        db.exec(`
             CREATE TABLE IF NOT EXISTS kitchens (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
@@ -67,7 +64,7 @@ function initializeDatabase() {
         `);
 
         // Plans Table
-        db.run(`
+        db.exec(`
             CREATE TABLE IF NOT EXISTS plans (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
@@ -80,7 +77,7 @@ function initializeDatabase() {
         `);
 
         // Meals Table
-        db.run(`
+        db.exec(`
             CREATE TABLE IF NOT EXISTS meals (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
@@ -101,7 +98,7 @@ function initializeDatabase() {
         `);
 
         // Subscriptions Table
-        db.run(`
+        db.exec(`
             CREATE TABLE IF NOT EXISTS subscriptions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 customerId INTEGER NOT NULL,
@@ -122,7 +119,7 @@ function initializeDatabase() {
         `);
 
         // Orders Table
-        db.run(`
+        db.exec(`
             CREATE TABLE IF NOT EXISTS orders (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 subscriptionId INTEGER,
@@ -144,7 +141,7 @@ function initializeDatabase() {
         `);
 
         // Delivery Assignments Table
-        db.run(`
+        db.exec(`
             CREATE TABLE IF NOT EXISTS delivery_assignments (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 orderId INTEGER NOT NULL,
@@ -162,7 +159,7 @@ function initializeDatabase() {
         `);
 
         // Deliveries Table
-        db.run(`
+        db.exec(`
             CREATE TABLE IF NOT EXISTS deliveries (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 orderId INTEGER NOT NULL,
@@ -188,7 +185,7 @@ function initializeDatabase() {
         `);
 
         // Skipped Meals Table
-        db.run(`
+        db.exec(`
             CREATE TABLE IF NOT EXISTS skipped_meals (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 subscriptionId INTEGER NOT NULL,
@@ -200,7 +197,7 @@ function initializeDatabase() {
         `);
 
         // Cancellation Requests Table
-        db.run(`
+        db.exec(`
             CREATE TABLE IF NOT EXISTS cancellation_requests (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 subscriptionId INTEGER NOT NULL,
@@ -217,7 +214,7 @@ function initializeDatabase() {
         `);
 
         // Renewal Schedules Table
-        db.run(`
+        db.exec(`
             CREATE TABLE IF NOT EXISTS renewal_schedules (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 subscriptionId INTEGER NOT NULL,
@@ -232,24 +229,26 @@ function initializeDatabase() {
 
         console.log('✓ Database tables initialized');
         insertSampleData();
-    });
+    } catch (err) {
+        console.error('Database init error:', err);
+    }
 }
 
 // Insert Sample Data
 function insertSampleData() {
-    db.serialize(() => {
-        db.run(`INSERT OR IGNORE INTO plans (id, name, mealsPerWeek, price, description) VALUES 
+    try {
+        db.exec(`INSERT OR IGNORE INTO plans (id, name, mealsPerWeek, price, description) VALUES 
             (1, 'Basic', 3, 199, '3 healthy meals per week'),
             (2, 'Premium', 5, 349, '5 healthy meals per week'),
             (3, 'Elite', 7, 499, '7 healthy meals per week')`
         );
 
-        db.run(`INSERT OR IGNORE INTO kitchens (id, name, region, address, capacity) VALUES 
+        db.exec(`INSERT OR IGNORE INTO kitchens (id, name, region, address, capacity) VALUES 
             (1, 'Central Kitchen', 'Thiruvananthapuram', '123 Main Street', 100),
             (2, 'North Kitchen', 'Kochi', '456 Oak Avenue', 80)`
         );
 
-        db.run(`INSERT OR IGNORE INTO meals (id, name, type, mealType, price, calories, description, kitchenId, availableQuantity) VALUES 
+        db.exec(`INSERT OR IGNORE INTO meals (id, name, type, mealType, price, calories, description, kitchenId, availableQuantity) VALUES 
             (1, 'Grilled Chicken Salad', 'Non-Vegetarian', 'lunch', 249, 450, 'Fresh grilled chicken with mixed greens', 1, 45),
             (2, 'Vegan Buddha Bowl', 'Vegan', 'lunch', 279, 520, 'Chickpeas, quinoa, and fresh vegetables', 1, 28),
             (3, 'Mediterranean Bowl', 'Vegetarian', 'dinner', 259, 480, 'Feta cheese, olives, and fresh herbs', 1, 30),
@@ -258,49 +257,53 @@ function insertSampleData() {
         );
 
         console.log('✓ Sample data inserted');
-    });
+    } catch (err) {
+        console.log('Sample data already exists');
+    }
 }
 
 // ==================== AUTHENTICATION ====================
 
 // Register
 app.post('/api/auth/register', (req, res) => {
-    const { name, email, password, userType = 'customer', authority = 'customer' } = req.body;
+    try {
+        const { name, email, password, userType = 'customer', authority = 'customer' } = req.body;
 
-    if (!name || !email || !password) {
-        return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    const hashedPassword = bcrypt.hashSync(password, 10);
-
-    db.run(
-        `INSERT INTO users (name, email, password, userType, authority) VALUES (?, ?, ?, ?, ?)`,
-        [name, email, hashedPassword, userType, authority],
-        function(err) {
-            if (err) {
-                return res.status(400).json({ error: 'Email already exists' });
-            }
-
-            const token = jwt.sign({ id: this.lastID, email, authority }, JWT_SECRET, { expiresIn: '7d' });
-            res.status(201).json({
-                message: 'User registered successfully',
-                token,
-                user: { id: this.lastID, name, email, authority }
-            });
+        if (!name || !email || !password) {
+            return res.status(400).json({ error: 'Missing required fields' });
         }
-    );
+
+        const hashedPassword = bcrypt.hashSync(password, 10);
+
+        const stmt = db.prepare(
+            `INSERT INTO users (name, email, password, userType, authority) VALUES (?, ?, ?, ?, ?)`
+        );
+        const result = stmt.run(name, email, hashedPassword, userType, authority);
+
+        const token = jwt.sign({ id: result.lastInsertRowid, email, authority }, JWT_SECRET, { expiresIn: '7d' });
+        res.status(201).json({
+            message: 'User registered successfully',
+            token,
+            user: { id: result.lastInsertRowid, name, email, authority }
+        });
+    } catch (err) {
+        res.status(400).json({ error: 'Email already exists or invalid input' });
+    }
 });
 
 // Login
 app.post('/api/auth/login', (req, res) => {
-    const { email, password } = req.body;
+    try {
+        const { email, password } = req.body;
 
-    if (!email || !password) {
-        return res.status(400).json({ error: 'Email and password required' });
-    }
+        if (!email || !password) {
+            return res.status(400).json({ error: 'Email and password required' });
+        }
 
-    db.get('SELECT * FROM users WHERE email = ?', [email], (err, user) => {
-        if (err || !user) {
+        const stmt = db.prepare('SELECT * FROM users WHERE email = ?');
+        const user = stmt.get(email);
+
+        if (!user) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
@@ -322,7 +325,9 @@ app.post('/api/auth/login', (req, res) => {
                 address: user.address
             }
         });
-    });
+    } catch (err) {
+        res.status(500).json({ error: 'Login error' });
+    }
 });
 
 // Verify Token
@@ -346,132 +351,133 @@ function verifyToken(req, res, next) {
 
 // Create Subscription
 app.post('/api/admin-executive/subscriptions', verifyToken, (req, res) => {
-    const { customerId, planId, mealTiming, specialInstructions } = req.body;
+    try {
+        const { customerId, planId, mealTiming, specialInstructions } = req.body;
 
-    if (!customerId || !planId) {
-        return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    const startDate = new Date().toISOString();
-    const endDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-
-    db.run(
-        `INSERT INTO subscriptions (customerId, planId, startDate, endDate, nextRenewalDate, mealTiming, specialInstructions)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [customerId, planId, startDate, endDate, endDate, mealTiming, specialInstructions],
-        function(err) {
-            if (err) {
-                return res.status(500).json({ error: 'Failed to create subscription' });
-            }
-            res.status(201).json({ message: 'Subscription created successfully', subscriptionId: this.lastID });
+        if (!customerId || !planId) {
+            return res.status(400).json({ error: 'Missing required fields' });
         }
-    );
+
+        const startDate = new Date().toISOString();
+        const endDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+        const stmt = db.prepare(
+            `INSERT INTO subscriptions (customerId, planId, startDate, endDate, nextRenewalDate, mealTiming, specialInstructions)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`
+        );
+        const result = stmt.run(customerId, planId, startDate, endDate, endDate, mealTiming, specialInstructions);
+
+        res.status(201).json({ message: 'Subscription created successfully', subscriptionId: result.lastInsertRowid });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to create subscription' });
+    }
 });
 
 // Get Subscriptions
 app.get('/api/subscriptions', verifyToken, (req, res) => {
-    db.all(
-        `SELECT s.*, p.name as planName, p.mealsPerWeek, p.price FROM subscriptions s 
-         JOIN plans p ON s.planId = p.id WHERE s.customerId = ?`,
-        [req.user.id],
-        (err, rows) => {
-            if (err) {
-                return res.status(500).json({ error: 'Failed to fetch subscriptions' });
-            }
-            res.json(rows);
-        }
-    );
+    try {
+        const stmt = db.prepare(
+            `SELECT s.*, p.name as planName, p.mealsPerWeek, p.price FROM subscriptions s 
+             JOIN plans p ON s.planId = p.id WHERE s.customerId = ?`
+        );
+        const rows = stmt.all(req.user.id);
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch subscriptions' });
+    }
 });
 
 // ==================== CUSTOMER ====================
 
 // Get Profile
 app.get('/api/customer/profile', verifyToken, (req, res) => {
-    db.get(
-        `SELECT id, name, email, phone, address, googleMapLocation, allergies, dietaryPreferences FROM users WHERE id = ?`,
-        [req.user.id],
-        (err, row) => {
-            if (err || !row) {
-                return res.status(404).json({ error: 'User not found' });
-            }
-            res.json(row);
+    try {
+        const stmt = db.prepare(
+            `SELECT id, name, email, phone, address, googleMapLocation, allergies, dietaryPreferences FROM users WHERE id = ?`
+        );
+        const user = stmt.get(req.user.id);
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
         }
-    );
+        res.json(user);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch profile' });
+    }
 });
 
 // Update Profile
 app.put('/api/customer/profile', verifyToken, (req, res) => {
-    const { name, phone, address, googleMapLocation, allergies, dietaryPreferences } = req.body;
+    try {
+        const { name, phone, address, googleMapLocation, allergies, dietaryPreferences } = req.body;
 
-    db.run(
-        `UPDATE users SET name = ?, phone = ?, address = ?, googleMapLocation = ?, allergies = ?, dietaryPreferences = ? WHERE id = ?`,
-        [name, phone, address, googleMapLocation, allergies, dietaryPreferences, req.user.id],
-        function(err) {
-            if (err) {
-                return res.status(500).json({ error: 'Failed to update profile' });
-            }
-            res.json({ message: 'Profile updated successfully' });
-        }
-    );
+        const stmt = db.prepare(
+            `UPDATE users SET name = ?, phone = ?, address = ?, googleMapLocation = ?, allergies = ?, dietaryPreferences = ? WHERE id = ?`
+        );
+        stmt.run(name, phone, address, googleMapLocation, allergies, dietaryPreferences, req.user.id);
+
+        res.json({ message: 'Profile updated successfully' });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to update profile' });
+    }
 });
 
 // ==================== SUPER ADMIN ====================
 
 // Create User
 app.post('/api/super-admin/users', verifyToken, (req, res) => {
-    const { name, email, password, authority, region, kitchenId } = req.body;
+    try {
+        const { name, email, password, authority, region, kitchenId } = req.body;
 
-    if (!name || !email || !password || !authority) {
-        return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    const hashedPassword = bcrypt.hashSync(password, 10);
-
-    db.run(
-        `INSERT INTO users (name, email, password, userType, authority, region, kitchenId) 
-         VALUES (?, ?, ?, 'staff', ?, ?, ?)`,
-        [name, email, hashedPassword, authority, region, kitchenId || null],
-        function(err) {
-            if (err) {
-                return res.status(400).json({ error: 'Failed to create user' });
-            }
-            res.status(201).json({ message: 'User created successfully', userId: this.lastID });
+        if (!name || !email || !password || !authority) {
+            return res.status(400).json({ error: 'Missing required fields' });
         }
-    );
+
+        const hashedPassword = bcrypt.hashSync(password, 10);
+
+        const stmt = db.prepare(
+            `INSERT INTO users (name, email, password, userType, authority, region, kitchenId) 
+             VALUES (?, ?, ?, 'staff', ?, ?, ?)`
+        );
+        const result = stmt.run(name, email, hashedPassword, authority, region, kitchenId || null);
+
+        res.status(201).json({ message: 'User created successfully', userId: result.lastInsertRowid });
+    } catch (err) {
+        res.status(400).json({ error: 'Failed to create user' });
+    }
 });
 
 // Get All Users
 app.get('/api/super-admin/users', verifyToken, (req, res) => {
-    db.all(
-        `SELECT id, name, email, authority, region, kitchenId, createdAt FROM users`,
-        [],
-        (err, rows) => {
-            if (err) {
-                return res.status(500).json({ error: 'Failed to fetch users' });
-            }
-            res.json(rows);
-        }
-    );
+    try {
+        const stmt = db.prepare(
+            `SELECT id, name, email, authority, region, kitchenId, createdAt FROM users`
+        );
+        const rows = stmt.all();
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch users' });
+    }
 });
 
 // Create Kitchen
 app.post('/api/super-admin/kitchens', verifyToken, (req, res) => {
-    const { name, region, address, capacity } = req.body;
+    try {
+        const { name, region, address, capacity } = req.body;
 
-    if (!name || !region) {
-        return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    db.run(
-        `INSERT INTO kitchens (name, region, address, capacity) VALUES (?, ?, ?, ?)`,
-        [name, region, address, capacity],
-        function(err) {
-            if (err) {
-                return res.status(500).json({ error: 'Failed to create kitchen' });
-            }
-            res.status(201).json({ message: 'Kitchen created successfully', kitchenId: this.lastID });
+        if (!name || !region) {
+            return res.status(400).json({ error: 'Missing required fields' });
         }
-    );
+
+        const stmt = db.prepare(
+            `INSERT INTO kitchens (name, region, address, capacity) VALUES (?, ?, ?, ?)`
+        );
+        const result = stmt.run(name, region, address, capacity);
+
+        res.status(201).json({ message: 'Kitchen created successfully', kitchenId: result.lastInsertRowid });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to create kitchen' });
+    }
 });
 
 // ==================== HEALTH CHECK ====================
