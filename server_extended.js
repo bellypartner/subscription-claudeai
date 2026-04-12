@@ -490,30 +490,34 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-// ==================== SERVE HTML ====================
+// ==================== SERVE STATIC & HTML ====================
 
-app.get('*', (req, res) => {
-    const filePath = path.join(__dirname, 'public', 'index.html');
-    console.log('Serving:', filePath);
-    
-    // If public/index.html doesn't exist, serve a simple response
-    if (!require('fs').existsSync(filePath)) {
-        return res.status(200).send(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Salad Caffe</title>
-                <script>
-                    window.location.href = '/api/health';
-                </script>
-            </head>
-            <body>Loading...</body>
-            </html>
-        `);
-    }
-    
-    res.sendFile(filePath);
+// Serve static files from public folder
+app.use(express.static(path.join(__dirname, 'public'), {
+    maxAge: '1d',
+    etag: false
+}));
+
+// Serve index.html for root and all non-API routes
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'), (err) => {
+        if (err) {
+            console.error('Error serving index.html:', err);
+            res.status(500).send('Could not load page');
+        }
+    });
 });
+
+// Catch-all for SPA routing
+app.get(/^(?!\/api).*$/, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'), (err) => {
+        if (err) {
+            console.error('Error serving index.html:', err);
+            res.status(500).send('Could not load page');
+        }
+    });
+});
+
 // ==================== ERROR HANDLING ====================
 
 app.use((err, req, res, next) => {
