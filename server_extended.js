@@ -496,9 +496,29 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // ==================== SERVE SPA ====================
 
-// Serve index.html for all non-API routes
-app.get(/^(?!\/api).*$/, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+// Serve index.html for SPA routing (but NOT for /api routes)
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'), (err) => {
+        if (err) {
+            console.error('Error serving index.html:', err);
+            res.status(500).json({ error: 'Could not load page' });
+        }
+    });
+});
+
+// Wildcard route for SPA - serves index.html for all routes except /api
+app.all('*', (req, res, next) => {
+    // Skip if it's an API route
+    if (req.path.startsWith('/api')) {
+        return next();
+    }
+    
+    res.sendFile(path.join(__dirname, 'public', 'index.html'), (err) => {
+        if (err) {
+            console.error('Error serving index.html:', err);
+            res.status(500).json({ error: 'Could not load page' });
+        }
+    });
 });
 
 // ==================== ERROR HANDLING ====================
