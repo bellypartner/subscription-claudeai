@@ -490,32 +490,15 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-// ==================== SERVE STATIC & HTML ====================
+// ==================== SERVE STATIC FILES ====================
 
-// Serve static files from public folder
-app.use(express.static(path.join(__dirname, 'public'), {
-    maxAge: '1d',
-    etag: false
-}));
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Serve index.html for root and all non-API routes
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'), (err) => {
-        if (err) {
-            console.error('Error serving index.html:', err);
-            res.status(500).send('Could not load page');
-        }
-    });
-});
+// ==================== SERVE SPA ====================
 
-// Catch-all for SPA routing
+// Serve index.html for all non-API routes
 app.get(/^(?!\/api).*$/, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'), (err) => {
-        if (err) {
-            console.error('Error serving index.html:', err);
-            res.status(500).send('Could not load page');
-        }
-    });
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // ==================== ERROR HANDLING ====================
