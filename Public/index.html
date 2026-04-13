@@ -19,7 +19,6 @@
             --primary-dark: #27ae60;
             --secondary: #3498db;
             --danger: #e74c3c;
-            --warning: #f39c12;
             --dark: #2c3e50;
             --light: #ecf0f1;
             --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -246,73 +245,6 @@
             box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.1);
         }
 
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        .table-responsive {
-            overflow-x: auto;
-            border-radius: 12px;
-            border: 1px solid var(--light);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        thead {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-        }
-
-        th {
-            padding: 15px;
-            text-align: left;
-            font-weight: 600;
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        td {
-            padding: 15px;
-            border-bottom: 1px solid var(--light);
-        }
-
-        tbody tr:hover {
-            background: rgba(46, 204, 113, 0.05);
-        }
-
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .badge-success {
-            background: rgba(46, 204, 113, 0.2);
-            color: var(--primary-dark);
-        }
-
-        .badge-warning {
-            background: rgba(243, 156, 18, 0.2);
-            color: #d68910;
-        }
-
-        .badge-danger {
-            background: rgba(231, 76, 60, 0.2);
-            color: #c0392b;
-        }
-
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -342,141 +274,81 @@
             opacity: 0.9;
         }
 
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal.active {
-            display: flex;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: 12px;
-            padding: 40px;
-            max-width: 600px;
-            width: 90%;
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid var(--light);
-        }
-
-        .modal-header h3 {
-            font-size: 22px;
-        }
-
-        .modal-close {
-            cursor: pointer;
-            font-size: 24px;
-            color: var(--light);
-            transition: color 0.3s ease;
-        }
-
-        .modal-close:hover {
-            color: var(--dark);
-        }
-
-        .order-card {
-            background: var(--light);
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            border-left: 4px solid var(--primary);
-        }
-
-        .meal-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-            margin-bottom: 10px;
-        }
-
-        .allergy-alert {
+        .error {
             background: rgba(231, 76, 60, 0.1);
             border-left: 4px solid var(--danger);
+            color: #c0392b;
             padding: 12px;
             border-radius: 6px;
-            margin-bottom: 10px;
-            color: #c0392b;
-            font-weight: 600;
-        }
-
-        .timeline {
-            position: relative;
-            padding-left: 30px;
-        }
-
-        .timeline-item {
-            position: relative;
-            padding-bottom: 20px;
             margin-bottom: 20px;
-            border-left: 2px solid var(--light);
-            padding-left: 20px;
         }
 
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: -8px;
-            top: 0;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: var(--primary);
-            border: 2px solid white;
-            box-shadow: 0 0 0 2px var(--primary);
+        .success {
+            background: rgba(46, 204, 113, 0.1);
+            border-left: 4px solid var(--primary);
+            color: var(--primary-dark);
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
         }
 
         @media (max-width: 768px) {
             .sidebar {
                 width: 200px;
             }
-
             .main-content {
                 margin-left: 200px;
                 padding: 20px;
             }
-
             .header h2 {
                 font-size: 24px;
-            }
-
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-
-            .stats-grid {
-                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
-    <div class="app-container">
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="app-container" style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); align-items: center; justify-content: center;">
+        <div class="card" style="max-width: 400px; width: 90%;">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <div style="font-size: 48px; margin-bottom: 15px;">🥗</div>
+                <h2 style="color: var(--primary);">Salad Caffe</h2>
+                <p style="color: #95a5a6; margin-top: 5px;">Complete Management System</p>
+            </div>
+
+            <div id="loginError" class="error" style="display: none;"></div>
+
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="loginEmail" placeholder="your@email.com">
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="loginPassword" placeholder="••••••••">
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-bottom: 15px;" onclick="login()">
+                <i class="fas fa-sign-in-alt"></i> Sign In
+            </button>
+
+            <div style="text-align: center; color: #95a5a6; font-size: 12px;">
+                <p>Test Accounts:</p>
+                <p>super@test.com</p>
+                <p>kitchen@test.com</p>
+                <p>Password: password123</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- APP SCREEN -->
+    <div id="appScreen" class="app-container" style="display: none;">
         <!-- SIDEBAR -->
         <div class="sidebar">
             <div class="sidebar-header">
                 <h1><div class="logo-icon">🥗</div>Salad Caffe</h1>
             </div>
 
-            <!-- NAVIGATION BY AUTHORITY -->
             <div id="navigationContainer"></div>
 
             <div style="padding: 25px; border-top: 1px solid rgba(255,255,255,0.1); margin-top: auto;">
@@ -488,141 +360,21 @@
 
         <!-- MAIN CONTENT -->
         <div class="main-content">
-            <!-- LOGIN SECTION -->
-            <div id="login" class="section active">
-                <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh;">
-                    <div class="card" style="max-width: 400px; width: 100%;">
-                        <div style="text-align: center; margin-bottom: 30px;">
-                            <div style="font-size: 48px; margin-bottom: 15px;">🥗</div>
-                            <h2 style="color: var(--primary);">Salad Caffe</h2>
-                            <p style="color: #95a5a6; margin-top: 5px;">Complete Management System</p>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Email</label>
-                            <input type="email" id="loginEmail" placeholder="your@email.com">
-                        </div>
-
-                        <div class="form-group">
-                            <label>Password</label>
-                            <input type="password" id="loginPassword" placeholder="••••••••">
-                        </div>
-
-                        <button class="btn btn-primary" style="width: 100%; margin-bottom: 15px;" onclick="login()">
-                            <i class="fas fa-sign-in-alt"></i> Sign In
-                        </button>
-
-                        <div style="text-align: center; color: #95a5a6; font-size: 12px;">
-                            <p>Test Accounts:</p>
-                            <p>kitchen@test.com | super@test.com | admin@test.com</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- KITCHEN MANAGER DASHBOARD -->
-            <div id="kitchen-manager-dashboard" class="section">
+            <!-- DASHBOARD -->
+            <div id="dashboard" class="section active">
                 <div class="header">
-                    <h2>Kitchen Manager Dashboard</h2>
+                    <h2>Dashboard</h2>
                     <div class="user-info">
-                        <div class="user-avatar" id="headerAvatar">K</div>
-                        <div id="headerUserName">Kitchen Manager</div>
-                    </div>
-                </div>
-
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <i class="fas fa-tasks" style="font-size: 24px;"></i>
-                        <div class="stat-value" id="totalOrders">0</div>
-                        <div class="stat-label">Today's Orders</div>
-                    </div>
-                    <div class="stat-card" style="background: linear-gradient(135deg, #3498db 0%, #5dade2 100%);">
-                        <i class="fas fa-truck" style="font-size: 24px;"></i>
-                        <div class="stat-value" id="pendingDeliveries">0</div>
-                        <div class="stat-label">Pending Deliveries</div>
-                    </div>
-                    <div class="stat-card" style="background: linear-gradient(135deg, #f39c12 0%, #f5b041 100%);">
-                        <i class="fas fa-check-circle" style="font-size: 24px;"></i>
-                        <div class="stat-value" id="completedDeliveries">0</div>
-                        <div class="stat-label">Completed Today</div>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">Delivery Schedule Management</div>
-                    <button class="btn btn-primary" onclick="openModal('scheduleModal')" style="margin-bottom: 20px;">
-                        <i class="fas fa-plus"></i> Schedule Delivery
-                    </button>
-                    <div id="scheduleList"></div>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">Pending Deliveries to Assign</div>
-                    <div id="deliveryList"></div>
-                </div>
-            </div>
-
-            <!-- KITCHEN STAFF DASHBOARD -->
-            <div id="kitchen-staff-dashboard" class="section">
-                <div class="header">
-                    <h2>Kitchen Staff - Meal Preparation</h2>
-                    <div class="user-info">
-                        <div class="user-avatar" id="headerAvatar2">S</div>
-                        <div id="headerUserName2">Kitchen Staff</div>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">Orders to Prepare - Today</div>
-                    <div style="margin-bottom: 20px;">
-                        <select id="mealTypeFilter" onchange="loadOrders()" style="padding: 10px 15px; border: 2px solid var(--light); border-radius: 8px;">
-                            <option value="breakfast">Breakfast</option>
-                            <option value="lunch" selected>Lunch</option>
-                            <option value="dinner">Dinner</option>
-                        </select>
-                    </div>
-                    <div id="ordersToPrep"></div>
-                </div>
-            </div>
-
-            <!-- ADMIN EXECUTIVE DASHBOARD -->
-            <div id="admin-executive-dashboard" class="section">
-                <div class="header">
-                    <h2>Admin Executive - Subscription Management</h2>
-                    <div class="user-info">
-                        <div class="user-avatar" id="headerAvatar3">A</div>
-                        <div id="headerUserName3">Admin Executive</div>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">Create New Subscription</div>
-                    <button class="btn btn-primary" onclick="openModal('createSubModal')" style="margin-bottom: 20px;">
-                        <i class="fas fa-plus"></i> Create Subscription
-                    </button>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">Pending Delivery Confirmations</div>
-                    <div id="pendingDeliveryList"></div>
-                </div>
-            </div>
-
-            <!-- ORG HEAD DASHBOARD -->
-            <div id="org-head-dashboard" class="section">
-                <div class="header">
-                    <h2>Organization Head - Complete Overview</h2>
-                    <div class="user-info">
-                        <div class="user-avatar" id="headerAvatar4">O</div>
-                        <div id="headerUserName4">Org Head</div>
+                        <div class="user-avatar" id="headerAvatar">U</div>
+                        <div id="headerUserName">User</div>
                     </div>
                 </div>
 
                 <div class="stats-grid">
                     <div class="stat-card">
                         <i class="fas fa-users" style="font-size: 24px;"></i>
-                        <div class="stat-value" id="totalCustomers">0</div>
-                        <div class="stat-label">Total Customers</div>
+                        <div class="stat-value" id="totalUsers">0</div>
+                        <div class="stat-label">Total Users</div>
                     </div>
                     <div class="stat-card" style="background: linear-gradient(135deg, #3498db 0%, #5dade2 100%);">
                         <i class="fas fa-bookmark" style="font-size: 24px;"></i>
@@ -630,64 +382,21 @@
                         <div class="stat-label">Active Subscriptions</div>
                     </div>
                     <div class="stat-card" style="background: linear-gradient(135deg, #f39c12 0%, #f5b041 100%);">
-                        <i class="fas fa-building" style="font-size: 24px;"></i>
-                        <div class="stat-value" id="totalKitchens">0</div>
-                        <div class="stat-label">Total Kitchens</div>
+                        <i class="fas fa-tasks" style="font-size: 24px;"></i>
+                        <div class="stat-value" id="totalOrders">0</div>
+                        <div class="stat-label">Total Orders</div>
                     </div>
                 </div>
 
                 <div class="card">
-                    <div class="card-title">Regional Performance</div>
-                    <div id="regionList"></div>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">Monthly Progress</div>
-                    <div id="progressList"></div>
+                    <div class="card-title">Welcome to Salad Caffe</div>
+                    <p>You are logged in as <strong id="userNameDisplay">User</strong>.</p>
+                    <p style="margin-top: 10px; color: #95a5a6; font-size: 14px;">Use the navigation menu to access different features based on your role.</p>
                 </div>
             </div>
 
-            <!-- SUPER ADMIN DASHBOARD -->
-            <div id="super-admin-dashboard" class="section">
-                <div class="header">
-                    <h2>Super Admin - Complete Control</h2>
-                    <div class="user-info">
-                        <div class="user-avatar" id="headerAvatar5">S</div>
-                        <div id="headerUserName5">Super Admin</div>
-                    </div>
-                </div>
-
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <i class="fas fa-users-cog" style="font-size: 24px;"></i>
-                        <div class="stat-value" id="totalStaff">0</div>
-                        <div class="stat-label">Total Staff</div>
-                    </div>
-                    <div class="stat-card" style="background: linear-gradient(135deg, #3498db 0%, #5dade2 100%);">
-                        <i class="fas fa-globe" style="font-size: 24px;"></i>
-                        <div class="stat-value" id="totalRegions">0</div>
-                        <div class="stat-label">Total Regions</div>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">User Management</div>
-                    <button class="btn btn-primary" onclick="openModal('createUserModal')" style="margin-bottom: 20px;">
-                        <i class="fas fa-plus"></i> Create User
-                    </button>
-                    <div id="usersList"></div>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">Create Kitchen</div>
-                    <button class="btn btn-primary" onclick="openModal('createKitchenModal')" style="margin-bottom: 20px;">
-                        <i class="fas fa-plus"></i> Create Kitchen
-                    </button>
-                </div>
-            </div>
-
-            <!-- CUSTOMER PROFILE -->
-            <div id="customer-profile" class="section">
+            <!-- PROFILE -->
+            <div id="profile" class="section">
                 <div class="header">
                     <h2>My Profile</h2>
                 </div>
@@ -700,15 +409,14 @@
                         <input type="text" id="profileName" placeholder="Your name">
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Email</label>
-                            <input type="email" id="profileEmail" placeholder="your@email.com" disabled>
-                        </div>
-                        <div class="form-group">
-                            <label>Phone</label>
-                            <input type="tel" id="profilePhone" placeholder="+91 98765 43210">
-                        </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="profileEmail" placeholder="your@email.com" disabled>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input type="tel" id="profilePhone" placeholder="+91 98765 43210">
                     </div>
 
                     <div class="form-group">
@@ -718,12 +426,12 @@
 
                     <div class="form-group">
                         <label>Google Maps Location</label>
-                        <input type="text" id="profileLocation" placeholder="Search on Google Maps">
+                        <input type="text" id="profileLocation" placeholder="Paste Google Maps link">
                     </div>
 
                     <div class="form-group">
                         <label>Allergies / Dietary Restrictions</label>
-                        <textarea id="profileAllergies" placeholder="e.g., Peanut allergy, Gluten-free, No dairy" style="height: 100px;"></textarea>
+                        <textarea id="profileAllergies" placeholder="e.g., Peanut allergy, Gluten-free" style="height: 100px;"></textarea>
                     </div>
 
                     <button class="btn btn-primary" onclick="updateProfile()">
@@ -732,215 +440,48 @@
                 </div>
             </div>
         </div>
-
-        <!-- MODALS -->
-        <div id="scheduleModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>Schedule Delivery</h3>
-                    <span class="modal-close" onclick="closeModal('scheduleModal')">&times;</span>
-                </div>
-
-                <div class="form-group">
-                    <label>Scheduled Date</label>
-                    <input type="date" id="scheduledDate">
-                </div>
-
-                <div class="form-group">
-                    <label>Meal Type</label>
-                    <select id="mealTypeSchedule">
-                        <option value="breakfast">Breakfast</option>
-                        <option value="lunch">Lunch</option>
-                        <option value="dinner">Dinner</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Notes</label>
-                    <textarea id="scheduleNotes" placeholder="Any special instructions..."></textarea>
-                </div>
-
-                <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="scheduleDelivery()">
-                    Schedule
-                </button>
-                <button class="btn" style="width: 100%; background: var(--light); color: var(--dark);" onclick="closeModal('scheduleModal')">
-                    Cancel
-                </button>
-            </div>
-        </div>
-
-        <div id="createSubModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>Create Subscription</h3>
-                    <span class="modal-close" onclick="closeModal('createSubModal')">&times;</span>
-                </div>
-
-                <div class="form-group">
-                    <label>Customer Email</label>
-                    <input type="email" id="subCustomerEmail" placeholder="customer@email.com">
-                </div>
-
-                <div class="form-group">
-                    <label>Plan</label>
-                    <select id="subPlan">
-                        <option value="1">Basic - 3 meals/week - ₹199</option>
-                        <option value="2">Premium - 5 meals/week - ₹349</option>
-                        <option value="3">Elite - 7 meals/week - ₹499</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Meal Timing</label>
-                    <select id="subMealTiming">
-                        <option value="breakfast">Breakfast</option>
-                        <option value="lunch">Lunch</option>
-                        <option value="dinner">Dinner</option>
-                        <option value="all">All (Breakfast, Lunch, Dinner)</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Special Instructions</label>
-                    <textarea id="subInstructions" placeholder="e.g., Extra protein, No onions, etc."></textarea>
-                </div>
-
-                <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="createSubscription()">
-                    Create Subscription
-                </button>
-                <button class="btn" style="width: 100%; background: var(--light); color: var(--dark);" onclick="closeModal('createSubModal')">
-                    Cancel
-                </button>
-            </div>
-        </div>
-
-        <div id="createUserModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>Create User</h3>
-                    <span class="modal-close" onclick="closeModal('createUserModal')">&times;</span>
-                </div>
-
-                <div class="form-group">
-                    <label>Name</label>
-                    <input type="text" id="userName" placeholder="User name">
-                </div>
-
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="userEmail" placeholder="user@email.com">
-                </div>
-
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" id="userPassword" placeholder="••••••••">
-                </div>
-
-                <div class="form-group">
-                    <label>Authority</label>
-                    <select id="userAuthority">
-                        <option value="kitchen_manager">Kitchen Manager</option>
-                        <option value="kitchen_staff">Kitchen Staff</option>
-                        <option value="admin_executive">Admin Executive</option>
-                        <option value="delivery_person">Delivery Person</option>
-                        <option value="org_head">Organization Head</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Region</label>
-                    <input type="text" id="userRegion" placeholder="e.g., Thiruvananthapuram">
-                </div>
-
-                <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="createUser()">
-                    Create User
-                </button>
-                <button class="btn" style="width: 100%; background: var(--light); color: var(--dark);" onclick="closeModal('createUserModal')">
-                    Cancel
-                </button>
-            </div>
-        </div>
-
-        <div id="createKitchenModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>Create Kitchen</h3>
-                    <span class="modal-close" onclick="closeModal('createKitchenModal')">&times;</span>
-                </div>
-
-                <div class="form-group">
-                    <label>Kitchen Name</label>
-                    <input type="text" id="kitchenName" placeholder="e.g., Central Kitchen">
-                </div>
-
-                <div class="form-group">
-                    <label>Region</label>
-                    <input type="text" id="kitchenRegion" placeholder="e.g., Thiruvananthapuram">
-                </div>
-
-                <div class="form-group">
-                    <label>Address</label>
-                    <input type="text" id="kitchenAddress" placeholder="Kitchen address">
-                </div>
-
-                <div class="form-group">
-                    <label>Capacity</label>
-                    <input type="number" id="kitchenCapacity" placeholder="e.g., 100">
-                </div>
-
-                <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="createKitchen()">
-                    Create Kitchen
-                </button>
-                <button class="btn" style="width: 100%; background: var(--light); color: var(--dark);" onclick="closeModal('createKitchenModal')">
-                    Cancel
-                </button>
-            </div>
-        </div>
     </div>
 
     <script>
-        // App State
+        // Global State
         const appState = {
             currentUser: null,
             authority: null,
             token: null
         };
 
-        // Navigation by Authority
-        const navigationMap = {
-            customer: [
-                { label: 'Dashboard', icon: 'fa-home', section: 'dashboard' },
-                { label: 'Profile', icon: 'fa-user', section: 'customer-profile' }
-            ],
-            kitchen_manager: [
-                { label: 'Dashboard', icon: 'fa-tachometer-alt', section: 'kitchen-manager-dashboard' }
-            ],
-            kitchen_staff: [
-                { label: 'Meal Prep', icon: 'fa-utensils', section: 'kitchen-staff-dashboard' }
-            ],
-            admin_executive: [
-                { label: 'Dashboard', icon: 'fa-tachometer-alt', section: 'admin-executive-dashboard' }
-            ],
-            org_head: [
-                { label: 'Dashboard', icon: 'fa-chart-bar', section: 'org-head-dashboard' }
-            ],
-            super_admin: [
-                { label: 'Dashboard', icon: 'fa-crown', section: 'super-admin-dashboard' }
-            ]
-        };
+        // API Base URL
+        const API_URL = '/api';
 
-        // Login
+        // Load from localStorage on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            if (token && user) {
+                appState.token = token;
+                appState.currentUser = JSON.parse(user);
+                appState.authority = appState.currentUser.authority;
+                showApp();
+                buildNavigation();
+                loadDashboard();
+            }
+        });
+
+        // Login Function
         async function login() {
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
+            const errorDiv = document.getElementById('loginError');
 
             if (!email || !password) {
-                alert('Please fill in all fields');
+                errorDiv.textContent = 'Please fill all fields';
+                errorDiv.style.display = 'block';
                 return;
             }
 
             try {
-                const response = await fetch('/api/auth/login', {
+                const response = await fetch(`${API_URL}/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
@@ -949,30 +490,53 @@
                 const data = await response.json();
 
                 if (!response.ok) {
-                    alert(data.error || 'Login failed');
+                    errorDiv.textContent = data.error || 'Login failed';
+                    errorDiv.style.display = 'block';
                     return;
                 }
 
+                // Save to localStorage
                 appState.currentUser = data.user;
                 appState.authority = data.user.authority;
                 appState.token = data.token;
 
                 localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
 
+                // Show app
+                showApp();
                 buildNavigation();
-                switchSection(navigationMap[appState.authority][0].section);
+                loadDashboard();
+
             } catch (err) {
-                alert('Login error: ' + err.message);
+                errorDiv.textContent = 'Network error: ' + err.message;
+                errorDiv.style.display = 'block';
             }
         }
 
-        // Logout
+        // Logout Function
         function logout() {
             appState.currentUser = null;
             appState.token = null;
             localStorage.removeItem('token');
-            switchSection('login');
-            buildNavigation();
+            localStorage.removeItem('user');
+            
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('appScreen').style.display = 'none';
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('loginError').style.display = 'none';
+        }
+
+        // Show App
+        function showApp() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('appScreen').style.display = 'flex';
+            
+            const firstChar = appState.currentUser.name.charAt(0).toUpperCase();
+            document.getElementById('headerAvatar').textContent = firstChar;
+            document.getElementById('headerUserName').textContent = appState.currentUser.name;
+            document.getElementById('userNameDisplay').textContent = appState.currentUser.name;
         }
 
         // Build Navigation
@@ -980,13 +544,15 @@
             const navContainer = document.getElementById('navigationContainer');
             navContainer.innerHTML = '';
 
-            if (!appState.authority) return;
+            const navItems = [
+                { label: 'Dashboard', icon: 'fa-home', section: 'dashboard' },
+                { label: 'Profile', icon: 'fa-user', section: 'profile' }
+            ];
 
-            const nav = navigationMap[appState.authority] || [];
-
-            nav.forEach(item => {
+            navItems.forEach(item => {
                 const navItem = document.createElement('div');
                 navItem.className = 'nav-item';
+                if (item.section === 'dashboard') navItem.classList.add('active');
                 navItem.innerHTML = `<i class="fas ${item.icon}"></i> ${item.label}`;
                 navItem.onclick = () => switchSection(item.section);
                 navContainer.appendChild(navItem);
@@ -996,65 +562,93 @@
         // Switch Section
         function switchSection(sectionId) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            const section = document.getElementById(sectionId);
-            if (section) {
-                section.classList.add('active');
+            document.getElementById(sectionId).classList.add('active');
+            
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            event.target.closest('.nav-item').classList.add('active');
+        }
+
+        // Load Dashboard
+        async function loadDashboard() {
+            try {
+                // Simulate loading stats
+                document.getElementById('totalUsers').textContent = '0';
+                document.getElementById('activeSubscriptions').textContent = '0';
+                document.getElementById('totalOrders').textContent = '0';
+            } catch (err) {
+                console.error('Error loading dashboard:', err);
             }
         }
 
-        // Modal Functions
-        function openModal(modalId) {
-            document.getElementById(modalId).classList.add('active');
+        // Update Profile
+        async function updateProfile() {
+            const name = document.getElementById('profileName').value;
+            const phone = document.getElementById('profilePhone').value;
+            const address = document.getElementById('profileAddress').value;
+            const googleMapLocation = document.getElementById('profileLocation').value;
+            const allergies = document.getElementById('profileAllergies').value;
+
+            if (!name || !phone || !address) {
+                alert('Please fill required fields');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/customer/profile`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${appState.token}`
+                    },
+                    body: JSON.stringify({
+                        name, phone, address, googleMapLocation, allergies
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    alert('Error: ' + (data.error || 'Failed to update profile'));
+                    return;
+                }
+
+                alert('Profile updated successfully!');
+
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
         }
 
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.remove('active');
+        // Load profile data
+        async function loadProfile() {
+            try {
+                const response = await fetch(`${API_URL}/customer/profile`, {
+                    headers: {
+                        'Authorization': `Bearer ${appState.token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('profileName').value = data.name || '';
+                    document.getElementById('profileEmail').value = data.email || '';
+                    document.getElementById('profilePhone').value = data.phone || '';
+                    document.getElementById('profileAddress').value = data.address || '';
+                    document.getElementById('profileLocation').value = data.googleMapLocation || '';
+                    document.getElementById('profileAllergies').value = data.allergies || '';
+                }
+            } catch (err) {
+                console.error('Error loading profile:', err);
+            }
         }
 
-        // Placeholder functions - implement as needed
-        function scheduleDelivery() {
-            alert('Schedule delivery feature');
-            closeModal('scheduleModal');
-        }
-
-        function createSubscription() {
-            alert('Create subscription feature');
-            closeModal('createSubModal');
-        }
-
-        function createUser() {
-            alert('Create user feature');
-            closeModal('createUserModal');
-        }
-
-        function createKitchen() {
-            alert('Create kitchen feature');
-            closeModal('createKitchenModal');
-        }
-
-        function updateProfile() {
-            alert('Profile updated');
-        }
-
-        function loadOrders() {
-            // Load orders based on meal type
-        }
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            const token = localStorage.getItem('token');
-            if (token) {
-                appState.token = token;
-                // Verify token and load user data
+        // Allow Enter key to login
+        document.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter' && document.getElementById('loginScreen').style.display !== 'none') {
+                login();
             }
         });
-    </script>
-
-    <script>
-        // Progressive Web App manifest
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW error:', err));
-        }
     </script>
 </body>
 </html>
