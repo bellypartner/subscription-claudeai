@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 const app = express();
@@ -15,7 +16,6 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your_secret_key';
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
 
 // Initialize Database
 const db = new Database('./salad_caffe.db');
@@ -262,6 +262,86 @@ function insertSampleData() {
     }
 }
 
+// ==================== SERVE STATIC FILES & HTML ====================
+
+// Load HTML file at startup
+let indexHtml = '';
+try {
+    indexHtml = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
+    console.log('✓ Loaded index.html from public folder');
+} catch (err) {
+    console.warn('⚠ Could not load index.html from public folder');
+    indexHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Salad Caffe</title>
+            <style>
+                body { font-family: Arial; text-align: center; margin-top: 50px; }
+                .container { max-width: 400px; margin: 0 auto; padding: 20px; background: #f0f0f0; border-radius: 8px; }
+                h1 { color: #2ecc71; }
+                p { color: #666; }
+                input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; }
+                button { width: 100%; padding: 10px; background: #2ecc71; color: white; border: none; border-radius: 4px; cursor: pointer; }
+                .error { color: red; margin: 10px 0; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>🥗 Salad Caffe</h1>
+                <p>Complete Meal Subscription System</p>
+                
+                <div id="error" class="error"></div>
+                
+                <input type="email" id="email" placeholder="Email" />
+                <input type="password" id="password" placeholder="Password" />
+                <button onclick="login()">Sign In</button>
+                
+                <p style="font-size: 12px; margin-top: 20px;">
+                    Test: super@test.com / password123
+                </p>
+            </div>
+            
+            <script>
+                async function login() {
+                    const email = document.getElementById('email').value;
+                    const password = document.getElementById('password').value;
+                    
+                    if (!email || !password) {
+                        document.getElementById('error').textContent = 'Please fill all fields';
+                        return;
+                    }
+                    
+                    try {
+                        const response = await fetch('/api/auth/login', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ email, password })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (!response.ok) {
+                            document.getElementById('error').textContent = data.error || 'Login failed';
+                            return;
+                        }
+                        
+                        localStorage.setItem('token', data.token);
+                        alert('Login successful!');
+                        console.log('User:', data.user);
+                    } catch (err) {
+                        document.getElementById('error').textContent = 'Error: ' + err.message;
+                    }
+                }
+            </script>
+        </body>
+        </html>
+    `;
+}
+
+// Serve static files
+app.use(express.static(path.join(__dirname, 'public')));
+
 // ==================== AUTHENTICATION ====================
 
 // Register
@@ -490,35 +570,23 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-// ==================== SERVE STATIC FILES ====================
+// ==================== SERVE SPA ROUTES ====================
 
-app.use(express.static(path.join(__dirname, 'public')));
-
-// ==================== SERVE SPA ====================
-
-// Serve index.html for SPA routing (but NOT for /api routes)
+// Root route
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'), (err) => {
-        if (err) {
-            console.error('Error serving index.html:', err);
-            res.status(500).json({ error: 'Could not load page' });
-        }
-    });
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(indexHtml);
 });
 
-// Wildcard route for SPA - serves index.html for all routes except /api
+// All non-API routes serve index.html (for SPA routing)
 app.all('*', (req, res, next) => {
     // Skip if it's an API route
     if (req.path.startsWith('/api')) {
         return next();
     }
     
-    res.sendFile(path.join(__dirname, 'public', 'index.html'), (err) => {
-        if (err) {
-            console.error('Error serving index.html:', err);
-            res.status(500).json({ error: 'Could not load page' });
-        }
-    });
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(indexHtml);
 });
 
 // ==================== ERROR HANDLING ====================
