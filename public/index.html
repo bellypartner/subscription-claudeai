@@ -15,14 +15,11 @@
         :root {
             --primary: #2ecc71;
             --primary-dark: #27ae60;
-            --secondary: #3498db;
-            --danger: #e74c3c;
             --dark: #1a1a1a;
             --light: #f8f9fa;
             --gray: #6c757d;
             --border: #dee2e6;
             --shadow: 0 2px 10px rgba(0,0,0,0.1);
-            --shadow-lg: 0 10px 30px rgba(0,0,0,0.15);
         }
 
         body {
@@ -31,7 +28,6 @@
             color: var(--dark);
         }
 
-        /* LOGIN PAGE */
         .login-page {
             display: flex;
             align-items: center;
@@ -44,10 +40,9 @@
             background: white;
             padding: 50px;
             border-radius: 15px;
-            box-shadow: var(--shadow-lg);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
             width: 100%;
             max-width: 420px;
-            text-align: center;
         }
 
         .login-card h1 {
@@ -64,23 +59,21 @@
 
         .form-input {
             width: 100%;
-            padding: 14px;
+            padding: 12px;
             margin: 10px 0;
             border: 2px solid var(--border);
             border-radius: 8px;
             font-size: 14px;
-            transition: border-color 0.3s;
         }
 
         .form-input:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.1);
         }
 
         .btn-login {
             width: 100%;
-            padding: 14px;
+            padding: 12px;
             margin-top: 20px;
             background: var(--primary);
             color: white;
@@ -89,7 +82,6 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.3s;
         }
 
         .btn-login:hover {
@@ -103,7 +95,6 @@
             border-radius: 8px;
             margin-bottom: 20px;
             display: none;
-            font-size: 14px;
         }
 
         .test-creds {
@@ -112,13 +103,10 @@
             border-radius: 8px;
             margin-top: 25px;
             font-size: 13px;
-            color: var(--gray);
         }
 
-        /* DASHBOARD */
         .dashboard {
             display: none;
-            min-height: 100vh;
         }
 
         .dashboard.active {
@@ -139,11 +127,9 @@
 
         .top-bar h1 {
             font-size: 24px;
-            color: var(--dark);
-            margin: 0;
         }
 
-        .top-bar .user-info {
+        .user-info {
             display: flex;
             align-items: center;
             gap: 15px;
@@ -163,22 +149,16 @@
 
         .btn-logout {
             padding: 10px 20px;
-            background: var(--danger);
+            background: #e74c3c;
             color: white;
             border: none;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 14px;
-            transition: background 0.3s;
-        }
-
-        .btn-logout:hover {
-            background: #c0392b;
         }
 
         .container {
             padding: 30px;
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
         }
 
@@ -187,11 +167,11 @@
             gap: 10px;
             margin-bottom: 30px;
             border-bottom: 2px solid var(--border);
-            overflow-x: auto;
+            flex-wrap: wrap;
         }
 
         .tab-btn {
-            padding: 15px 25px;
+            padding: 12px 20px;
             background: none;
             border: none;
             border-bottom: 3px solid transparent;
@@ -200,16 +180,11 @@
             font-weight: 600;
             color: var(--gray);
             transition: all 0.3s;
-            white-space: nowrap;
         }
 
         .tab-btn.active {
             color: var(--primary);
             border-bottom-color: var(--primary);
-        }
-
-        .tab-btn:hover {
-            color: var(--dark);
         }
 
         .section {
@@ -218,12 +193,6 @@
 
         .section.active {
             display: block;
-            animation: slideIn 0.3s ease;
-        }
-
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
         }
 
         .header-row {
@@ -233,33 +202,18 @@
             margin-bottom: 25px;
         }
 
-        .header-row h2 {
-            font-size: 22px;
-            color: var(--dark);
-        }
-
         .btn {
             padding: 12px 25px;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
-            font-size: 14px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s;
-        }
-
-        .btn-primary {
             background: var(--primary);
             color: white;
         }
 
-        .btn-primary:hover {
+        .btn:hover {
             background: var(--primary-dark);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow);
         }
 
         .card {
@@ -278,19 +232,16 @@
             display: block;
             font-weight: 600;
             margin-bottom: 8px;
-            color: var(--dark);
-            font-size: 14px;
         }
 
         .form-group input,
         .form-group select,
         .form-group textarea {
             width: 100%;
-            padding: 12px;
-            border: 2px solid var(--border);
-            border-radius: 8px;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
             font-size: 14px;
-            font-family: inherit;
         }
 
         .form-group input:focus,
@@ -298,37 +249,6 @@
         .form-group textarea:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.1);
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        .checkbox-group {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-            margin: 15px 0;
-        }
-
-        .checkbox-group label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin: 0;
-            cursor: pointer;
-        }
-
-        .checkbox-group input {
-            width: auto;
-            margin: 0;
-        }
-
-        .table-container {
-            overflow-x: auto;
         }
 
         .table {
@@ -336,25 +256,18 @@
             border-collapse: collapse;
         }
 
-        .table thead {
-            background: #f8f9fa;
-        }
-
         .table th {
-            padding: 15px;
+            background: #f8f9fa;
+            padding: 12px;
             text-align: left;
             font-weight: 600;
-            color: var(--dark);
             border-bottom: 2px solid var(--border);
             font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
         .table td {
-            padding: 15px;
+            padding: 12px;
             border-bottom: 1px solid var(--border);
-            font-size: 14px;
         }
 
         .table tbody tr:hover {
@@ -367,30 +280,21 @@
             color: var(--gray);
         }
 
-        .empty-state i {
-            font-size: 48px;
-            margin-bottom: 15px;
-            opacity: 0.3;
-        }
-
         .alert {
             padding: 15px;
             border-radius: 8px;
             margin-bottom: 20px;
             display: none;
-            font-size: 14px;
         }
 
         .alert-success {
             background: #d4edda;
             color: #155724;
-            border: 1px solid #c3e6cb;
         }
 
         .alert-error {
             background: #f8d7da;
             color: #721c24;
-            border: 1px solid #f5c6cb;
         }
 
         .modal {
@@ -412,63 +316,46 @@
 
         .modal-content {
             background: white;
-            padding: 35px;
+            padding: 30px;
             border-radius: 12px;
             width: 100%;
             max-width: 500px;
             max-height: 80vh;
             overflow-y: auto;
-            box-shadow: var(--shadow-lg);
         }
 
         .modal-header {
             font-size: 20px;
             font-weight: 700;
-            margin-bottom: 25px;
-            color: var(--dark);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .modal-close {
-            float: right;
-            font-size: 28px;
+            background: none;
+            border: none;
+            font-size: 24px;
             cursor: pointer;
             color: var(--gray);
-            border: none;
-            background: none;
-            width: 30px;
-            height: 30px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 20px;
+            margin: 15px 0;
+        }
+
+        .checkbox-group label {
             display: flex;
             align-items: center;
-            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
         }
 
-        .modal-close:hover {
-            color: var(--dark);
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .badge-success {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .badge-primary {
-            background: #d1ecf1;
-            color: #0c5460;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: var(--gray);
+        .checkbox-group input {
+            width: auto;
         }
 
         .spinner {
@@ -484,31 +371,14 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-
-        @media (max-width: 768px) {
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-            .login-card {
-                padding: 30px;
-            }
-            .container {
-                padding: 15px;
-            }
-            .header-row {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 15px;
-            }
-        }
     </style>
 </head>
 <body>
-    <!-- LOGIN PAGE -->
+    <!-- LOGIN -->
     <div id="loginPage" class="login-page">
         <div class="login-card">
             <h1>🥗 Salad Caffe</h1>
-            <p>Admin Management System</p>
+            <p>Admin Dashboard</p>
             
             <div class="login-error" id="loginError"></div>
 
@@ -517,9 +387,8 @@
             <button class="btn-login" onclick="handleLogin()">Sign In</button>
 
             <div class="test-creds">
-                <strong>Demo Credentials:</strong><br>
-                Email: super@test.com<br>
-                Password: password123
+                <strong>Demo:</strong><br>
+                super@test.com / password123
             </div>
         </div>
     </div>
@@ -535,284 +404,210 @@
         </div>
 
         <div class="container">
-            <!-- TABS -->
             <div class="tabs">
-                <button class="tab-btn active" onclick="switchTab('categories')"><i class="fas fa-list"></i> Categories</button>
-                <button class="tab-btn" onclick="switchTab('meals')"><i class="fas fa-utensils"></i> Meal Items</button>
-                <button class="tab-btn" onclick="switchTab('territories')"><i class="fas fa-map"></i> Territories</button>
-                <button class="tab-btn" onclick="switchTab('kitchens')"><i class="fas fa-building"></i> Kitchens</button>
-                <button class="tab-btn" onclick="switchTab('plans')"><i class="fas fa-bookmark"></i> Plans</button>
+                <button class="tab-btn active" onclick="switchTab('categories')">Categories</button>
+                <button class="tab-btn" onclick="switchTab('meals')">Meals</button>
+                <button class="tab-btn" onclick="switchTab('territories')">Territories</button>
+                <button class="tab-btn" onclick="switchTab('kitchens')">Kitchens</button>
+                <button class="tab-btn" onclick="switchTab('plans')">Plans</button>
             </div>
 
-            <!-- CATEGORIES SECTION -->
+            <!-- CATEGORIES -->
             <div id="categories" class="section active">
                 <div class="header-row">
                     <h2>Meal Categories</h2>
-                    <button class="btn btn-primary" onclick="showCategoryModal()">
-                        <i class="fas fa-plus"></i> Add Category
-                    </button>
+                    <button class="btn" onclick="showCategoryModal()">+ Add Category</button>
                 </div>
-
                 <div class="alert alert-success" id="catSuccess"></div>
                 <div class="alert alert-error" id="catError"></div>
-
                 <div class="card">
-                    <div id="categoriesList" class="loading"><div class="spinner"></div> Loading...</div>
+                    <div id="categoriesList"><div class="spinner"></div> Loading...</div>
                 </div>
             </div>
 
-            <!-- MEAL ITEMS SECTION -->
+            <!-- MEALS -->
             <div id="meals" class="section">
                 <div class="header-row">
                     <h2>Meal Items</h2>
-                    <button class="btn btn-primary" onclick="showMealModal()">
-                        <i class="fas fa-plus"></i> Add Meal Item
-                    </button>
+                    <button class="btn" onclick="showMealModal()">+ Add Meal</button>
                 </div>
-
                 <div class="alert alert-success" id="mealSuccess"></div>
                 <div class="alert alert-error" id="mealError"></div>
-
                 <div class="card">
-                    <div id="mealsList" class="loading"><div class="spinner"></div> Loading...</div>
+                    <div id="mealsList"><div class="spinner"></div> Loading...</div>
                 </div>
             </div>
 
-            <!-- TERRITORIES SECTION -->
+            <!-- TERRITORIES -->
             <div id="territories" class="section">
                 <div class="header-row">
                     <h2>Territories</h2>
-                    <button class="btn btn-primary" onclick="showTerritoryModal()">
-                        <i class="fas fa-plus"></i> Add Territory
-                    </button>
+                    <button class="btn" onclick="showTerritoryModal()">+ Add Territory</button>
                 </div>
-
                 <div class="alert alert-success" id="terrSuccess"></div>
                 <div class="alert alert-error" id="terrError"></div>
-
                 <div class="card">
-                    <div id="territoriesList" class="loading"><div class="spinner"></div> Loading...</div>
+                    <div id="territoriesList"><div class="spinner"></div> Loading...</div>
                 </div>
             </div>
 
-            <!-- KITCHENS SECTION -->
+            <!-- KITCHENS -->
             <div id="kitchens" class="section">
                 <div class="header-row">
                     <h2>Kitchens</h2>
-                    <button class="btn btn-primary" onclick="showKitchenModal()">
-                        <i class="fas fa-plus"></i> Add Kitchen
-                    </button>
+                    <button class="btn" onclick="showKitchenModal()">+ Add Kitchen</button>
                 </div>
-
                 <div class="alert alert-success" id="kitchenSuccess"></div>
                 <div class="alert alert-error" id="kitchenError"></div>
-
                 <div class="card">
-                    <div id="kitchensList" class="loading"><div class="spinner"></div> Loading...</div>
+                    <div id="kitchensList"><div class="spinner"></div> Loading...</div>
                 </div>
             </div>
 
-            <!-- PLANS SECTION -->
+            <!-- PLANS -->
             <div id="plans" class="section">
                 <div class="header-row">
                     <h2>Subscription Plans</h2>
-                    <button class="btn btn-primary" onclick="showPlanModal()">
-                        <i class="fas fa-plus"></i> Add Plan
-                    </button>
+                    <button class="btn" onclick="showPlanModal()">+ Add Plan</button>
                 </div>
-
                 <div class="alert alert-success" id="planSuccess"></div>
                 <div class="alert alert-error" id="planError"></div>
-
                 <div class="card">
-                    <div id="plansList" class="loading"><div class="spinner"></div> Loading...</div>
+                    <div id="plansList"><div class="spinner"></div> Loading...</div>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- MODALS -->
-
-    <!-- Category Modal -->
     <div id="categoryModal" class="modal">
         <div class="modal-content">
-            <button class="modal-close" onclick="closeCategoryModal()">&times;</button>
-            <div class="modal-header">Add Meal Category</div>
-            
+            <div class="modal-header">
+                <span>Add Category</span>
+                <button class="modal-close" onclick="closeCategoryModal()">&times;</button>
+            </div>
             <div class="form-group">
-                <label>Category Name *</label>
+                <label>Name *</label>
                 <input type="text" id="catName" placeholder="e.g., Salads">
             </div>
-
             <div class="form-group">
                 <label>Description</label>
-                <textarea id="catDesc" placeholder="Brief description" style="height: 80px;"></textarea>
+                <textarea id="catDesc" placeholder="Description" style="height: 80px;"></textarea>
             </div>
-
-            <button class="btn btn-primary" style="width: 100%; margin-top: 20px;" onclick="addCategory()">
-                <i class="fas fa-save"></i> Create Category
-            </button>
+            <button class="btn" style="width: 100%; margin-top: 20px;" onclick="addCategory()">Create</button>
         </div>
     </div>
 
-    <!-- Meal Item Modal -->
     <div id="mealModal" class="modal">
         <div class="modal-content">
-            <button class="modal-close" onclick="closeMealModal()">&times;</button>
-            <div class="modal-header">Add Meal Item</div>
-            
-            <div class="form-group">
-                <label>Item Name *</label>
-                <input type="text" id="mealName" placeholder="e.g., Grilled Chicken Salad">
+            <div class="modal-header">
+                <span>Add Meal Item</span>
+                <button class="modal-close" onclick="closeMealModal()">&times;</button>
             </div>
-
+            <div class="form-group">
+                <label>Name *</label>
+                <input type="text" id="mealName" placeholder="Item name">
+            </div>
             <div class="form-group">
                 <label>Category *</label>
                 <select id="mealCategory">
                     <option value="">Select Category</option>
                 </select>
             </div>
-
             <div class="checkbox-group">
-                <label><input type="checkbox" id="mealVeg"> Vegetarian</label>
-                <label><input type="checkbox" id="mealNonVeg"> Non-Vegetarian</label>
+                <label><input type="checkbox" id="mealVeg"> Veg</label>
+                <label><input type="checkbox" id="mealNonVeg"> Non-Veg</label>
             </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Calories</label>
-                    <input type="number" id="mealCalories" placeholder="350">
-                </div>
-                <div class="form-group">
-                    <label>Weight</label>
-                    <input type="text" id="mealWeight" placeholder="300g">
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label>MRP (₹) *</label>
-                    <input type="number" id="mealPrice" placeholder="249">
-                </div>
-                <div class="form-group">
-                    <label>Prep Time (min)</label>
-                    <input type="number" id="mealPrepTime" placeholder="15">
-                </div>
-            </div>
-
             <div class="form-group">
-                <label>Description</label>
-                <textarea id="mealDesc" placeholder="Item description" style="height: 60px;"></textarea>
+                <label>Price (₹)</label>
+                <input type="number" id="mealPrice" placeholder="249">
             </div>
-
-            <button class="btn btn-primary" style="width: 100%; margin-top: 20px;" onclick="addMeal()">
-                <i class="fas fa-save"></i> Create Item
-            </button>
+            <div class="form-group">
+                <label>Calories</label>
+                <input type="number" id="mealCalories" placeholder="350">
+            </div>
+            <button class="btn" style="width: 100%; margin-top: 20px;" onclick="addMeal()">Create</button>
         </div>
     </div>
 
-    <!-- Territory Modal -->
     <div id="territoryModal" class="modal">
         <div class="modal-content">
-            <button class="modal-close" onclick="closeTerritoryModal()">&times;</button>
-            <div class="modal-header">Add Territory</div>
-            
-            <div class="form-group">
-                <label>Territory Name *</label>
-                <input type="text" id="terrName" placeholder="e.g., Bangalore">
+            <div class="modal-header">
+                <span>Add Territory</span>
+                <button class="modal-close" onclick="closeTerritoryModal()">&times;</button>
             </div>
-
+            <div class="form-group">
+                <label>Name *</label>
+                <input type="text" id="terrName" placeholder="Territory name">
+            </div>
             <div class="form-group">
                 <label>Description</label>
-                <textarea id="terrDesc" placeholder="Territory description" style="height: 80px;"></textarea>
+                <textarea id="terrDesc" placeholder="Description" style="height: 80px;"></textarea>
             </div>
-
-            <button class="btn btn-primary" style="width: 100%; margin-top: 20px;" onclick="addTerritory()">
-                <i class="fas fa-save"></i> Create Territory
-            </button>
+            <button class="btn" style="width: 100%; margin-top: 20px;" onclick="addTerritory()">Create</button>
         </div>
     </div>
 
-    <!-- Kitchen Modal -->
     <div id="kitchenModal" class="modal">
         <div class="modal-content">
-            <button class="modal-close" onclick="closeKitchenModal()">&times;</button>
-            <div class="modal-header">Add Kitchen</div>
-            
-            <div class="form-group">
-                <label>Kitchen Name *</label>
-                <input type="text" id="kitchenName" placeholder="e.g., Central Kitchen">
+            <div class="modal-header">
+                <span>Add Kitchen</span>
+                <button class="modal-close" onclick="closeKitchenModal()">&times;</button>
             </div>
-
+            <div class="form-group">
+                <label>Name *</label>
+                <input type="text" id="kitchenName" placeholder="Kitchen name">
+            </div>
             <div class="form-group">
                 <label>Territory *</label>
                 <select id="kitchenTerritory">
                     <option value="">Select Territory</option>
                 </select>
             </div>
-
             <div class="form-group">
-                <label>Address</label>
-                <textarea id="kitchenAddr" placeholder="Kitchen address" style="height: 60px;"></textarea>
-            </div>
-
-            <div class="form-group">
-                <label>Capacity (meals/day)</label>
+                <label>Capacity</label>
                 <input type="number" id="kitchenCap" placeholder="100">
             </div>
-
-            <button class="btn btn-primary" style="width: 100%; margin-top: 20px;" onclick="addKitchen()">
-                <i class="fas fa-save"></i> Create Kitchen
-            </button>
+            <button class="btn" style="width: 100%; margin-top: 20px;" onclick="addKitchen()">Create</button>
         </div>
     </div>
 
-    <!-- Plan Modal -->
     <div id="planModal" class="modal">
         <div class="modal-content">
-            <button class="modal-close" onclick="closePlanModal()">&times;</button>
-            <div class="modal-header">Add Subscription Plan</div>
-            
+            <div class="modal-header">
+                <span>Add Plan</span>
+                <button class="modal-close" onclick="closePlanModal()">&times;</button>
+            </div>
             <div class="form-group">
-                <label>Plan Name *</label>
-                <input type="text" id="planName" placeholder="e.g., 7-Day Pure Veg">
+                <label>Name *</label>
+                <input type="text" id="planName" placeholder="Plan name">
             </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Duration (days) *</label>
-                    <input type="number" id="planDays" placeholder="7">
-                </div>
-                <div class="form-group">
-                    <label>Deliveries *</label>
-                    <input type="number" id="planDeliveries" placeholder="6">
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Diet Type *</label>
-                    <select id="planDietType">
-                        <option value="">Select Type</option>
-                        <option value="pure_veg">Pure Vegetarian</option>
-                        <option value="non_veg">Non-Vegetarian</option>
-                        <option value="mixed">Mixed (Alternate)</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Price (₹) *</label>
-                    <input type="number" id="planPrice" placeholder="599">
-                </div>
-            </div>
-
             <div class="form-group">
-                <label>Meal Selection *</label>
+                <label>Duration (days) *</label>
+                <input type="number" id="planDays" placeholder="7">
+            </div>
+            <div class="form-group">
+                <label>Deliveries *</label>
+                <input type="number" id="planDeliveries" placeholder="6">
+            </div>
+            <div class="form-group">
+                <label>Diet Type *</label>
+                <select id="planDietType">
+                    <option value="">Select</option>
+                    <option value="pure_veg">Pure Veg</option>
+                    <option value="non_veg">Non-Veg</option>
+                    <option value="mixed">Mixed</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Price (₹) *</label>
+                <input type="number" id="planPrice" placeholder="599">
+            </div>
+            <div class="form-group">
+                <label>Meals *</label>
                 <input type="text" id="planMeals" placeholder="breakfast,lunch,dinner">
             </div>
-
-            <button class="btn btn-primary" style="width: 100%; margin-top: 20px;" onclick="addPlan()">
-                <i class="fas fa-save"></i> Create Plan
-            </button>
+            <button class="btn" style="width: 100%; margin-top: 20px;" onclick="addPlan()">Create</button>
         </div>
     </div>
 
@@ -821,13 +616,15 @@
         let token = null;
         let user = null;
 
-        // Initialize
-        window.addEventListener('load', () => {
+        // Load on page load
+        window.addEventListener('load', async function() {
             const savedToken = sessionStorage.getItem('token');
             if (savedToken) {
                 token = savedToken;
                 user = JSON.parse(sessionStorage.getItem('user'));
                 showDashboard();
+                // Wait for DOM to be ready, then load data
+                setTimeout(() => loadAllData(), 100);
             }
         });
 
@@ -837,7 +634,8 @@
             const errorDiv = document.getElementById('loginError');
 
             if (!email || !password) {
-                showAlert(errorDiv, 'Fill all fields');
+                errorDiv.textContent = 'Fill all fields';
+                errorDiv.style.display = 'block';
                 return;
             }
 
@@ -849,7 +647,8 @@
             .then(r => r.json())
             .then(data => {
                 if (data.error) {
-                    showAlert(errorDiv, data.error);
+                    errorDiv.textContent = data.error;
+                    errorDiv.style.display = 'block';
                     return;
                 }
                 token = data.token;
@@ -857,15 +656,18 @@
                 sessionStorage.setItem('token', token);
                 sessionStorage.setItem('user', JSON.stringify(user));
                 showDashboard();
+                loadAllData();
             })
-            .catch(err => showAlert(errorDiv, err.message));
+            .catch(err => {
+                errorDiv.textContent = 'Error: ' + err.message;
+                errorDiv.style.display = 'block';
+            });
         }
 
         function showDashboard() {
             document.getElementById('loginPage').style.display = 'none';
             document.getElementById('dashboard').classList.add('active');
             document.getElementById('userAvatar').textContent = user.name.charAt(0).toUpperCase();
-            loadAllData();
         }
 
         function handleLogout() {
@@ -877,51 +679,50 @@
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.getElementById(tabName).classList.add('active');
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.closest('.tab-btn').classList.add('active');
+            event.target.classList.add('active');
         }
 
-        function showAlert(element, message) {
-            element.textContent = message;
-            element.style.display = 'block';
-            setTimeout(() => element.style.display = 'none', 4000);
+        function showAlert(elementId, message) {
+            const el = document.getElementById(elementId);
+            el.textContent = message;
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 4000);
         }
 
-        // ===== CATEGORIES =====
-
+        // CATEGORIES
         async function loadCategories() {
             try {
                 const res = await fetch(`${API}/admin/categories`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                const categories = await res.json();
+                const data = await res.json();
 
                 let html = '';
-                if (categories.length === 0) {
-                    html = '<div class="empty-state"><i class="fas fa-inbox"></i><p>No categories yet</p></div>';
+                if (!data || data.length === 0) {
+                    html = '<div class="empty-state">No categories yet. Add one to get started!</div>';
                 } else {
-                    html = '<div class="table-container"><table class="table"><thead><tr><th>Name</th><th>Description</th><th>Status</th></tr></thead><tbody>';
-                    categories.forEach(cat => {
-                        html += `<tr>
-                            <td><strong>${cat.name}</strong></td>
-                            <td>${cat.description || '-'}</td>
-                            <td><span class="badge badge-success">Active</span></td>
-                        </tr>`;
+                    html = '<table class="table"><thead><tr><th>Name</th><th>Description</th></tr></thead><tbody>';
+                    data.forEach(cat => {
+                        html += `<tr><td><strong>${cat.name}</strong></td><td>${cat.description || '-'}</td></tr>`;
                     });
-                    html += '</tbody></table></div>';
+                    html += '</tbody></table>';
                 }
                 document.getElementById('categoriesList').innerHTML = html;
 
                 // Update dropdown
-                const select = document.getElementById('mealCategory');
-                select.innerHTML = '<option value="">Select Category</option>';
-                categories.forEach(cat => {
-                    const opt = document.createElement('option');
-                    opt.value = cat.id;
-                    opt.textContent = cat.name;
-                    select.appendChild(opt);
-                });
+                const sel = document.getElementById('mealCategory');
+                sel.innerHTML = '<option value="">Select Category</option>';
+                if (data) {
+                    data.forEach(cat => {
+                        const opt = document.createElement('option');
+                        opt.value = cat.id;
+                        opt.text = cat.name;
+                        sel.appendChild(opt);
+                    });
+                }
             } catch (err) {
-                document.getElementById('categoriesList').innerHTML = `<div class="empty-state">Error loading</div>`;
+                console.error(err);
+                document.getElementById('categoriesList').innerHTML = '<div class="empty-state">Error loading</div>';
             }
         }
 
@@ -939,7 +740,10 @@
             const name = document.getElementById('catName').value;
             const desc = document.getElementById('catDesc').value;
 
-            if (!name) return;
+            if (!name) {
+                showAlert('catError', 'Name required');
+                return;
+            }
 
             const res = await fetch(`${API}/admin/categories`, {
                 method: 'POST',
@@ -952,43 +756,35 @@
 
             const data = await res.json();
             if (res.ok) {
-                showAlert(document.getElementById('catSuccess'), '✅ Category created!');
+                showAlert('catSuccess', '✅ Category created!');
                 closeCategoryModal();
-                loadCategories();
+                await loadCategories();
             } else {
-                showAlert(document.getElementById('catError'), data.error);
+                showAlert('catError', data.error || 'Error');
             }
         }
 
-        // ===== MEALS =====
-
+        // MEALS
         async function loadMeals() {
             try {
                 const res = await fetch(`${API}/admin/meal-items`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                const items = await res.json();
+                const data = await res.json();
 
                 let html = '';
-                if (items.length === 0) {
-                    html = '<div class="empty-state"><i class="fas fa-inbox"></i><p>No meal items yet</p></div>';
+                if (!data || data.length === 0) {
+                    html = '<div class="empty-state">No meals yet</div>';
                 } else {
-                    html = '<div class="table-container"><table class="table"><thead><tr><th>Name</th><th>Category</th><th>Type</th><th>Price</th><th>Calories</th></tr></thead><tbody>';
-                    items.forEach(item => {
-                        const type = item.veg_tag && item.non_veg_tag ? 'Both' : item.veg_tag ? 'Veg' : 'Non-Veg';
-                        html += `<tr>
-                            <td><strong>${item.name}</strong></td>
-                            <td>${item.category_name}</td>
-                            <td><span class="badge badge-primary">${type}</span></td>
-                            <td>₹${item.mrp}</td>
-                            <td>${item.calories} kcal</td>
-                        </tr>`;
+                    html = '<table class="table"><thead><tr><th>Name</th><th>Category</th><th>Price</th><th>Calories</th></tr></thead><tbody>';
+                    data.forEach(item => {
+                        html += `<tr><td><strong>${item.name}</strong></td><td>${item.category_name}</td><td>₹${item.mrp}</td><td>${item.calories} kcal</td></tr>`;
                     });
-                    html += '</tbody></table></div>';
+                    html += '</tbody></table>';
                 }
                 document.getElementById('mealsList').innerHTML = html;
             } catch (err) {
-                document.getElementById('mealsList').innerHTML = `<div class="empty-state">Error loading</div>`;
+                document.getElementById('mealsList').innerHTML = '<div class="empty-state">Error</div>';
             }
         }
 
@@ -996,11 +792,8 @@
             document.getElementById('mealName').value = '';
             document.getElementById('mealVeg').checked = false;
             document.getElementById('mealNonVeg').checked = false;
-            document.getElementById('mealCalories').value = '';
-            document.getElementById('mealWeight').value = '';
             document.getElementById('mealPrice').value = '';
-            document.getElementById('mealPrepTime').value = '';
-            document.getElementById('mealDesc').value = '';
+            document.getElementById('mealCalories').value = '';
             document.getElementById('mealModal').classList.add('active');
         }
 
@@ -1010,11 +803,14 @@
 
         async function addMeal() {
             const name = document.getElementById('mealName').value;
-            const category_id = document.getElementById('mealCategory').value;
+            const cat_id = document.getElementById('mealCategory').value;
             const veg = document.getElementById('mealVeg').checked;
-            const nonVeg = document.getElementById('mealNonVeg').checked;
+            const nonveg = document.getElementById('mealNonVeg').checked;
 
-            if (!name || !category_id || (!veg && !nonVeg)) return;
+            if (!name || !cat_id || (!veg && !nonveg)) {
+                showAlert('mealError', 'Fill required fields');
+                return;
+            }
 
             const res = await fetch(`${API}/admin/meal-items`, {
                 method: 'POST',
@@ -1023,61 +819,55 @@
                     'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    name, category_id, veg_tag: veg, non_veg_tag: nonVeg,
-                    description: document.getElementById('mealDesc').value,
-                    calories: document.getElementById('mealCalories').value,
-                    weight: document.getElementById('mealWeight').value,
+                    name, category_id: cat_id, veg_tag: veg, non_veg_tag: nonveg,
                     mrp: document.getElementById('mealPrice').value,
-                    prep_time_minutes: document.getElementById('mealPrepTime').value
+                    calories: document.getElementById('mealCalories').value
                 })
             });
 
             const data = await res.json();
             if (res.ok) {
-                showAlert(document.getElementById('mealSuccess'), '✅ Meal item created!');
+                showAlert('mealSuccess', '✅ Meal created!');
                 closeMealModal();
-                loadMeals();
+                await loadMeals();
             } else {
-                showAlert(document.getElementById('mealError'), data.error);
+                showAlert('mealError', data.error || 'Error');
             }
         }
 
-        // ===== TERRITORIES =====
-
+        // TERRITORIES
         async function loadTerritories() {
             try {
                 const res = await fetch(`${API}/admin/territories`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                const items = await res.json();
+                const data = await res.json();
 
                 let html = '';
-                if (items.length === 0) {
-                    html = '<div class="empty-state"><i class="fas fa-inbox"></i><p>No territories yet</p></div>';
+                if (!data || data.length === 0) {
+                    html = '<div class="empty-state">No territories yet</div>';
                 } else {
-                    html = '<div class="table-container"><table class="table"><thead><tr><th>Name</th><th>Description</th><th>Status</th></tr></thead><tbody>';
-                    items.forEach(item => {
-                        html += `<tr>
-                            <td><strong>${item.name}</strong></td>
-                            <td>${item.description || '-'}</td>
-                            <td><span class="badge badge-success">Active</span></td>
-                        </tr>`;
+                    html = '<table class="table"><thead><tr><th>Name</th><th>Description</th></tr></thead><tbody>';
+                    data.forEach(item => {
+                        html += `<tr><td><strong>${item.name}</strong></td><td>${item.description || '-'}</td></tr>`;
                     });
-                    html += '</tbody></table></div>';
+                    html += '</tbody></table>';
                 }
                 document.getElementById('territoriesList').innerHTML = html;
 
                 // Update dropdown
-                const select = document.getElementById('kitchenTerritory');
-                select.innerHTML = '<option value="">Select Territory</option>';
-                items.forEach(item => {
-                    const opt = document.createElement('option');
-                    opt.value = item.id;
-                    opt.textContent = item.name;
-                    select.appendChild(opt);
-                });
+                const sel = document.getElementById('kitchenTerritory');
+                sel.innerHTML = '<option value="">Select Territory</option>';
+                if (data) {
+                    data.forEach(item => {
+                        const opt = document.createElement('option');
+                        opt.value = item.id;
+                        opt.text = item.name;
+                        sel.appendChild(opt);
+                    });
+                }
             } catch (err) {
-                document.getElementById('territoriesList').innerHTML = `<div class="empty-state">Error loading</div>`;
+                document.getElementById('territoriesList').innerHTML = '<div class="empty-state">Error</div>';
             }
         }
 
@@ -1095,7 +885,10 @@
             const name = document.getElementById('terrName').value;
             const desc = document.getElementById('terrDesc').value;
 
-            if (!name) return;
+            if (!name) {
+                showAlert('terrError', 'Name required');
+                return;
+            }
 
             const res = await fetch(`${API}/admin/territories`, {
                 method: 'POST',
@@ -1108,47 +901,40 @@
 
             const data = await res.json();
             if (res.ok) {
-                showAlert(document.getElementById('terrSuccess'), '✅ Territory created!');
+                showAlert('terrSuccess', '✅ Territory created!');
                 closeTerritoryModal();
-                loadTerritories();
+                await loadTerritories();
             } else {
-                showAlert(document.getElementById('terrError'), data.error);
+                showAlert('terrError', data.error || 'Error');
             }
         }
 
-        // ===== KITCHENS =====
-
+        // KITCHENS
         async function loadKitchens() {
             try {
                 const res = await fetch(`${API}/admin/kitchens`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                const items = await res.json();
+                const data = await res.json();
 
                 let html = '';
-                if (items.length === 0) {
-                    html = '<div class="empty-state"><i class="fas fa-inbox"></i><p>No kitchens yet</p></div>';
+                if (!data || data.length === 0) {
+                    html = '<div class="empty-state">No kitchens yet</div>';
                 } else {
-                    html = '<div class="table-container"><table class="table"><thead><tr><th>Name</th><th>Territory</th><th>Address</th><th>Capacity</th></tr></thead><tbody>';
-                    items.forEach(item => {
-                        html += `<tr>
-                            <td><strong>${item.name}</strong></td>
-                            <td>${item.territory_name || '-'}</td>
-                            <td>${item.address || '-'}</td>
-                            <td>${item.capacity || '-'} meals/day</td>
-                        </tr>`;
+                    html = '<table class="table"><thead><tr><th>Name</th><th>Territory</th><th>Capacity</th></tr></thead><tbody>';
+                    data.forEach(item => {
+                        html += `<tr><td><strong>${item.name}</strong></td><td>${item.territory_name || '-'}</td><td>${item.capacity || '-'}</td></tr>`;
                     });
-                    html += '</tbody></table></div>';
+                    html += '</tbody></table>';
                 }
                 document.getElementById('kitchensList').innerHTML = html;
             } catch (err) {
-                document.getElementById('kitchensList').innerHTML = `<div class="empty-state">Error loading</div>`;
+                document.getElementById('kitchensList').innerHTML = '<div class="empty-state">Error</div>';
             }
         }
 
         function showKitchenModal() {
             document.getElementById('kitchenName').value = '';
-            document.getElementById('kitchenAddr').value = '';
             document.getElementById('kitchenCap').value = '';
             document.getElementById('kitchenModal').classList.add('active');
         }
@@ -1159,11 +945,13 @@
 
         async function addKitchen() {
             const name = document.getElementById('kitchenName').value;
-            const territory_id = document.getElementById('kitchenTerritory').value;
-            const address = document.getElementById('kitchenAddr').value;
-            const capacity = document.getElementById('kitchenCap').value;
+            const terr_id = document.getElementById('kitchenTerritory').value;
+            const cap = document.getElementById('kitchenCap').value;
 
-            if (!name || !territory_id) return;
+            if (!name || !terr_id) {
+                showAlert('kitchenError', 'Fill required fields');
+                return;
+            }
 
             const res = await fetch(`${API}/admin/kitchens`, {
                 method: 'POST',
@@ -1171,47 +959,40 @@
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ name, territory_id, address, capacity })
+                body: JSON.stringify({ name, territory_id: terr_id, capacity: cap })
             });
 
             const data = await res.json();
             if (res.ok) {
-                showAlert(document.getElementById('kitchenSuccess'), '✅ Kitchen created!');
+                showAlert('kitchenSuccess', '✅ Kitchen created!');
                 closeKitchenModal();
-                loadKitchens();
+                await loadKitchens();
             } else {
-                showAlert(document.getElementById('kitchenError'), data.error);
+                showAlert('kitchenError', data.error || 'Error');
             }
         }
 
-        // ===== PLANS =====
-
+        // PLANS
         async function loadPlans() {
             try {
                 const res = await fetch(`${API}/admin/subscription-plans`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                const items = await res.json();
+                const data = await res.json();
 
                 let html = '';
-                if (items.length === 0) {
-                    html = '<div class="empty-state"><i class="fas fa-inbox"></i><p>No plans yet</p></div>';
+                if (!data || data.length === 0) {
+                    html = '<div class="empty-state">No plans yet</div>';
                 } else {
-                    html = '<div class="table-container"><table class="table"><thead><tr><th>Name</th><th>Duration</th><th>Deliveries</th><th>Diet Type</th><th>Price</th></tr></thead><tbody>';
-                    items.forEach(item => {
-                        html += `<tr>
-                            <td><strong>${item.name}</strong></td>
-                            <td>${item.duration_days} days</td>
-                            <td>${item.num_deliveries}</td>
-                            <td>${item.diet_type.replace('_', ' ').toUpperCase()}</td>
-                            <td>₹${item.price}</td>
-                        </tr>`;
+                    html = '<table class="table"><thead><tr><th>Name</th><th>Duration</th><th>Diet</th><th>Price</th></tr></thead><tbody>';
+                    data.forEach(item => {
+                        html += `<tr><td><strong>${item.name}</strong></td><td>${item.duration_days}d</td><td>${item.diet_type.replace('_', ' ')}</td><td>₹${item.price}</td></tr>`;
                     });
-                    html += '</tbody></table></div>';
+                    html += '</tbody></table>';
                 }
                 document.getElementById('plansList').innerHTML = html;
             } catch (err) {
-                document.getElementById('plansList').innerHTML = `<div class="empty-state">Error loading</div>`;
+                document.getElementById('plansList').innerHTML = '<div class="empty-state">Error</div>';
             }
         }
 
@@ -1230,13 +1011,16 @@
 
         async function addPlan() {
             const name = document.getElementById('planName').value;
-            const duration_days = parseInt(document.getElementById('planDays').value);
-            const num_deliveries = parseInt(document.getElementById('planDeliveries').value);
-            const diet_type = document.getElementById('planDietType').value;
+            const days = parseInt(document.getElementById('planDays').value);
+            const deliveries = parseInt(document.getElementById('planDeliveries').value);
+            const diet = document.getElementById('planDietType').value;
             const price = parseFloat(document.getElementById('planPrice').value);
-            const meal_selection = document.getElementById('planMeals').value;
+            const meals = document.getElementById('planMeals').value;
 
-            if (!name || !duration_days || !num_deliveries || !diet_type || !price || !meal_selection) return;
+            if (!name || !days || !deliveries || !diet || !price || !meals) {
+                showAlert('planError', 'Fill all fields');
+                return;
+            }
 
             const res = await fetch(`${API}/admin/subscription-plans`, {
                 method: 'POST',
@@ -1244,27 +1028,31 @@
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ name, duration_days, num_deliveries, diet_type, price, meal_selection })
+                body: JSON.stringify({
+                    name, duration_days: days, num_deliveries: deliveries,
+                    diet_type: diet, price, meal_selection: meals
+                })
             });
 
             const data = await res.json();
             if (res.ok) {
-                showAlert(document.getElementById('planSuccess'), '✅ Plan created!');
+                showAlert('planSuccess', '✅ Plan created!');
                 closePlanModal();
-                loadPlans();
+                await loadPlans();
             } else {
-                showAlert(document.getElementById('planError'), data.error);
+                showAlert('planError', data.error || 'Error');
             }
         }
 
-        // ===== LOAD ALL =====
-
+        // LOAD ALL
         async function loadAllData() {
-            await loadCategories();
-            await loadMeals();
-            await loadTerritories();
-            await loadKitchens();
-            await loadPlans();
+            await Promise.all([
+                loadCategories(),
+                loadMeals(),
+                loadTerritories(),
+                loadKitchens(),
+                loadPlans()
+            ]);
         }
     </script>
 </body>
