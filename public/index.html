@@ -28,9 +28,112 @@
             color: var(--dark);
         }
 
-        .app-container {
+        /* LOGIN SCREEN */
+        .login-container {
             display: flex;
+            align-items: center;
+            justify-content: center;
             min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-box h1 {
+            text-align: center;
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+
+        .login-box p {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--light);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .login-error {
+            background: rgba(231, 76, 60, 0.1);
+            color: #c0392b;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .test-info {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #666;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        /* APP SCREEN */
+        .app-container {
+            display: none;
+            flex: 1;
+            min-height: 100vh;
+        }
+
+        .app-container.active {
+            display: flex;
         }
 
         .sidebar {
@@ -97,27 +200,6 @@
             color: var(--dark);
         }
 
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-dark);
-        }
-
         .btn-secondary {
             background: var(--secondary);
             color: white;
@@ -151,36 +233,6 @@
             color: var(--dark);
             border-bottom: 2px solid var(--light);
             padding-bottom: 15px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: var(--dark);
-        }
-
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid var(--light);
-            border-radius: 8px;
-            font-size: 14px;
-            font-family: inherit;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.1);
         }
 
         .form-row {
@@ -223,15 +275,6 @@
         .table td {
             padding: 12px;
             border-bottom: 1px solid var(--light);
-        }
-
-        .table tr:hover {
-            background: #fafafa;
-        }
-
-        .table .btn-small {
-            padding: 6px 12px;
-            font-size: 12px;
         }
 
         .success {
@@ -294,6 +337,11 @@
             color: #999;
         }
 
+        textarea {
+            font-family: inherit;
+            resize: vertical;
+        }
+
         @media (max-width: 768px) {
             .sidebar {
                 width: 200px;
@@ -309,7 +357,36 @@
     </style>
 </head>
 <body>
-    <div class="app-container">
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-box">
+            <h1>🥗 Salad Caffe</h1>
+            <p>Super Admin Panel</p>
+            
+            <div class="login-error" id="loginError"></div>
+
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="loginEmail" placeholder="super@test.com">
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="loginPassword" placeholder="password123">
+            </div>
+
+            <button class="btn btn-primary" onclick="handleLogin()">Sign In</button>
+
+            <div class="test-info">
+                <strong>Test Account:</strong><br>
+                Email: super@test.com<br>
+                Password: password123
+            </div>
+        </div>
+    </div>
+
+    <!-- APP SCREEN -->
+    <div id="appScreen" class="app-container">
         <!-- SIDEBAR -->
         <div class="sidebar">
             <div class="sidebar-header">
@@ -335,11 +412,9 @@
             <div class="nav-item" onclick="switchSection('subscription-plans')">
                 <i class="fas fa-bookmark"></i> Subscriptions
             </div>
-            <div class="nav-item" onclick="switchSection('menu-schedule')">
-                <i class="fas fa-calendar"></i> Menu Schedule
-            </div>
+
             <div style="padding: 25px; border-top: 1px solid rgba(255,255,255,0.1); margin-top: auto;">
-                <div class="nav-item" onclick="logout()">
+                <div class="nav-item" onclick="handleLogout()">
                     <i class="fas fa-sign-out-alt"></i> Logout
                 </div>
             </div>
@@ -355,14 +430,13 @@
 
                 <div class="card">
                     <div class="card-title">Welcome to Salad Caffe Admin Panel</div>
-                    <p>This is the Super Admin dashboard for managing:</p>
+                    <p>Manage your meal subscription system:</p>
                     <ul style="margin-left: 20px; margin-top: 15px; line-height: 2;">
-                        <li><strong>Meal Categories</strong> - Create and manage meal categories (Salads, Wraps, etc.)</li>
-                        <li><strong>Meal Items</strong> - Create meal items with veg/non-veg variants</li>
-                        <li><strong>Territories</strong> - Create and manage delivery territories</li>
-                        <li><strong>Kitchens</strong> - Create kitchens under territories</li>
-                        <li><strong>Subscription Plans</strong> - Create subscription plans with dynamic pricing</li>
-                        <li><strong>Menu Schedule</strong> - Schedule meals for the month</li>
+                        <li><strong>Meal Categories</strong> - Salads, Wraps, Sandwiches, Multigrain Bowls, Pasta Bowls</li>
+                        <li><strong>Meal Items</strong> - Create items with veg/non-veg variants</li>
+                        <li><strong>Territories</strong> - Kochi, Trivandrum, etc.</li>
+                        <li><strong>Kitchens</strong> - One per territory</li>
+                        <li><strong>Subscription Plans</strong> - 7/15/30 day plans with dynamic pricing</li>
                     </ul>
                 </div>
             </div>
@@ -380,7 +454,7 @@
                 <div class="error" id="categoryError"></div>
 
                 <div class="card">
-                    <div id="categoriesList"></div>
+                    <div id="categoriesList"><p>Loading...</p></div>
                 </div>
             </div>
 
@@ -397,7 +471,7 @@
                 <div class="error" id="mealItemError"></div>
 
                 <div class="card">
-                    <div id="mealItemsList"></div>
+                    <div id="mealItemsList"><p>Loading...</p></div>
                 </div>
             </div>
 
@@ -414,7 +488,7 @@
                 <div class="error" id="territoryError"></div>
 
                 <div class="card">
-                    <div id="territoriesList"></div>
+                    <div id="territoriesList"><p>Loading...</p></div>
                 </div>
             </div>
 
@@ -431,7 +505,7 @@
                 <div class="error" id="kitchenError"></div>
 
                 <div class="card">
-                    <div id="kitchensList"></div>
+                    <div id="kitchensList"><p>Loading...</p></div>
                 </div>
             </div>
 
@@ -448,48 +522,7 @@
                 <div class="error" id="subscriptionError"></div>
 
                 <div class="card">
-                    <div id="subscriptionPlansList"></div>
-                </div>
-            </div>
-
-            <!-- MENU SCHEDULE SECTION -->
-            <div id="menu-schedule" class="section">
-                <div class="header">
-                    <h2>Monthly Menu Schedule</h2>
-                </div>
-
-                <div class="card">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Month</label>
-                            <select id="scheduleMonth">
-                                <option value="1">January</option>
-                                <option value="2">February</option>
-                                <option value="3">March</option>
-                                <option value="4">April</option>
-                                <option value="5">May</option>
-                                <option value="6">June</option>
-                                <option value="7">July</option>
-                                <option value="8">August</option>
-                                <option value="9">September</option>
-                                <option value="10">October</option>
-                                <option value="11">November</option>
-                                <option value="12">December</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Year</label>
-                            <input type="number" id="scheduleYear" value="2026">
-                        </div>
-                    </div>
-                    <button class="btn btn-primary" onclick="loadMenuSchedule()">Load Schedule</button>
-                </div>
-
-                <div class="success" id="scheduleSuccess"></div>
-                <div class="error" id="scheduleError"></div>
-
-                <div class="card">
-                    <div id="scheduleList"></div>
+                    <div id="subscriptionPlansList"><p>Loading...</p></div>
                 </div>
             </div>
         </div>
@@ -510,7 +543,7 @@
 
             <div class="form-group">
                 <label>Description</label>
-                <textarea id="categoryDescription" placeholder="Brief description"></textarea>
+                <textarea id="categoryDescription" placeholder="Brief description" style="height: 80px;"></textarea>
             </div>
 
             <button class="btn btn-primary" onclick="addCategory()" style="width: 100%;">Create Category</button>
@@ -530,7 +563,9 @@
 
             <div class="form-group">
                 <label>Category</label>
-                <select id="mealItemCategory"></select>
+                <select id="mealItemCategory">
+                    <option value="">Select Category</option>
+                </select>
             </div>
 
             <div class="checkbox-group">
@@ -540,7 +575,7 @@
 
             <div class="form-group">
                 <label>Description</label>
-                <textarea id="mealItemDescription" placeholder="Description"></textarea>
+                <textarea id="mealItemDescription" placeholder="Description" style="height: 60px;"></textarea>
             </div>
 
             <div class="form-row">
@@ -567,7 +602,7 @@
 
             <div class="form-group">
                 <label>Ingredients</label>
-                <textarea id="mealItemIngredients" placeholder="Comma separated"></textarea>
+                <textarea id="mealItemIngredients" placeholder="Comma separated" style="height: 60px;"></textarea>
             </div>
 
             <button class="btn btn-primary" onclick="addMealItem()" style="width: 100%;">Create Meal Item</button>
@@ -587,7 +622,7 @@
 
             <div class="form-group">
                 <label>Description</label>
-                <textarea id="territoryDescription" placeholder="Territory description"></textarea>
+                <textarea id="territoryDescription" placeholder="Territory description" style="height: 80px;"></textarea>
             </div>
 
             <button class="btn btn-primary" onclick="addTerritory()" style="width: 100%;">Create Territory</button>
@@ -607,19 +642,19 @@
 
             <div class="form-group">
                 <label>Territory</label>
-                <select id="kitchenTerritory"></select>
+                <select id="kitchenTerritory">
+                    <option value="">Select Territory</option>
+                </select>
             </div>
 
             <div class="form-group">
                 <label>Address</label>
-                <textarea id="kitchenAddress" placeholder="Kitchen address"></textarea>
+                <textarea id="kitchenAddress" placeholder="Kitchen address" style="height: 60px;"></textarea>
             </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Capacity (meals/day)</label>
-                    <input type="number" id="kitchenCapacity" placeholder="100">
-                </div>
+            <div class="form-group">
+                <label>Capacity (meals/day)</label>
+                <input type="number" id="kitchenCapacity" placeholder="100">
             </div>
 
             <button class="btn btn-primary" onclick="addKitchen()" style="width: 100%;">Create Kitchen</button>
@@ -664,18 +699,13 @@
             </div>
 
             <div class="form-group">
-                <label>Meal Selection</label>
-                <select id="subMealSelection" multiple style="height: 100px;">
-                    <option value="breakfast">Breakfast</option>
-                    <option value="lunch">Lunch</option>
-                    <option value="dinner">Dinner</option>
-                </select>
-                <small style="color: #999;">Hold Ctrl/Cmd to select multiple</small>
+                <label>Meal Selection (comma separated)</label>
+                <input type="text" id="subMealSelection" placeholder="breakfast,lunch,dinner">
             </div>
 
             <div class="form-group">
                 <label>Description</label>
-                <textarea id="subDescription" placeholder="Plan description"></textarea>
+                <textarea id="subDescription" placeholder="Plan description" style="height: 60px;"></textarea>
             </div>
 
             <button class="btn btn-primary" onclick="addSubscription()" style="width: 100%;">Create Plan</button>
@@ -687,6 +717,7 @@
         let authToken = null;
         let currentUser = null;
 
+        // Check login on page load
         window.addEventListener('load', function() {
             const token = sessionStorage.getItem('token');
             const user = sessionStorage.getItem('user');
@@ -694,11 +725,70 @@
             if (token && user) {
                 authToken = token;
                 currentUser = JSON.parse(user);
+                showApp();
                 loadInitialData();
             } else {
-                location.href = '/';
+                showLogin();
             }
         });
+
+        function showLogin() {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('appScreen').classList.remove('active');
+        }
+
+        function showApp() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('appScreen').classList.add('active');
+        }
+
+        function handleLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorDiv = document.getElementById('loginError');
+
+            if (!email || !password) {
+                errorDiv.textContent = 'Please fill all fields';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            fetch(`${API}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.error) {
+                    errorDiv.textContent = data.error;
+                    errorDiv.style.display = 'block';
+                    return;
+                }
+
+                authToken = data.token;
+                currentUser = data.user;
+                sessionStorage.setItem('token', data.token);
+                sessionStorage.setItem('user', JSON.stringify(data.user));
+
+                showApp();
+                loadInitialData();
+            })
+            .catch(err => {
+                errorDiv.textContent = 'Error: ' + err.message;
+                errorDiv.style.display = 'block';
+            });
+        }
+
+        function handleLogout() {
+            sessionStorage.clear();
+            authToken = null;
+            currentUser = null;
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('loginError').style.display = 'none';
+            showLogin();
+        }
 
         function loadInitialData() {
             loadCategories();
@@ -722,11 +812,6 @@
 
         function closeModal(modalId) {
             document.getElementById(modalId).classList.remove('active');
-        }
-
-        function logout() {
-            sessionStorage.clear();
-            location.href = '/';
         }
 
         // ==================== CATEGORIES ====================
@@ -756,7 +841,7 @@
                 
                 // Update dropdown
                 const select = document.getElementById('mealItemCategory');
-                select.innerHTML = '';
+                select.innerHTML = '<option value="">Select Category</option>';
                 categories.forEach(cat => {
                     const option = document.createElement('option');
                     option.value = cat.id;
@@ -941,7 +1026,7 @@
                 
                 // Update dropdown
                 const select = document.getElementById('kitchenTerritory');
-                select.innerHTML = '';
+                select.innerHTML = '<option value="">Select Territory</option>';
                 territories.forEach(terr => {
                     const option = document.createElement('option');
                     option.value = terr.id;
@@ -1119,6 +1204,7 @@
             document.getElementById('subDeliveries').value = '';
             document.getElementById('subPrice').value = '';
             document.getElementById('subDescription').value = '';
+            document.getElementById('subMealSelection').value = '';
             showModal('addSubscriptionModal');
         }
 
@@ -1128,12 +1214,12 @@
             const num_deliveries = parseInt(document.getElementById('subDeliveries').value);
             const diet_type = document.getElementById('subDietType').value;
             const price = parseFloat(document.getElementById('subPrice').value);
-            const mealSelection = Array.from(document.getElementById('subMealSelection').selectedOptions).map(o => o.value);
+            const meal_selection = document.getElementById('subMealSelection').value;
             const description = document.getElementById('subDescription').value;
             const errorDiv = document.getElementById('subscriptionError');
             const successDiv = document.getElementById('subscriptionSuccess');
 
-            if (!name || !duration_days || !num_deliveries || !diet_type || !price || mealSelection.length === 0) {
+            if (!name || !duration_days || !num_deliveries || !diet_type || !price || !meal_selection) {
                 errorDiv.textContent = 'Please fill all required fields';
                 errorDiv.style.display = 'block';
                 return;
@@ -1148,7 +1234,7 @@
                     },
                     body: JSON.stringify({
                         name, duration_days, num_deliveries, diet_type, price,
-                        meal_selection: mealSelection.join(','),
+                        meal_selection,
                         description
                     })
                 });
@@ -1170,40 +1256,6 @@
             } catch (err) {
                 errorDiv.textContent = 'Error: ' + err.message;
                 errorDiv.style.display = 'block';
-            }
-        }
-
-        // ==================== MENU SCHEDULE ====================
-
-        async function loadMenuSchedule() {
-            const month = document.getElementById('scheduleMonth').value;
-            const year = document.getElementById('scheduleYear').value;
-            
-            try {
-                const response = await fetch(`${API}/admin/menu-schedule/${month}/${year}`, {
-                    headers: { 'Authorization': `Bearer ${authToken}` }
-                });
-                const schedule = await response.json();
-                
-                let html = '';
-                if (schedule.length === 0) {
-                    html = '<p>No schedule found for this month.</p>';
-                } else {
-                    html = '<table class="table"><thead><tr><th>Day</th><th>Meal Type</th><th>Item</th><th>Category</th></tr></thead><tbody>';
-                    const days = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-                    schedule.forEach(s => {
-                        html += `<tr>
-                            <td><strong>${days[s.day_of_week]}</strong></td>
-                            <td>${s.meal_type.charAt(0).toUpperCase() + s.meal_type.slice(1)}</td>
-                            <td>${s.item_name}</td>
-                            <td>${s.category_name}</td>
-                        </tr>`;
-                    });
-                    html += '</tbody></table>';
-                }
-                document.getElementById('scheduleList').innerHTML = html;
-            } catch (err) {
-                console.error('Error:', err);
             }
         }
     </script>
