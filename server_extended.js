@@ -14,8 +14,8 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your_secret_key';
 
 // Middleware
 app.use(cors());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
 
 // Initialize Database
 const db = new Database('./salad_caffe.db');
@@ -24,10 +24,11 @@ db.pragma('journal_mode = WAL');
 console.log('✓ Connected to database');
 initializeDatabase();
 
-// Initialize Database Tables
+// ==================== DATABASE INITIALIZATION ====================
+
 function initializeDatabase() {
     try {
-        // Users Table
+        // 1. USERS TABLE
         db.exec(`
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -35,195 +36,260 @@ function initializeDatabase() {
                 email TEXT UNIQUE NOT NULL,
                 password TEXT NOT NULL,
                 phone TEXT,
-                address TEXT,
-                googleMapLocation TEXT,
-                userType TEXT NOT NULL,
-                authority TEXT NOT NULL,
-                region TEXT,
-                kitchenId INTEGER,
-                dietaryPreferences TEXT,
+                alternate_phone TEXT,
+                whatsapp_number TEXT,
+                home_address TEXT,
+                home_location TEXT,
+                office_address TEXT,
+                office_location TEXT,
+                height INTEGER,
+                weight INTEGER,
+                lifestyle_diseases TEXT,
+                occupation TEXT,
                 allergies TEXT,
-                createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+                special_instructions TEXT,
+                user_type TEXT NOT NULL,
+                authority TEXT NOT NULL,
+                territory_id INTEGER,
+                kitchen_id INTEGER,
+                status TEXT DEFAULT 'active',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         `);
 
-        // Kitchens Table
+        // 2. TERRITORIES TABLE
+        db.exec(`
+            CREATE TABLE IF NOT EXISTS territories (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL UNIQUE,
+                manager_id INTEGER,
+                description TEXT,
+                status TEXT DEFAULT 'active',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // 3. KITCHENS TABLE
         db.exec(`
             CREATE TABLE IF NOT EXISTS kitchens (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
-                region TEXT NOT NULL,
+                territory_id INTEGER NOT NULL,
                 address TEXT,
-                managerId INTEGER,
+                manager_id INTEGER,
                 capacity INTEGER,
-                operatingHours TEXT,
+                operating_hours TEXT,
                 status TEXT DEFAULT 'active',
-                createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(territory_id) REFERENCES territories(id)
             )
         `);
 
-        // Plans Table
+        // 4. MEAL CATEGORIES TABLE
         db.exec(`
-            CREATE TABLE IF NOT EXISTS plans (
+            CREATE TABLE IF NOT EXISTS meal_categories (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                mealsPerWeek INTEGER NOT NULL,
-                price DECIMAL(10, 2) NOT NULL,
+                name TEXT NOT NULL UNIQUE,
                 description TEXT,
-                isActive INTEGER DEFAULT 1,
-                createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+                status TEXT DEFAULT 'active',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         `);
 
-        // Meals Table
+        // 5. MEAL ITEMS TABLE
         db.exec(`
-            CREATE TABLE IF NOT EXISTS meals (
+            CREATE TABLE IF NOT EXISTS meal_items (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
-                type TEXT NOT NULL,
-                mealType TEXT NOT NULL,
-                price DECIMAL(10, 2) NOT NULL,
+                category_id INTEGER NOT NULL,
+                veg_tag INTEGER DEFAULT 0,
+                non_veg_tag INTEGER DEFAULT 0,
+                description TEXT,
                 calories INTEGER,
-                description TEXT,
                 ingredients TEXT,
-                allergies TEXT,
-                specialInstructions TEXT,
-                kitchenId INTEGER,
-                availableQuantity INTEGER NOT NULL,
+                weight TEXT,
+                mrp DECIMAL(10, 2),
+                image_url TEXT,
+                prep_time_minutes INTEGER,
                 status TEXT DEFAULT 'active',
-                createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(category_id) REFERENCES meal_categories(id)
             )
         `);
 
-        // Subscriptions Table
+        // 6. MENU SCHEDULE TABLE (Monthly)
+        db.exec(`
+            CREATE TABLE IF NOT EXISTS menu_schedules (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                month INTEGER NOT NULL,
+                year INTEGER NOT NULL,
+                day_of_week INTEGER NOT NULL,
+                meal_type TEXT NOT NULL,
+                meal_item_id INTEGER NOT NULL,
+                category TEXT NOT NULL,
+                created_by INTEGER,
+                status TEXT DEFAULT 'active',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(month, year, day_of_week, meal_type),
+                FOREIGN KEY(meal_item_id) REFERENCES meal_items(id)
+            )
+        `);
+
+        // 7. SUBSCRIPTION PLANS TABLE
+        db.exec(`
+            CREATE TABLE IF NOT EXISTS subscription_plans (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL UNIQUE,
+                duration_days INTEGER NOT NULL,
+                num_deliveries INTEGER NOT NULL,
+                diet_type TEXT NOT NULL,
+                price DECIMAL(10, 2) NOT NULL,
+                meal_selection TEXT NOT NULL,
+                menu_schedule TEXT,
+                description TEXT,
+                status TEXT DEFAULT 'active',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // 8. SUBSCRIPTIONS TABLE
         db.exec(`
             CREATE TABLE IF NOT EXISTS subscriptions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                customerId INTEGER NOT NULL,
-                planId INTEGER NOT NULL,
+                customer_id INTEGER NOT NULL,
+                plan_id INTEGER NOT NULL,
+                start_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+                end_date DATETIME,
+                extension_end_date DATETIME,
                 status TEXT DEFAULT 'active',
-                startDate DATETIME DEFAULT CURRENT_TIMESTAMP,
-                endDate DATETIME,
-                nextRenewalDate DATETIME,
-                pausedUntil DATETIME,
-                cancellationReason TEXT,
-                mealTiming TEXT,
-                specialInstructions TEXT,
-                createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY(customerId) REFERENCES users(id),
-                FOREIGN KEY(planId) REFERENCES plans(id)
+                remaining_deliveries INTEGER,
+                paused_until DATETIME,
+                cancellation_reason TEXT,
+                delivery_address TEXT,
+                google_location TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(customer_id) REFERENCES users(id),
+                FOREIGN KEY(plan_id) REFERENCES subscription_plans(id)
             )
         `);
 
-        // Orders Table
+        // 9. DAILY ORDERS TABLE
         db.exec(`
-            CREATE TABLE IF NOT EXISTS orders (
+            CREATE TABLE IF NOT EXISTS daily_orders (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                subscriptionId INTEGER,
-                customerId INTEGER NOT NULL,
-                mealId INTEGER NOT NULL,
-                deliveryDate DATETIME NOT NULL,
-                mealType TEXT,
+                subscription_id INTEGER NOT NULL,
+                customer_id INTEGER NOT NULL,
+                plan_id INTEGER NOT NULL,
+                order_date DATE NOT NULL,
+                day_of_week INTEGER,
+                meal_type TEXT NOT NULL,
+                meal_item_id INTEGER NOT NULL,
+                meal_variant TEXT,
                 status TEXT DEFAULT 'scheduled',
-                orderAmount DECIMAL(10, 2) NOT NULL,
-                deliveryNotes TEXT,
-                specialInstructions TEXT,
-                kitchenId INTEGER,
-                createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY(subscriptionId) REFERENCES subscriptions(id),
-                FOREIGN KEY(customerId) REFERENCES users(id),
-                FOREIGN KEY(mealId) REFERENCES meals(id)
+                cancelled_at DATETIME,
+                cancellation_reason TEXT,
+                cancelled_by TEXT,
+                delivery_address TEXT,
+                google_location TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(subscription_id) REFERENCES subscriptions(id),
+                FOREIGN KEY(customer_id) REFERENCES users(id),
+                FOREIGN KEY(plan_id) REFERENCES subscription_plans(id),
+                FOREIGN KEY(meal_item_id) REFERENCES meal_items(id)
             )
         `);
 
-        // Delivery Assignments Table
+        // 10. CANCELLATIONS TABLE
         db.exec(`
-            CREATE TABLE IF NOT EXISTS delivery_assignments (
+            CREATE TABLE IF NOT EXISTS cancellations (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                orderId INTEGER NOT NULL,
-                deliveryPersonId INTEGER NOT NULL,
-                kitchenId INTEGER NOT NULL,
-                assignedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-                scheduledDeliveryTime TEXT,
-                status TEXT DEFAULT 'assigned',
-                actualDeliveryTime DATETIME,
-                notes TEXT,
-                createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY(orderId) REFERENCES orders(id),
-                FOREIGN KEY(deliveryPersonId) REFERENCES users(id)
+                order_id INTEGER NOT NULL,
+                customer_id INTEGER NOT NULL,
+                reason TEXT,
+                cancelled_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                cancelled_by TEXT,
+                refund_status TEXT DEFAULT 'rolled_over',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(order_id) REFERENCES daily_orders(id),
+                FOREIGN KEY(customer_id) REFERENCES users(id)
             )
         `);
 
-        // Deliveries Table
+        // 11. DELIVERIES TABLE
         db.exec(`
             CREATE TABLE IF NOT EXISTS deliveries (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                orderId INTEGER NOT NULL,
-                deliveryPersonId INTEGER NOT NULL,
-                customerId INTEGER NOT NULL,
+                order_id INTEGER NOT NULL,
+                customer_id INTEGER NOT NULL,
+                delivery_boy_id INTEGER,
                 status TEXT DEFAULT 'pending',
-                assignedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-                pickupTime DATETIME,
-                deliveryTime DATETIME,
-                customerAddress TEXT,
-                googleMapLocation TEXT,
+                scheduled_time TEXT,
+                picked_at DATETIME,
+                delivered_at DATETIME,
+                delivery_address TEXT,
+                google_location TEXT,
+                customer_phone TEXT,
+                delivery_boy_phone TEXT,
+                whatsapp_out_for_delivery INTEGER DEFAULT 0,
+                whatsapp_delivered INTEGER DEFAULT 0,
                 notes TEXT,
-                proofImage TEXT,
-                confirmationCode TEXT,
-                confirmedByExecutive INTEGER,
-                confirmedAt DATETIME,
-                createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY(orderId) REFERENCES orders(id),
-                FOREIGN KEY(deliveryPersonId) REFERENCES users(id),
-                FOREIGN KEY(customerId) REFERENCES users(id)
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(order_id) REFERENCES daily_orders(id),
+                FOREIGN KEY(customer_id) REFERENCES users(id),
+                FOREIGN KEY(delivery_boy_id) REFERENCES users(id)
             )
         `);
 
-        // Skipped Meals Table
+        // 12. DELIVERY ASSIGNMENTS TABLE
         db.exec(`
-            CREATE TABLE IF NOT EXISTS skipped_meals (
+            CREATE TABLE IF NOT EXISTS delivery_assignments (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                subscriptionId INTEGER NOT NULL,
-                mealDate DATETIME NOT NULL,
-                reason TEXT,
-                createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY(subscriptionId) REFERENCES subscriptions(id)
+                customer_id INTEGER NOT NULL,
+                delivery_boy_id INTEGER NOT NULL,
+                territory_id INTEGER,
+                assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                unassigned_at DATETIME,
+                is_active INTEGER DEFAULT 1,
+                auto_suggested INTEGER DEFAULT 0,
+                FOREIGN KEY(customer_id) REFERENCES users(id),
+                FOREIGN KEY(delivery_boy_id) REFERENCES users(id),
+                FOREIGN KEY(territory_id) REFERENCES territories(id)
             )
         `);
 
-        // Cancellation Requests Table
+        // 13. CUSTOMER DIET PREFERENCES TABLE
         db.exec(`
-            CREATE TABLE IF NOT EXISTS cancellation_requests (
+            CREATE TABLE IF NOT EXISTS customer_diet_preferences (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                subscriptionId INTEGER NOT NULL,
-                customerId INTEGER NOT NULL,
-                reason TEXT NOT NULL,
-                status TEXT DEFAULT 'pending',
-                requestedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-                approvedAt DATETIME,
-                approvedBy INTEGER,
-                FOREIGN KEY(subscriptionId) REFERENCES subscriptions(id),
-                FOREIGN KEY(customerId) REFERENCES users(id),
-                FOREIGN KEY(approvedBy) REFERENCES users(id)
+                customer_id INTEGER NOT NULL UNIQUE,
+                diet_type TEXT NOT NULL,
+                allergies TEXT,
+                restrictions TEXT,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(customer_id) REFERENCES users(id)
             )
         `);
 
-        // Renewal Schedules Table
+        // 14. STAFF ASSIGNMENTS TABLE
         db.exec(`
-            CREATE TABLE IF NOT EXISTS renewal_schedules (
+            CREATE TABLE IF NOT EXISTS staff_assignments (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                subscriptionId INTEGER NOT NULL,
-                renewalDate DATETIME NOT NULL,
-                amount DECIMAL(10, 2) NOT NULL,
-                paymentStatus TEXT DEFAULT 'pending',
-                paymentDate DATETIME,
-                createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY(subscriptionId) REFERENCES subscriptions(id)
+                staff_id INTEGER NOT NULL,
+                role TEXT NOT NULL,
+                territory_id INTEGER,
+                kitchen_id INTEGER,
+                assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                unassigned_at DATETIME,
+                status TEXT DEFAULT 'active',
+                FOREIGN KEY(staff_id) REFERENCES users(id),
+                FOREIGN KEY(territory_id) REFERENCES territories(id),
+                FOREIGN KEY(kitchen_id) REFERENCES kitchens(id)
             )
         `);
 
@@ -234,131 +300,67 @@ function initializeDatabase() {
     }
 }
 
-// Insert Sample Data
+// ==================== SAMPLE DATA ====================
+
 function insertSampleData() {
     try {
-        db.exec(`INSERT OR IGNORE INTO plans (id, name, mealsPerWeek, price, description) VALUES 
-            (1, 'Basic', 3, 199, '3 healthy meals per week'),
-            (2, 'Premium', 5, 349, '5 healthy meals per week'),
-            (3, 'Elite', 7, 499, '7 healthy meals per week')`
-        );
+        // Insert meal categories
+        db.exec(`
+            INSERT OR IGNORE INTO meal_categories (name, description) VALUES 
+            ('Salads', 'Fresh and healthy salad bowls'),
+            ('Wraps', 'Delicious wraps with various fillings'),
+            ('Sandwiches', 'Nutritious sandwich options'),
+            ('Multigrain Bowls', 'Wholesome multigrain bowls'),
+            ('Pasta Bowls', 'Italian pasta preparations'),
+            ('Rice Bowls', 'Rice based healthy bowls')
+        `);
 
-        db.exec(`INSERT OR IGNORE INTO kitchens (id, name, region, address, capacity) VALUES 
-            (1, 'Central Kitchen', 'Thiruvananthapuram', '123 Main Street', 100),
-            (2, 'North Kitchen', 'Kochi', '456 Oak Avenue', 80)`
-        );
+        // Insert territories
+        db.exec(`
+            INSERT OR IGNORE INTO territories (name, description) VALUES 
+            ('Kochi', 'Kochi metropolitan area'),
+            ('Trivandrum', 'Trivandrum metropolitan area')
+        `);
 
-        db.exec(`INSERT OR IGNORE INTO meals (id, name, type, mealType, price, calories, description, kitchenId, availableQuantity) VALUES 
-            (1, 'Grilled Chicken Salad', 'Non-Vegetarian', 'lunch', 249, 450, 'Fresh grilled chicken with mixed greens', 1, 45),
-            (2, 'Vegan Buddha Bowl', 'Vegan', 'lunch', 279, 520, 'Chickpeas, quinoa, and fresh vegetables', 1, 28),
-            (3, 'Mediterranean Bowl', 'Vegetarian', 'dinner', 259, 480, 'Feta cheese, olives, and fresh herbs', 1, 30),
-            (4, 'Protein Boost Breakfast', 'Non-Vegetarian', 'breakfast', 199, 380, 'Eggs, turkey, whole wheat toast', 1, 40),
-            (5, 'Green Smoothie Bowl', 'Vegan', 'breakfast', 179, 350, 'Spinach, banana, and granola', 2, 50)`
-        );
+        // Insert sample meal items
+        db.exec(`
+            INSERT OR IGNORE INTO meal_items (name, category_id, veg_tag, non_veg_tag, description, calories, ingredients, weight, mrp, prep_time_minutes) VALUES 
+            ('Spinach Salad', 1, 1, 0, 'Fresh spinach with olive oil', 250, 'Spinach, olive oil, lemon', '300g', 249, 15),
+            ('Grilled Chicken Salad', 1, 0, 1, 'Grilled chicken with mixed greens', 350, 'Chicken, mixed greens, olive oil', '350g', 299, 25),
+            ('Vegetable Wrap', 2, 1, 0, 'Wrap with fresh vegetables', 280, 'Vegetables, tortilla, mayo', '250g', 249, 12),
+            ('Chicken Wrap', 2, 0, 1, 'Wrap with grilled chicken', 380, 'Chicken, vegetables, tortilla', '300g', 299, 20),
+            ('Paneer Sandwich', 3, 1, 0, 'Paneer with cheese', 320, 'Paneer, cheese, bread', '200g', 249, 10),
+            ('Grilled Chicken Sandwich', 3, 0, 1, 'Grilled chicken sandwich', 380, 'Chicken, bread, mayo', '220g', 299, 15),
+            ('Multigrain with Veggies', 4, 1, 0, 'Multigrain bowl with vegetables', 300, 'Multigrain, vegetables, olive oil', '350g', 249, 18),
+            ('Multigrain with Chicken', 4, 0, 1, 'Multigrain bowl with chicken', 420, 'Multigrain, chicken, vegetables', '400g', 299, 25),
+            ('Vegetable Pasta', 5, 1, 0, 'Pasta with vegetables', 350, 'Pasta, vegetables, olive oil', '350g', 249, 20),
+            ('Pasta Carbonara', 5, 0, 1, 'Classic carbonara pasta', 450, 'Pasta, bacon, cream, egg', '400g', 299, 25)
+        `);
 
         console.log('✓ Sample data inserted');
     } catch (err) {
-        console.log('Sample data already exists');
+        console.log('Sample data already exists or insertion error:', err.message);
     }
 }
 
-// ==================== SERVE STATIC FILES & HTML ====================
-
-// Load HTML file at startup
-let indexHtml = '';
-try {
-    indexHtml = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
-    console.log('✓ Loaded index.html from public folder');
-} catch (err) {
-    console.warn('⚠ Could not load index.html from public folder');
-    indexHtml = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Salad Caffe</title>
-            <style>
-                body { font-family: Arial; text-align: center; margin-top: 50px; }
-                .container { max-width: 400px; margin: 0 auto; padding: 20px; background: #f0f0f0; border-radius: 8px; }
-                h1 { color: #2ecc71; }
-                p { color: #666; }
-                input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; }
-                button { width: 100%; padding: 10px; background: #2ecc71; color: white; border: none; border-radius: 4px; cursor: pointer; }
-                .error { color: red; margin: 10px 0; }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <h1>🥗 Salad Caffe</h1>
-                <p>Complete Meal Subscription System</p>
-                
-                <div id="error" class="error"></div>
-                
-                <input type="email" id="email" placeholder="Email" />
-                <input type="password" id="password" placeholder="Password" />
-                <button onclick="login()">Sign In</button>
-                
-                <p style="font-size: 12px; margin-top: 20px;">
-                    Test: super@test.com / password123
-                </p>
-            </div>
-            
-            <script>
-                async function login() {
-                    const email = document.getElementById('email').value;
-                    const password = document.getElementById('password').value;
-                    
-                    if (!email || !password) {
-                        document.getElementById('error').textContent = 'Please fill all fields';
-                        return;
-                    }
-                    
-                    try {
-                        const response = await fetch('/api/auth/login', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ email, password })
-                        });
-                        
-                        const data = await response.json();
-                        
-                        if (!response.ok) {
-                            document.getElementById('error').textContent = data.error || 'Login failed';
-                            return;
-                        }
-                        
-                        localStorage.setItem('token', data.token);
-                        alert('Login successful!');
-                        console.log('User:', data.user);
-                    } catch (err) {
-                        document.getElementById('error').textContent = 'Error: ' + err.message;
-                    }
-                }
-            </script>
-        </body>
-        </html>
-    `;
-}
-
-// Serve static files
-app.use(express.static(path.join(__dirname, 'public')));
-
 // ==================== AUTHENTICATION ====================
 
-// Register
+// Register User (Super Admin only)
 app.post('/api/auth/register', (req, res) => {
     try {
-        const { name, email, password, userType = 'customer', authority = 'customer' } = req.body;
+        const { name, email, password, phone, authority, territory_id, kitchen_id } = req.body;
 
-        if (!name || !email || !password) {
+        if (!name || !email || !password || !authority) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
         const hashedPassword = bcrypt.hashSync(password, 10);
 
         const stmt = db.prepare(
-            `INSERT INTO users (name, email, password, userType, authority) VALUES (?, ?, ?, ?, ?)`
+            `INSERT INTO users (name, email, password, phone, authority, territory_id, kitchen_id, user_type) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
         );
-        const result = stmt.run(name, email, hashedPassword, userType, authority);
+        const result = stmt.run(name, email, hashedPassword, phone, authority, territory_id || null, kitchen_id || null, 'staff');
 
         const token = jwt.sign({ id: result.lastInsertRowid, email, authority }, JWT_SECRET, { expiresIn: '7d' });
         res.status(201).json({
@@ -367,7 +369,7 @@ app.post('/api/auth/register', (req, res) => {
             user: { id: result.lastInsertRowid, name, email, authority }
         });
     } catch (err) {
-        res.status(400).json({ error: 'Email already exists or invalid input' });
+        res.status(400).json({ error: err.message });
     }
 });
 
@@ -401,8 +403,7 @@ app.post('/api/auth/login', (req, res) => {
                 name: user.name,
                 email: user.email,
                 authority: user.authority,
-                phone: user.phone,
-                address: user.address
+                phone: user.phone
             }
         });
     } catch (err) {
@@ -427,136 +428,310 @@ function verifyToken(req, res, next) {
     });
 }
 
-// ==================== SUBSCRIPTIONS ====================
+// ==================== MEAL CATEGORIES ENDPOINTS ====================
 
-// Create Subscription
-app.post('/api/admin-executive/subscriptions', verifyToken, (req, res) => {
+// Get all categories
+app.get('/api/admin/categories', verifyToken, (req, res) => {
     try {
-        const { customerId, planId, mealTiming, specialInstructions } = req.body;
+        const stmt = db.prepare('SELECT * FROM meal_categories WHERE status = "active"');
+        const categories = stmt.all();
+        res.json(categories);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
-        if (!customerId || !planId) {
+// Create category
+app.post('/api/admin/categories', verifyToken, (req, res) => {
+    try {
+        const { name, description } = req.body;
+
+        if (!name) {
+            return res.status(400).json({ error: 'Category name required' });
+        }
+
+        const stmt = db.prepare(
+            'INSERT INTO meal_categories (name, description) VALUES (?, ?)'
+        );
+        const result = stmt.run(name, description);
+
+        res.status(201).json({
+            message: 'Category created',
+            categoryId: result.lastInsertRowid
+        });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// ==================== MEAL ITEMS ENDPOINTS ====================
+
+// Get all meal items
+app.get('/api/admin/meal-items', verifyToken, (req, res) => {
+    try {
+        const stmt = db.prepare(`
+            SELECT m.*, c.name as category_name 
+            FROM meal_items m 
+            JOIN meal_categories c ON m.category_id = c.id 
+            WHERE m.status = "active"
+            ORDER BY c.name, m.name
+        `);
+        const items = stmt.all();
+        res.json(items);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Create meal item
+app.post('/api/admin/meal-items', verifyToken, (req, res) => {
+    try {
+        const { name, category_id, veg_tag, non_veg_tag, description, calories, ingredients, weight, mrp, prep_time_minutes } = req.body;
+
+        if (!name || !category_id) {
+            return res.status(400).json({ error: 'Name and category required' });
+        }
+
+        const stmt = db.prepare(`
+            INSERT INTO meal_items 
+            (name, category_id, veg_tag, non_veg_tag, description, calories, ingredients, weight, mrp, prep_time_minutes) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+        const result = stmt.run(name, category_id, veg_tag ? 1 : 0, non_veg_tag ? 1 : 0, description, calories, ingredients, weight, mrp, prep_time_minutes);
+
+        res.status(201).json({
+            message: 'Meal item created',
+            mealItemId: result.lastInsertRowid
+        });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// Update meal item
+app.put('/api/admin/meal-items/:id', verifyToken, (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, category_id, veg_tag, non_veg_tag, description, calories, ingredients, weight, mrp, prep_time_minutes } = req.body;
+
+        const stmt = db.prepare(`
+            UPDATE meal_items 
+            SET name = ?, category_id = ?, veg_tag = ?, non_veg_tag = ?, description = ?, 
+                calories = ?, ingredients = ?, weight = ?, mrp = ?, prep_time_minutes = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        `);
+        stmt.run(name, category_id, veg_tag ? 1 : 0, non_veg_tag ? 1 : 0, description, calories, ingredients, weight, mrp, prep_time_minutes, id);
+
+        res.json({ message: 'Meal item updated' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ==================== TERRITORIES ENDPOINTS ====================
+
+// Get all territories
+app.get('/api/admin/territories', verifyToken, (req, res) => {
+    try {
+        const stmt = db.prepare('SELECT * FROM territories WHERE status = "active"');
+        const territories = stmt.all();
+        res.json(territories);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Create territory
+app.post('/api/admin/territories', verifyToken, (req, res) => {
+    try {
+        const { name, description, manager_id } = req.body;
+
+        if (!name) {
+            return res.status(400).json({ error: 'Territory name required' });
+        }
+
+        const stmt = db.prepare(
+            'INSERT INTO territories (name, description, manager_id) VALUES (?, ?, ?)'
+        );
+        const result = stmt.run(name, description, manager_id || null);
+
+        res.status(201).json({
+            message: 'Territory created',
+            territoryId: result.lastInsertRowid
+        });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// ==================== KITCHENS ENDPOINTS ====================
+
+// Get all kitchens
+app.get('/api/admin/kitchens', verifyToken, (req, res) => {
+    try {
+        const stmt = db.prepare(`
+            SELECT k.*, t.name as territory_name 
+            FROM kitchens k 
+            LEFT JOIN territories t ON k.territory_id = t.id 
+            WHERE k.status = "active"
+        `);
+        const kitchens = stmt.all();
+        res.json(kitchens);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Create kitchen
+app.post('/api/admin/kitchens', verifyToken, (req, res) => {
+    try {
+        const { name, territory_id, address, manager_id, capacity } = req.body;
+
+        if (!name || !territory_id) {
+            return res.status(400).json({ error: 'Name and territory required' });
+        }
+
+        const stmt = db.prepare(
+            'INSERT INTO kitchens (name, territory_id, address, manager_id, capacity) VALUES (?, ?, ?, ?, ?)'
+        );
+        const result = stmt.run(name, territory_id, address, manager_id || null, capacity);
+
+        res.status(201).json({
+            message: 'Kitchen created',
+            kitchenId: result.lastInsertRowid
+        });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// ==================== SUBSCRIPTION PLANS ENDPOINTS ====================
+
+// Get all subscription plans
+app.get('/api/admin/subscription-plans', verifyToken, (req, res) => {
+    try {
+        const stmt = db.prepare('SELECT * FROM subscription_plans WHERE status = "active"');
+        const plans = stmt.all();
+        
+        // Parse menu_schedule JSON
+        const plansWithMenu = plans.map(plan => ({
+            ...plan,
+            menu_schedule: plan.menu_schedule ? JSON.parse(plan.menu_schedule) : null
+        }));
+        
+        res.json(plansWithMenu);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Create subscription plan
+app.post('/api/admin/subscription-plans', verifyToken, (req, res) => {
+    try {
+        const { name, duration_days, num_deliveries, diet_type, price, meal_selection, menu_schedule, description } = req.body;
+
+        if (!name || !duration_days || !num_deliveries || !diet_type || !price || !meal_selection) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
-        const startDate = new Date().toISOString();
-        const endDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-
-        const stmt = db.prepare(
-            `INSERT INTO subscriptions (customerId, planId, startDate, endDate, nextRenewalDate, mealTiming, specialInstructions)
-             VALUES (?, ?, ?, ?, ?, ?, ?)`
+        const stmt = db.prepare(`
+            INSERT INTO subscription_plans 
+            (name, duration_days, num_deliveries, diet_type, price, meal_selection, menu_schedule, description) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+        const result = stmt.run(
+            name,
+            duration_days,
+            num_deliveries,
+            diet_type,
+            price,
+            meal_selection,
+            menu_schedule ? JSON.stringify(menu_schedule) : null,
+            description
         );
-        const result = stmt.run(customerId, planId, startDate, endDate, endDate, mealTiming, specialInstructions);
 
-        res.status(201).json({ message: 'Subscription created successfully', subscriptionId: result.lastInsertRowid });
+        res.status(201).json({
+            message: 'Subscription plan created',
+            planId: result.lastInsertRowid
+        });
     } catch (err) {
-        res.status(500).json({ error: 'Failed to create subscription' });
+        res.status(400).json({ error: err.message });
     }
 });
 
-// Get Subscriptions
-app.get('/api/subscriptions', verifyToken, (req, res) => {
+// Update subscription plan
+app.put('/api/admin/subscription-plans/:id', verifyToken, (req, res) => {
     try {
-        const stmt = db.prepare(
-            `SELECT s.*, p.name as planName, p.mealsPerWeek, p.price FROM subscriptions s 
-             JOIN plans p ON s.planId = p.id WHERE s.customerId = ?`
+        const { id } = req.params;
+        const { name, duration_days, num_deliveries, diet_type, price, meal_selection, menu_schedule, description } = req.body;
+
+        const stmt = db.prepare(`
+            UPDATE subscription_plans 
+            SET name = ?, duration_days = ?, num_deliveries = ?, diet_type = ?, price = ?, 
+                meal_selection = ?, menu_schedule = ?, description = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        `);
+        stmt.run(
+            name,
+            duration_days,
+            num_deliveries,
+            diet_type,
+            price,
+            meal_selection,
+            menu_schedule ? JSON.stringify(menu_schedule) : null,
+            description,
+            id
         );
-        const rows = stmt.all(req.user.id);
-        res.json(rows);
+
+        res.json({ message: 'Subscription plan updated' });
     } catch (err) {
-        res.status(500).json({ error: 'Failed to fetch subscriptions' });
+        res.status(500).json({ error: err.message });
     }
 });
 
-// ==================== CUSTOMER ====================
+// ==================== MENU SCHEDULE ENDPOINTS ====================
 
-// Get Profile
-app.get('/api/customer/profile', verifyToken, (req, res) => {
+// Get monthly menu schedule
+app.get('/api/admin/menu-schedule/:month/:year', verifyToken, (req, res) => {
     try {
-        const stmt = db.prepare(
-            `SELECT id, name, email, phone, address, googleMapLocation, allergies, dietaryPreferences FROM users WHERE id = ?`
-        );
-        const user = stmt.get(req.user.id);
-
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-        res.json(user);
+        const { month, year } = req.params;
+        const stmt = db.prepare(`
+            SELECT m.*, c.name as category_name, mi.name as item_name
+            FROM menu_schedules m
+            JOIN meal_categories c ON m.category = c.name
+            JOIN meal_items mi ON m.meal_item_id = mi.id
+            WHERE m.month = ? AND m.year = ? AND m.status = "active"
+            ORDER BY m.day_of_week, m.meal_type
+        `);
+        const schedule = stmt.all(month, year);
+        res.json(schedule);
     } catch (err) {
-        res.status(500).json({ error: 'Failed to fetch profile' });
+        res.status(500).json({ error: err.message });
     }
 });
 
-// Update Profile
-app.put('/api/customer/profile', verifyToken, (req, res) => {
+// Create menu schedule entry
+app.post('/api/admin/menu-schedule', verifyToken, (req, res) => {
     try {
-        const { name, phone, address, googleMapLocation, allergies, dietaryPreferences } = req.body;
+        const { month, year, day_of_week, meal_type, meal_item_id, category } = req.body;
 
-        const stmt = db.prepare(
-            `UPDATE users SET name = ?, phone = ?, address = ?, googleMapLocation = ?, allergies = ?, dietaryPreferences = ? WHERE id = ?`
-        );
-        stmt.run(name, phone, address, googleMapLocation, allergies, dietaryPreferences, req.user.id);
-
-        res.json({ message: 'Profile updated successfully' });
-    } catch (err) {
-        res.status(500).json({ error: 'Failed to update profile' });
-    }
-});
-
-// ==================== SUPER ADMIN ====================
-
-// Create User
-app.post('/api/super-admin/users', verifyToken, (req, res) => {
-    try {
-        const { name, email, password, authority, region, kitchenId } = req.body;
-
-        if (!name || !email || !password || !authority) {
+        if (!month || !year || !day_of_week || !meal_type || !meal_item_id || !category) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
-        const hashedPassword = bcrypt.hashSync(password, 10);
+        const stmt = db.prepare(`
+            INSERT INTO menu_schedules 
+            (month, year, day_of_week, meal_type, meal_item_id, category, created_by) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        `);
+        const result = stmt.run(month, year, day_of_week, meal_type, meal_item_id, category, req.user.id);
 
-        const stmt = db.prepare(
-            `INSERT INTO users (name, email, password, userType, authority, region, kitchenId) 
-             VALUES (?, ?, ?, 'staff', ?, ?, ?)`
-        );
-        const result = stmt.run(name, email, hashedPassword, authority, region, kitchenId || null);
-
-        res.status(201).json({ message: 'User created successfully', userId: result.lastInsertRowid });
+        res.status(201).json({
+            message: 'Menu schedule entry created',
+            scheduleId: result.lastInsertRowid
+        });
     } catch (err) {
-        res.status(400).json({ error: 'Failed to create user' });
-    }
-});
-
-// Get All Users
-app.get('/api/super-admin/users', verifyToken, (req, res) => {
-    try {
-        const stmt = db.prepare(
-            `SELECT id, name, email, authority, region, kitchenId, createdAt FROM users`
-        );
-        const rows = stmt.all();
-        res.json(rows);
-    } catch (err) {
-        res.status(500).json({ error: 'Failed to fetch users' });
-    }
-});
-
-// Create Kitchen
-app.post('/api/super-admin/kitchens', verifyToken, (req, res) => {
-    try {
-        const { name, region, address, capacity } = req.body;
-
-        if (!name || !region) {
-            return res.status(400).json({ error: 'Missing required fields' });
-        }
-
-        const stmt = db.prepare(
-            `INSERT INTO kitchens (name, region, address, capacity) VALUES (?, ?, ?, ?)`
-        );
-        const result = stmt.run(name, region, address, capacity);
-
-        res.status(201).json({ message: 'Kitchen created successfully', kitchenId: result.lastInsertRowid });
-    } catch (err) {
-        res.status(500).json({ error: 'Failed to create kitchen' });
+        res.status(400).json({ error: err.message });
     }
 });
 
@@ -566,25 +741,33 @@ app.get('/api/health', (req, res) => {
     res.json({
         status: 'ok',
         timestamp: new Date().toISOString(),
-        uptime: process.uptime()
+        uptime: process.uptime(),
+        database: 'connected'
     });
 });
 
-// ==================== SERVE SPA ROUTES ====================
+// ==================== SERVE STATIC FILES ====================
 
-// Root route
+let indexHtml = '';
+try {
+    indexHtml = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
+    console.log('✓ Loaded index.html from public folder');
+} catch (err) {
+    console.warn('⚠ Could not load index.html');
+    indexHtml = '<h1>Salad Caffe API Server</h1><p>Frontend loading...</p>';
+}
+
+app.use(express.static(path.join(__dirname, 'public')));
+
 app.get('/', (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(indexHtml);
 });
 
-// All non-API routes serve index.html (for SPA routing)
 app.all('*', (req, res, next) => {
-    // Skip if it's an API route
     if (req.path.startsWith('/api')) {
         return next();
     }
-    
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(indexHtml);
 });
