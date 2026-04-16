@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Salad Caffe - Admin Panel</title>
+    <title>Salad Caffe - Admin Dashboard</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         * {
@@ -17,19 +17,22 @@
             --primary-dark: #27ae60;
             --secondary: #3498db;
             --danger: #e74c3c;
-            --dark: #2c3e50;
-            --light: #ecf0f1;
-            --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --dark: #1a1a1a;
+            --light: #f8f9fa;
+            --gray: #6c757d;
+            --border: #dee2e6;
+            --shadow: 0 2px 10px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 30px rgba(0,0,0,0.15);
         }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f7fa;
+            background: var(--light);
             color: var(--dark);
         }
 
-        /* LOGIN SCREEN */
-        .login-container {
+        /* LOGIN PAGE */
+        .login-page {
             display: flex;
             align-items: center;
             justify-content: center;
@@ -37,177 +40,176 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
 
-        .login-box {
+        .login-card {
             background: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 50px;
+            border-radius: 15px;
+            box-shadow: var(--shadow-lg);
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
+            text-align: center;
         }
 
-        .login-box h1 {
-            text-align: center;
-            color: var(--primary);
+        .login-card h1 {
+            font-size: 36px;
             margin-bottom: 10px;
-            font-size: 32px;
+            color: var(--primary);
         }
 
-        .login-box p {
-            text-align: center;
-            color: #666;
+        .login-card p {
+            color: var(--gray);
             margin-bottom: 30px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: var(--dark);
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid var(--light);
-            border-radius: 8px;
             font-size: 14px;
         }
 
-        .form-group input:focus {
+        .form-input {
+            width: 100%;
+            padding: 14px;
+            margin: 10px 0;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus {
             outline: none;
             border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.1);
         }
 
-        .btn {
-            padding: 12px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-primary {
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            margin-top: 20px;
             background: var(--primary);
             color: white;
-            width: 100%;
-            justify-content: center;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
         }
 
-        .btn-primary:hover {
+        .btn-login:hover {
             background: var(--primary-dark);
         }
 
         .login-error {
-            background: rgba(231, 76, 60, 0.1);
-            color: #c0392b;
+            background: #fee;
+            color: #c33;
             padding: 12px;
             border-radius: 8px;
             margin-bottom: 20px;
             display: none;
+            font-size: 14px;
         }
 
-        .test-info {
+        .test-creds {
             background: #f0f0f0;
             padding: 15px;
             border-radius: 8px;
-            font-size: 12px;
-            color: #666;
-            margin-top: 20px;
-            text-align: center;
+            margin-top: 25px;
+            font-size: 13px;
+            color: var(--gray);
         }
 
-        /* APP SCREEN */
-        .app-container {
+        /* DASHBOARD */
+        .dashboard {
             display: none;
-            flex: 1;
             min-height: 100vh;
         }
 
-        .app-container.active {
-            display: flex;
+        .dashboard.active {
+            display: block;
         }
 
-        .sidebar {
-            width: 280px;
-            background: linear-gradient(135deg, var(--dark) 0%, #34495e 100%);
-            color: white;
-            padding: 30px 0;
-            position: fixed;
-            height: 100vh;
-            overflow-y: auto;
+        .top-bar {
+            background: white;
+            padding: 20px 30px;
             box-shadow: var(--shadow);
-            z-index: 1000;
-        }
-
-        .sidebar-header {
-            padding: 0 25px 30px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 20px;
-        }
-
-        .sidebar-header h1 {
-            font-size: 18px;
-            font-weight: 700;
-        }
-
-        .nav-item {
-            padding: 15px 25px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            color: rgba(255, 255, 255, 0.7);
-            transition: all 0.3s ease;
-            border-left: 3px solid transparent;
-        }
-
-        .nav-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-        }
-
-        .nav-item.active {
-            background: rgba(46, 204, 113, 0.15);
-            color: var(--primary);
-            border-left-color: var(--primary);
-        }
-
-        .main-content {
-            margin-left: 280px;
-            flex: 1;
-            padding: 30px;
-            overflow-y: auto;
-        }
-
-        .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
-        .header h2 {
-            font-size: 28px;
+        .top-bar h1 {
+            font-size: 24px;
             color: var(--dark);
+            margin: 0;
         }
 
-        .btn-secondary {
-            background: var(--secondary);
+        .top-bar .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
             color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
         }
 
-        .btn-danger {
+        .btn-logout {
+            padding: 10px 20px;
             background: var(--danger);
             color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .btn-logout:hover {
+            background: #c0392b;
+        }
+
+        .container {
+            padding: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--border);
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            padding: 15px 25px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--gray);
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-btn:hover {
+            color: var(--dark);
         }
 
         .section {
@@ -216,23 +218,87 @@
 
         .section.active {
             display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .header-row h2 {
+            font-size: 22px;
+            color: var(--dark);
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
         }
 
         .card {
             background: white;
-            border-radius: 12px;
             padding: 25px;
-            margin-bottom: 25px;
+            border-radius: 12px;
             box-shadow: var(--shadow);
+            margin-bottom: 25px;
         }
 
-        .card-title {
-            font-size: 20px;
-            font-weight: 700;
+        .form-group {
             margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
             color: var(--dark);
-            border-bottom: 2px solid var(--light);
-            padding-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.1);
         }
 
         .form-row {
@@ -245,6 +311,7 @@
             display: flex;
             gap: 20px;
             align-items: center;
+            margin: 15px 0;
         }
 
         .checkbox-group label {
@@ -252,6 +319,7 @@
             align-items: center;
             gap: 8px;
             margin: 0;
+            cursor: pointer;
         }
 
         .checkbox-group input {
@@ -259,40 +327,70 @@
             margin: 0;
         }
 
+        .table-container {
+            overflow-x: auto;
+        }
+
         .table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
+        }
+
+        .table thead {
+            background: #f8f9fa;
         }
 
         .table th {
-            background: var(--light);
-            padding: 12px;
+            padding: 15px;
             text-align: left;
             font-weight: 600;
+            color: var(--dark);
+            border-bottom: 2px solid var(--border);
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .table td {
-            padding: 12px;
-            border-bottom: 1px solid var(--light);
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
         }
 
-        .success {
-            background: rgba(46, 204, 113, 0.1);
-            color: #27ae60;
-            padding: 12px;
+        .table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: var(--gray);
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.3;
+        }
+
+        .alert {
+            padding: 15px;
             border-radius: 8px;
             margin-bottom: 20px;
             display: none;
+            font-size: 14px;
         }
 
-        .error {
-            background: rgba(231, 76, 60, 0.1);
-            color: #c0392b;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: none;
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
         }
 
         .modal {
@@ -302,8 +400,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 2000;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
             align-items: center;
             justify-content: center;
         }
@@ -314,215 +412,220 @@
 
         .modal-content {
             background: white;
-            padding: 30px;
+            padding: 35px;
             border-radius: 12px;
+            width: 100%;
             max-width: 500px;
-            width: 90%;
             max-height: 80vh;
             overflow-y: auto;
+            box-shadow: var(--shadow-lg);
         }
 
         .modal-header {
             font-size: 20px;
             font-weight: 700;
-            margin-bottom: 20px;
-            border-bottom: 2px solid var(--light);
-            padding-bottom: 15px;
+            margin-bottom: 25px;
+            color: var(--dark);
         }
 
         .modal-close {
             float: right;
-            font-size: 24px;
+            font-size: 28px;
             cursor: pointer;
-            color: #999;
+            color: var(--gray);
+            border: none;
+            background: none;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        textarea {
-            font-family: inherit;
-            resize: vertical;
+        .modal-close:hover {
+            color: var(--dark);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge-primary {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: var(--gray);
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         @media (max-width: 768px) {
-            .sidebar {
-                width: 200px;
-            }
-            .main-content {
-                margin-left: 200px;
-                padding: 15px;
-            }
             .form-row {
                 grid-template-columns: 1fr;
+            }
+            .login-card {
+                padding: 30px;
+            }
+            .container {
+                padding: 15px;
+            }
+            .header-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
             }
         }
     </style>
 </head>
 <body>
-    <!-- LOGIN SCREEN -->
-    <div id="loginScreen" class="login-container">
-        <div class="login-box">
+    <!-- LOGIN PAGE -->
+    <div id="loginPage" class="login-page">
+        <div class="login-card">
             <h1>🥗 Salad Caffe</h1>
-            <p>Super Admin Panel</p>
+            <p>Admin Management System</p>
             
             <div class="login-error" id="loginError"></div>
 
-            <div class="form-group">
-                <label>Email</label>
-                <input type="email" id="loginEmail" placeholder="super@test.com">
-            </div>
+            <input type="email" class="form-input" id="loginEmail" placeholder="Email" value="super@test.com">
+            <input type="password" class="form-input" id="loginPassword" placeholder="Password" value="password123">
+            <button class="btn-login" onclick="handleLogin()">Sign In</button>
 
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" id="loginPassword" placeholder="password123">
-            </div>
-
-            <button class="btn btn-primary" onclick="handleLogin()">Sign In</button>
-
-            <div class="test-info">
-                <strong>Test Account:</strong><br>
+            <div class="test-creds">
+                <strong>Demo Credentials:</strong><br>
                 Email: super@test.com<br>
                 Password: password123
             </div>
         </div>
     </div>
 
-    <!-- APP SCREEN -->
-    <div id="appScreen" class="app-container">
-        <!-- SIDEBAR -->
-        <div class="sidebar">
-            <div class="sidebar-header">
-                <h1>🥗 Salad Caffe</h1>
-                <p style="font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 5px;">Super Admin Panel</p>
-            </div>
-
-            <div class="nav-item active" onclick="switchSection('dashboard')">
-                <i class="fas fa-home"></i> Dashboard
-            </div>
-            <div class="nav-item" onclick="switchSection('categories')">
-                <i class="fas fa-list"></i> Categories
-            </div>
-            <div class="nav-item" onclick="switchSection('meal-items')">
-                <i class="fas fa-utensils"></i> Meal Items
-            </div>
-            <div class="nav-item" onclick="switchSection('territories')">
-                <i class="fas fa-map"></i> Territories
-            </div>
-            <div class="nav-item" onclick="switchSection('kitchens')">
-                <i class="fas fa-building"></i> Kitchens
-            </div>
-            <div class="nav-item" onclick="switchSection('subscription-plans')">
-                <i class="fas fa-bookmark"></i> Subscriptions
-            </div>
-
-            <div style="padding: 25px; border-top: 1px solid rgba(255,255,255,0.1); margin-top: auto;">
-                <div class="nav-item" onclick="handleLogout()">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </div>
+    <!-- DASHBOARD -->
+    <div id="dashboard" class="dashboard">
+        <div class="top-bar">
+            <h1>🥗 Salad Caffe Admin</h1>
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">S</div>
+                <button class="btn-logout" onclick="handleLogout()">Logout</button>
             </div>
         </div>
 
-        <!-- MAIN CONTENT -->
-        <div class="main-content">
-            <!-- DASHBOARD SECTION -->
-            <div id="dashboard" class="section active">
-                <div class="header">
-                    <h2>Dashboard</h2>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">Welcome to Salad Caffe Admin Panel</div>
-                    <p>Manage your meal subscription system:</p>
-                    <ul style="margin-left: 20px; margin-top: 15px; line-height: 2;">
-                        <li><strong>Meal Categories</strong> - Salads, Wraps, Sandwiches, Multigrain Bowls, Pasta Bowls</li>
-                        <li><strong>Meal Items</strong> - Create items with veg/non-veg variants</li>
-                        <li><strong>Territories</strong> - Kochi, Trivandrum, etc.</li>
-                        <li><strong>Kitchens</strong> - One per territory</li>
-                        <li><strong>Subscription Plans</strong> - 7/15/30 day plans with dynamic pricing</li>
-                    </ul>
-                </div>
+        <div class="container">
+            <!-- TABS -->
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('categories')"><i class="fas fa-list"></i> Categories</button>
+                <button class="tab-btn" onclick="switchTab('meals')"><i class="fas fa-utensils"></i> Meal Items</button>
+                <button class="tab-btn" onclick="switchTab('territories')"><i class="fas fa-map"></i> Territories</button>
+                <button class="tab-btn" onclick="switchTab('kitchens')"><i class="fas fa-building"></i> Kitchens</button>
+                <button class="tab-btn" onclick="switchTab('plans')"><i class="fas fa-bookmark"></i> Plans</button>
             </div>
 
             <!-- CATEGORIES SECTION -->
-            <div id="categories" class="section">
-                <div class="header">
+            <div id="categories" class="section active">
+                <div class="header-row">
                     <h2>Meal Categories</h2>
-                    <button class="btn btn-primary" onclick="showAddCategoryModal()">
+                    <button class="btn btn-primary" onclick="showCategoryModal()">
                         <i class="fas fa-plus"></i> Add Category
                     </button>
                 </div>
 
-                <div class="success" id="categorySuccess"></div>
-                <div class="error" id="categoryError"></div>
+                <div class="alert alert-success" id="catSuccess"></div>
+                <div class="alert alert-error" id="catError"></div>
 
                 <div class="card">
-                    <div id="categoriesList"><p>Loading...</p></div>
+                    <div id="categoriesList" class="loading"><div class="spinner"></div> Loading...</div>
                 </div>
             </div>
 
             <!-- MEAL ITEMS SECTION -->
-            <div id="meal-items" class="section">
-                <div class="header">
+            <div id="meals" class="section">
+                <div class="header-row">
                     <h2>Meal Items</h2>
-                    <button class="btn btn-primary" onclick="showAddMealItemModal()">
+                    <button class="btn btn-primary" onclick="showMealModal()">
                         <i class="fas fa-plus"></i> Add Meal Item
                     </button>
                 </div>
 
-                <div class="success" id="mealItemSuccess"></div>
-                <div class="error" id="mealItemError"></div>
+                <div class="alert alert-success" id="mealSuccess"></div>
+                <div class="alert alert-error" id="mealError"></div>
 
                 <div class="card">
-                    <div id="mealItemsList"><p>Loading...</p></div>
+                    <div id="mealsList" class="loading"><div class="spinner"></div> Loading...</div>
                 </div>
             </div>
 
             <!-- TERRITORIES SECTION -->
             <div id="territories" class="section">
-                <div class="header">
+                <div class="header-row">
                     <h2>Territories</h2>
-                    <button class="btn btn-primary" onclick="showAddTerritoryModal()">
+                    <button class="btn btn-primary" onclick="showTerritoryModal()">
                         <i class="fas fa-plus"></i> Add Territory
                     </button>
                 </div>
 
-                <div class="success" id="territorySuccess"></div>
-                <div class="error" id="territoryError"></div>
+                <div class="alert alert-success" id="terrSuccess"></div>
+                <div class="alert alert-error" id="terrError"></div>
 
                 <div class="card">
-                    <div id="territoriesList"><p>Loading...</p></div>
+                    <div id="territoriesList" class="loading"><div class="spinner"></div> Loading...</div>
                 </div>
             </div>
 
             <!-- KITCHENS SECTION -->
             <div id="kitchens" class="section">
-                <div class="header">
+                <div class="header-row">
                     <h2>Kitchens</h2>
-                    <button class="btn btn-primary" onclick="showAddKitchenModal()">
+                    <button class="btn btn-primary" onclick="showKitchenModal()">
                         <i class="fas fa-plus"></i> Add Kitchen
                     </button>
                 </div>
 
-                <div class="success" id="kitchenSuccess"></div>
-                <div class="error" id="kitchenError"></div>
+                <div class="alert alert-success" id="kitchenSuccess"></div>
+                <div class="alert alert-error" id="kitchenError"></div>
 
                 <div class="card">
-                    <div id="kitchensList"><p>Loading...</p></div>
+                    <div id="kitchensList" class="loading"><div class="spinner"></div> Loading...</div>
                 </div>
             </div>
 
-            <!-- SUBSCRIPTION PLANS SECTION -->
-            <div id="subscription-plans" class="section">
-                <div class="header">
+            <!-- PLANS SECTION -->
+            <div id="plans" class="section">
+                <div class="header-row">
                     <h2>Subscription Plans</h2>
-                    <button class="btn btn-primary" onclick="showAddSubscriptionModal()">
+                    <button class="btn btn-primary" onclick="showPlanModal()">
                         <i class="fas fa-plus"></i> Add Plan
                     </button>
                 </div>
 
-                <div class="success" id="subscriptionSuccess"></div>
-                <div class="error" id="subscriptionError"></div>
+                <div class="alert alert-success" id="planSuccess"></div>
+                <div class="alert alert-error" id="planError"></div>
 
                 <div class="card">
-                    <div id="subscriptionPlansList"><p>Loading...</p></div>
+                    <div id="plansList" class="loading"><div class="spinner"></div> Loading...</div>
                 </div>
             </div>
         </div>
@@ -530,118 +633,119 @@
 
     <!-- MODALS -->
 
-    <!-- Add Category Modal -->
-    <div id="addCategoryModal" class="modal">
+    <!-- Category Modal -->
+    <div id="categoryModal" class="modal">
         <div class="modal-content">
-            <span class="modal-close" onclick="closeModal('addCategoryModal')">&times;</span>
+            <button class="modal-close" onclick="closeCategoryModal()">&times;</button>
             <div class="modal-header">Add Meal Category</div>
             
             <div class="form-group">
-                <label>Category Name</label>
-                <input type="text" id="categoryName" placeholder="e.g., Salads">
+                <label>Category Name *</label>
+                <input type="text" id="catName" placeholder="e.g., Salads">
             </div>
 
             <div class="form-group">
                 <label>Description</label>
-                <textarea id="categoryDescription" placeholder="Brief description" style="height: 80px;"></textarea>
+                <textarea id="catDesc" placeholder="Brief description" style="height: 80px;"></textarea>
             </div>
 
-            <button class="btn btn-primary" onclick="addCategory()" style="width: 100%;">Create Category</button>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 20px;" onclick="addCategory()">
+                <i class="fas fa-save"></i> Create Category
+            </button>
         </div>
     </div>
 
-    <!-- Add Meal Item Modal -->
-    <div id="addMealItemModal" class="modal">
+    <!-- Meal Item Modal -->
+    <div id="mealModal" class="modal">
         <div class="modal-content">
-            <span class="modal-close" onclick="closeModal('addMealItemModal')">&times;</span>
+            <button class="modal-close" onclick="closeMealModal()">&times;</button>
             <div class="modal-header">Add Meal Item</div>
             
             <div class="form-group">
-                <label>Item Name</label>
-                <input type="text" id="mealItemName" placeholder="e.g., Grilled Chicken Salad">
+                <label>Item Name *</label>
+                <input type="text" id="mealName" placeholder="e.g., Grilled Chicken Salad">
             </div>
 
             <div class="form-group">
-                <label>Category</label>
-                <select id="mealItemCategory">
+                <label>Category *</label>
+                <select id="mealCategory">
                     <option value="">Select Category</option>
                 </select>
             </div>
 
             <div class="checkbox-group">
-                <label><input type="checkbox" id="mealItemVeg"> Vegetarian</label>
-                <label><input type="checkbox" id="mealItemNonVeg"> Non-Vegetarian</label>
-            </div>
-
-            <div class="form-group">
-                <label>Description</label>
-                <textarea id="mealItemDescription" placeholder="Description" style="height: 60px;"></textarea>
+                <label><input type="checkbox" id="mealVeg"> Vegetarian</label>
+                <label><input type="checkbox" id="mealNonVeg"> Non-Vegetarian</label>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
                     <label>Calories</label>
-                    <input type="number" id="mealItemCalories" placeholder="350">
+                    <input type="number" id="mealCalories" placeholder="350">
                 </div>
                 <div class="form-group">
                     <label>Weight</label>
-                    <input type="text" id="mealItemWeight" placeholder="300g">
+                    <input type="text" id="mealWeight" placeholder="300g">
                 </div>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
-                    <label>MRP (₹)</label>
-                    <input type="number" id="mealItemMrp" placeholder="249">
+                    <label>MRP (₹) *</label>
+                    <input type="number" id="mealPrice" placeholder="249">
                 </div>
                 <div class="form-group">
                     <label>Prep Time (min)</label>
-                    <input type="number" id="mealItemPrepTime" placeholder="15">
+                    <input type="number" id="mealPrepTime" placeholder="15">
                 </div>
-            </div>
-
-            <div class="form-group">
-                <label>Ingredients</label>
-                <textarea id="mealItemIngredients" placeholder="Comma separated" style="height: 60px;"></textarea>
-            </div>
-
-            <button class="btn btn-primary" onclick="addMealItem()" style="width: 100%;">Create Meal Item</button>
-        </div>
-    </div>
-
-    <!-- Add Territory Modal -->
-    <div id="addTerritoryModal" class="modal">
-        <div class="modal-content">
-            <span class="modal-close" onclick="closeModal('addTerritoryModal')">&times;</span>
-            <div class="modal-header">Add Territory</div>
-            
-            <div class="form-group">
-                <label>Territory Name</label>
-                <input type="text" id="territoryName" placeholder="e.g., Kochi">
             </div>
 
             <div class="form-group">
                 <label>Description</label>
-                <textarea id="territoryDescription" placeholder="Territory description" style="height: 80px;"></textarea>
+                <textarea id="mealDesc" placeholder="Item description" style="height: 60px;"></textarea>
             </div>
 
-            <button class="btn btn-primary" onclick="addTerritory()" style="width: 100%;">Create Territory</button>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 20px;" onclick="addMeal()">
+                <i class="fas fa-save"></i> Create Item
+            </button>
         </div>
     </div>
 
-    <!-- Add Kitchen Modal -->
-    <div id="addKitchenModal" class="modal">
+    <!-- Territory Modal -->
+    <div id="territoryModal" class="modal">
         <div class="modal-content">
-            <span class="modal-close" onclick="closeModal('addKitchenModal')">&times;</span>
+            <button class="modal-close" onclick="closeTerritoryModal()">&times;</button>
+            <div class="modal-header">Add Territory</div>
+            
+            <div class="form-group">
+                <label>Territory Name *</label>
+                <input type="text" id="terrName" placeholder="e.g., Bangalore">
+            </div>
+
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="terrDesc" placeholder="Territory description" style="height: 80px;"></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 20px;" onclick="addTerritory()">
+                <i class="fas fa-save"></i> Create Territory
+            </button>
+        </div>
+    </div>
+
+    <!-- Kitchen Modal -->
+    <div id="kitchenModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeKitchenModal()">&times;</button>
             <div class="modal-header">Add Kitchen</div>
             
             <div class="form-group">
-                <label>Kitchen Name</label>
+                <label>Kitchen Name *</label>
                 <input type="text" id="kitchenName" placeholder="e.g., Central Kitchen">
             </div>
 
             <div class="form-group">
-                <label>Territory</label>
+                <label>Territory *</label>
                 <select id="kitchenTerritory">
                     <option value="">Select Territory</option>
                 </select>
@@ -649,98 +753,83 @@
 
             <div class="form-group">
                 <label>Address</label>
-                <textarea id="kitchenAddress" placeholder="Kitchen address" style="height: 60px;"></textarea>
+                <textarea id="kitchenAddr" placeholder="Kitchen address" style="height: 60px;"></textarea>
             </div>
 
             <div class="form-group">
                 <label>Capacity (meals/day)</label>
-                <input type="number" id="kitchenCapacity" placeholder="100">
+                <input type="number" id="kitchenCap" placeholder="100">
             </div>
 
-            <button class="btn btn-primary" onclick="addKitchen()" style="width: 100%;">Create Kitchen</button>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 20px;" onclick="addKitchen()">
+                <i class="fas fa-save"></i> Create Kitchen
+            </button>
         </div>
     </div>
 
-    <!-- Add Subscription Modal -->
-    <div id="addSubscriptionModal" class="modal">
+    <!-- Plan Modal -->
+    <div id="planModal" class="modal">
         <div class="modal-content">
-            <span class="modal-close" onclick="closeModal('addSubscriptionModal')">&times;</span>
+            <button class="modal-close" onclick="closePlanModal()">&times;</button>
             <div class="modal-header">Add Subscription Plan</div>
             
             <div class="form-group">
-                <label>Plan Name</label>
-                <input type="text" id="subName" placeholder="e.g., 7-Day Pure Veg">
+                <label>Plan Name *</label>
+                <input type="text" id="planName" placeholder="e.g., 7-Day Pure Veg">
             </div>
 
             <div class="form-row">
                 <div class="form-group">
-                    <label>Duration (days)</label>
-                    <input type="number" id="subDuration" placeholder="7">
+                    <label>Duration (days) *</label>
+                    <input type="number" id="planDays" placeholder="7">
                 </div>
                 <div class="form-group">
-                    <label>Num Deliveries</label>
-                    <input type="number" id="subDeliveries" placeholder="6">
+                    <label>Deliveries *</label>
+                    <input type="number" id="planDeliveries" placeholder="6">
                 </div>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
-                    <label>Diet Type</label>
-                    <select id="subDietType">
+                    <label>Diet Type *</label>
+                    <select id="planDietType">
+                        <option value="">Select Type</option>
                         <option value="pure_veg">Pure Vegetarian</option>
                         <option value="non_veg">Non-Vegetarian</option>
-                        <option value="mixed">Mixed (Alternate Days)</option>
+                        <option value="mixed">Mixed (Alternate)</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Price (₹)</label>
-                    <input type="number" id="subPrice" placeholder="599">
+                    <label>Price (₹) *</label>
+                    <input type="number" id="planPrice" placeholder="599">
                 </div>
             </div>
 
             <div class="form-group">
-                <label>Meal Selection (comma separated)</label>
-                <input type="text" id="subMealSelection" placeholder="breakfast,lunch,dinner">
+                <label>Meal Selection *</label>
+                <input type="text" id="planMeals" placeholder="breakfast,lunch,dinner">
             </div>
 
-            <div class="form-group">
-                <label>Description</label>
-                <textarea id="subDescription" placeholder="Plan description" style="height: 60px;"></textarea>
-            </div>
-
-            <button class="btn btn-primary" onclick="addSubscription()" style="width: 100%;">Create Plan</button>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 20px;" onclick="addPlan()">
+                <i class="fas fa-save"></i> Create Plan
+            </button>
         </div>
     </div>
 
     <script>
         const API = '/api';
-        let authToken = null;
-        let currentUser = null;
+        let token = null;
+        let user = null;
 
-        // Check login on page load
-        window.addEventListener('load', function() {
-            const token = sessionStorage.getItem('token');
-            const user = sessionStorage.getItem('user');
-            
-            if (token && user) {
-                authToken = token;
-                currentUser = JSON.parse(user);
-                showApp();
-                loadInitialData();
-            } else {
-                showLogin();
+        // Initialize
+        window.addEventListener('load', () => {
+            const savedToken = sessionStorage.getItem('token');
+            if (savedToken) {
+                token = savedToken;
+                user = JSON.parse(sessionStorage.getItem('user'));
+                showDashboard();
             }
         });
-
-        function showLogin() {
-            document.getElementById('loginScreen').style.display = 'flex';
-            document.getElementById('appScreen').classList.remove('active');
-        }
-
-        function showApp() {
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('appScreen').classList.add('active');
-        }
 
         function handleLogin() {
             const email = document.getElementById('loginEmail').value;
@@ -748,8 +837,7 @@
             const errorDiv = document.getElementById('loginError');
 
             if (!email || !password) {
-                errorDiv.textContent = 'Please fill all fields';
-                errorDiv.style.display = 'block';
+                showAlert(errorDiv, 'Fill all fields');
                 return;
             }
 
@@ -761,504 +849,423 @@
             .then(r => r.json())
             .then(data => {
                 if (data.error) {
-                    errorDiv.textContent = data.error;
-                    errorDiv.style.display = 'block';
+                    showAlert(errorDiv, data.error);
                     return;
                 }
-
-                authToken = data.token;
-                currentUser = data.user;
-                sessionStorage.setItem('token', data.token);
-                sessionStorage.setItem('user', JSON.stringify(data.user));
-
-                showApp();
-                loadInitialData();
+                token = data.token;
+                user = data.user;
+                sessionStorage.setItem('token', token);
+                sessionStorage.setItem('user', JSON.stringify(user));
+                showDashboard();
             })
-            .catch(err => {
-                errorDiv.textContent = 'Error: ' + err.message;
-                errorDiv.style.display = 'block';
-            });
+            .catch(err => showAlert(errorDiv, err.message));
+        }
+
+        function showDashboard() {
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('dashboard').classList.add('active');
+            document.getElementById('userAvatar').textContent = user.name.charAt(0).toUpperCase();
+            loadAllData();
         }
 
         function handleLogout() {
             sessionStorage.clear();
-            authToken = null;
-            currentUser = null;
-            document.getElementById('loginEmail').value = '';
-            document.getElementById('loginPassword').value = '';
-            document.getElementById('loginError').style.display = 'none';
-            showLogin();
+            location.reload();
         }
 
-        function loadInitialData() {
-            loadCategories();
-            loadMealItems();
-            loadTerritories();
-            loadKitchens();
-            loadSubscriptionPlans();
-        }
-
-        function switchSection(sectionId) {
+        function switchTab(tabName) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.getElementById(sectionId).classList.add('active');
-            
-            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-            event.target.closest('.nav-item').classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.closest('.tab-btn').classList.add('active');
         }
 
-        function showModal(modalId) {
-            document.getElementById(modalId).classList.add('active');
+        function showAlert(element, message) {
+            element.textContent = message;
+            element.style.display = 'block';
+            setTimeout(() => element.style.display = 'none', 4000);
         }
 
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.remove('active');
-        }
-
-        // ==================== CATEGORIES ====================
+        // ===== CATEGORIES =====
 
         async function loadCategories() {
             try {
-                const response = await fetch(`${API}/admin/categories`, {
-                    headers: { 'Authorization': `Bearer ${authToken}` }
+                const res = await fetch(`${API}/admin/categories`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
-                const categories = await response.json();
-                
+                const categories = await res.json();
+
                 let html = '';
                 if (categories.length === 0) {
-                    html = '<p>No categories yet. Click "Add Category" to create one.</p>';
+                    html = '<div class="empty-state"><i class="fas fa-inbox"></i><p>No categories yet</p></div>';
                 } else {
-                    html = '<table class="table"><thead><tr><th>Name</th><th>Description</th><th>Status</th></tr></thead><tbody>';
+                    html = '<div class="table-container"><table class="table"><thead><tr><th>Name</th><th>Description</th><th>Status</th></tr></thead><tbody>';
                     categories.forEach(cat => {
                         html += `<tr>
                             <td><strong>${cat.name}</strong></td>
                             <td>${cat.description || '-'}</td>
-                            <td><span style="color: green;">●</span> Active</td>
+                            <td><span class="badge badge-success">Active</span></td>
                         </tr>`;
                     });
-                    html += '</tbody></table>';
+                    html += '</tbody></table></div>';
                 }
                 document.getElementById('categoriesList').innerHTML = html;
-                
+
                 // Update dropdown
-                const select = document.getElementById('mealItemCategory');
+                const select = document.getElementById('mealCategory');
                 select.innerHTML = '<option value="">Select Category</option>';
                 categories.forEach(cat => {
-                    const option = document.createElement('option');
-                    option.value = cat.id;
-                    option.text = cat.name;
-                    select.appendChild(option);
+                    const opt = document.createElement('option');
+                    opt.value = cat.id;
+                    opt.textContent = cat.name;
+                    select.appendChild(opt);
                 });
             } catch (err) {
-                console.error('Error:', err);
+                document.getElementById('categoriesList').innerHTML = `<div class="empty-state">Error loading</div>`;
             }
         }
 
-        function showAddCategoryModal() {
-            document.getElementById('categoryName').value = '';
-            document.getElementById('categoryDescription').value = '';
-            showModal('addCategoryModal');
+        function showCategoryModal() {
+            document.getElementById('catName').value = '';
+            document.getElementById('catDesc').value = '';
+            document.getElementById('categoryModal').classList.add('active');
+        }
+
+        function closeCategoryModal() {
+            document.getElementById('categoryModal').classList.remove('active');
         }
 
         async function addCategory() {
-            const name = document.getElementById('categoryName').value;
-            const description = document.getElementById('categoryDescription').value;
-            const errorDiv = document.getElementById('categoryError');
-            const successDiv = document.getElementById('categorySuccess');
+            const name = document.getElementById('catName').value;
+            const desc = document.getElementById('catDesc').value;
 
-            if (!name) {
-                errorDiv.textContent = 'Category name required';
-                errorDiv.style.display = 'block';
-                return;
-            }
+            if (!name) return;
 
-            try {
-                const response = await fetch(`${API}/admin/categories`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${authToken}`
-                    },
-                    body: JSON.stringify({ name, description })
-                });
+            const res = await fetch(`${API}/admin/categories`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ name, description: desc })
+            });
 
-                const data = await response.json();
-
-                if (!response.ok) {
-                    errorDiv.textContent = data.error || 'Error creating category';
-                    errorDiv.style.display = 'block';
-                    return;
-                }
-
-                successDiv.textContent = 'Category created successfully!';
-                successDiv.style.display = 'block';
-                setTimeout(() => successDiv.style.display = 'none', 3000);
-                
-                closeModal('addCategoryModal');
+            const data = await res.json();
+            if (res.ok) {
+                showAlert(document.getElementById('catSuccess'), '✅ Category created!');
+                closeCategoryModal();
                 loadCategories();
-            } catch (err) {
-                errorDiv.textContent = 'Error: ' + err.message;
-                errorDiv.style.display = 'block';
+            } else {
+                showAlert(document.getElementById('catError'), data.error);
             }
         }
 
-        // ==================== MEAL ITEMS ====================
+        // ===== MEALS =====
 
-        async function loadMealItems() {
+        async function loadMeals() {
             try {
-                const response = await fetch(`${API}/admin/meal-items`, {
-                    headers: { 'Authorization': `Bearer ${authToken}` }
+                const res = await fetch(`${API}/admin/meal-items`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
-                const items = await response.json();
-                
+                const items = await res.json();
+
                 let html = '';
                 if (items.length === 0) {
-                    html = '<p>No meal items yet. Click "Add Meal Item" to create one.</p>';
+                    html = '<div class="empty-state"><i class="fas fa-inbox"></i><p>No meal items yet</p></div>';
                 } else {
-                    html = '<table class="table"><thead><tr><th>Name</th><th>Category</th><th>Type</th><th>MRP</th><th>Calories</th></tr></thead><tbody>';
+                    html = '<div class="table-container"><table class="table"><thead><tr><th>Name</th><th>Category</th><th>Type</th><th>Price</th><th>Calories</th></tr></thead><tbody>';
                     items.forEach(item => {
                         const type = item.veg_tag && item.non_veg_tag ? 'Both' : item.veg_tag ? 'Veg' : 'Non-Veg';
                         html += `<tr>
                             <td><strong>${item.name}</strong></td>
                             <td>${item.category_name}</td>
-                            <td>${type}</td>
+                            <td><span class="badge badge-primary">${type}</span></td>
                             <td>₹${item.mrp}</td>
                             <td>${item.calories} kcal</td>
                         </tr>`;
                     });
-                    html += '</tbody></table>';
+                    html += '</tbody></table></div>';
                 }
-                document.getElementById('mealItemsList').innerHTML = html;
+                document.getElementById('mealsList').innerHTML = html;
             } catch (err) {
-                console.error('Error:', err);
+                document.getElementById('mealsList').innerHTML = `<div class="empty-state">Error loading</div>`;
             }
         }
 
-        function showAddMealItemModal() {
-            document.getElementById('mealItemName').value = '';
-            document.getElementById('mealItemDescription').value = '';
-            document.getElementById('mealItemVeg').checked = false;
-            document.getElementById('mealItemNonVeg').checked = false;
-            document.getElementById('mealItemCalories').value = '';
-            document.getElementById('mealItemWeight').value = '';
-            document.getElementById('mealItemMrp').value = '';
-            document.getElementById('mealItemPrepTime').value = '';
-            document.getElementById('mealItemIngredients').value = '';
-            showModal('addMealItemModal');
+        function showMealModal() {
+            document.getElementById('mealName').value = '';
+            document.getElementById('mealVeg').checked = false;
+            document.getElementById('mealNonVeg').checked = false;
+            document.getElementById('mealCalories').value = '';
+            document.getElementById('mealWeight').value = '';
+            document.getElementById('mealPrice').value = '';
+            document.getElementById('mealPrepTime').value = '';
+            document.getElementById('mealDesc').value = '';
+            document.getElementById('mealModal').classList.add('active');
         }
 
-        async function addMealItem() {
-            const name = document.getElementById('mealItemName').value;
-            const category_id = document.getElementById('mealItemCategory').value;
-            const veg_tag = document.getElementById('mealItemVeg').checked;
-            const non_veg_tag = document.getElementById('mealItemNonVeg').checked;
-            const description = document.getElementById('mealItemDescription').value;
-            const calories = document.getElementById('mealItemCalories').value;
-            const weight = document.getElementById('mealItemWeight').value;
-            const mrp = document.getElementById('mealItemMrp').value;
-            const prep_time_minutes = document.getElementById('mealItemPrepTime').value;
-            const ingredients = document.getElementById('mealItemIngredients').value;
-            const errorDiv = document.getElementById('mealItemError');
-            const successDiv = document.getElementById('mealItemSuccess');
+        function closeMealModal() {
+            document.getElementById('mealModal').classList.remove('active');
+        }
 
-            if (!name || !category_id || (!veg_tag && !non_veg_tag)) {
-                errorDiv.textContent = 'Please fill all required fields';
-                errorDiv.style.display = 'block';
-                return;
-            }
+        async function addMeal() {
+            const name = document.getElementById('mealName').value;
+            const category_id = document.getElementById('mealCategory').value;
+            const veg = document.getElementById('mealVeg').checked;
+            const nonVeg = document.getElementById('mealNonVeg').checked;
 
-            try {
-                const response = await fetch(`${API}/admin/meal-items`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${authToken}`
-                    },
-                    body: JSON.stringify({
-                        name, category_id, veg_tag, non_veg_tag, description,
-                        calories, weight, mrp, prep_time_minutes, ingredients
-                    })
-                });
+            if (!name || !category_id || (!veg && !nonVeg)) return;
 
-                const data = await response.json();
+            const res = await fetch(`${API}/admin/meal-items`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    name, category_id, veg_tag: veg, non_veg_tag: nonVeg,
+                    description: document.getElementById('mealDesc').value,
+                    calories: document.getElementById('mealCalories').value,
+                    weight: document.getElementById('mealWeight').value,
+                    mrp: document.getElementById('mealPrice').value,
+                    prep_time_minutes: document.getElementById('mealPrepTime').value
+                })
+            });
 
-                if (!response.ok) {
-                    errorDiv.textContent = data.error || 'Error creating meal item';
-                    errorDiv.style.display = 'block';
-                    return;
-                }
-
-                successDiv.textContent = 'Meal item created successfully!';
-                successDiv.style.display = 'block';
-                setTimeout(() => successDiv.style.display = 'none', 3000);
-                
-                closeModal('addMealItemModal');
-                loadMealItems();
-            } catch (err) {
-                errorDiv.textContent = 'Error: ' + err.message;
-                errorDiv.style.display = 'block';
+            const data = await res.json();
+            if (res.ok) {
+                showAlert(document.getElementById('mealSuccess'), '✅ Meal item created!');
+                closeMealModal();
+                loadMeals();
+            } else {
+                showAlert(document.getElementById('mealError'), data.error);
             }
         }
 
-        // ==================== TERRITORIES ====================
+        // ===== TERRITORIES =====
 
         async function loadTerritories() {
             try {
-                const response = await fetch(`${API}/admin/territories`, {
-                    headers: { 'Authorization': `Bearer ${authToken}` }
+                const res = await fetch(`${API}/admin/territories`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
-                const territories = await response.json();
-                
+                const items = await res.json();
+
                 let html = '';
-                if (territories.length === 0) {
-                    html = '<p>No territories yet. Click "Add Territory" to create one.</p>';
+                if (items.length === 0) {
+                    html = '<div class="empty-state"><i class="fas fa-inbox"></i><p>No territories yet</p></div>';
                 } else {
-                    html = '<table class="table"><thead><tr><th>Name</th><th>Description</th><th>Status</th></tr></thead><tbody>';
-                    territories.forEach(terr => {
+                    html = '<div class="table-container"><table class="table"><thead><tr><th>Name</th><th>Description</th><th>Status</th></tr></thead><tbody>';
+                    items.forEach(item => {
                         html += `<tr>
-                            <td><strong>${terr.name}</strong></td>
-                            <td>${terr.description || '-'}</td>
-                            <td><span style="color: green;">●</span> Active</td>
+                            <td><strong>${item.name}</strong></td>
+                            <td>${item.description || '-'}</td>
+                            <td><span class="badge badge-success">Active</span></td>
                         </tr>`;
                     });
-                    html += '</tbody></table>';
+                    html += '</tbody></table></div>';
                 }
                 document.getElementById('territoriesList').innerHTML = html;
-                
+
                 // Update dropdown
                 const select = document.getElementById('kitchenTerritory');
                 select.innerHTML = '<option value="">Select Territory</option>';
-                territories.forEach(terr => {
-                    const option = document.createElement('option');
-                    option.value = terr.id;
-                    option.text = terr.name;
-                    select.appendChild(option);
+                items.forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = item.id;
+                    opt.textContent = item.name;
+                    select.appendChild(opt);
                 });
             } catch (err) {
-                console.error('Error:', err);
+                document.getElementById('territoriesList').innerHTML = `<div class="empty-state">Error loading</div>`;
             }
         }
 
-        function showAddTerritoryModal() {
-            document.getElementById('territoryName').value = '';
-            document.getElementById('territoryDescription').value = '';
-            showModal('addTerritoryModal');
+        function showTerritoryModal() {
+            document.getElementById('terrName').value = '';
+            document.getElementById('terrDesc').value = '';
+            document.getElementById('territoryModal').classList.add('active');
+        }
+
+        function closeTerritoryModal() {
+            document.getElementById('territoryModal').classList.remove('active');
         }
 
         async function addTerritory() {
-            const name = document.getElementById('territoryName').value;
-            const description = document.getElementById('territoryDescription').value;
-            const errorDiv = document.getElementById('territoryError');
-            const successDiv = document.getElementById('territorySuccess');
+            const name = document.getElementById('terrName').value;
+            const desc = document.getElementById('terrDesc').value;
 
-            if (!name) {
-                errorDiv.textContent = 'Territory name required';
-                errorDiv.style.display = 'block';
-                return;
-            }
+            if (!name) return;
 
-            try {
-                const response = await fetch(`${API}/admin/territories`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${authToken}`
-                    },
-                    body: JSON.stringify({ name, description })
-                });
+            const res = await fetch(`${API}/admin/territories`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ name, description: desc })
+            });
 
-                const data = await response.json();
-
-                if (!response.ok) {
-                    errorDiv.textContent = data.error || 'Error creating territory';
-                    errorDiv.style.display = 'block';
-                    return;
-                }
-
-                successDiv.textContent = 'Territory created successfully!';
-                successDiv.style.display = 'block';
-                setTimeout(() => successDiv.style.display = 'none', 3000);
-                
-                closeModal('addTerritoryModal');
+            const data = await res.json();
+            if (res.ok) {
+                showAlert(document.getElementById('terrSuccess'), '✅ Territory created!');
+                closeTerritoryModal();
                 loadTerritories();
-            } catch (err) {
-                errorDiv.textContent = 'Error: ' + err.message;
-                errorDiv.style.display = 'block';
+            } else {
+                showAlert(document.getElementById('terrError'), data.error);
             }
         }
 
-        // ==================== KITCHENS ====================
+        // ===== KITCHENS =====
 
         async function loadKitchens() {
             try {
-                const response = await fetch(`${API}/admin/kitchens`, {
-                    headers: { 'Authorization': `Bearer ${authToken}` }
+                const res = await fetch(`${API}/admin/kitchens`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
-                const kitchens = await response.json();
-                
+                const items = await res.json();
+
                 let html = '';
-                if (kitchens.length === 0) {
-                    html = '<p>No kitchens yet. Click "Add Kitchen" to create one.</p>';
+                if (items.length === 0) {
+                    html = '<div class="empty-state"><i class="fas fa-inbox"></i><p>No kitchens yet</p></div>';
                 } else {
-                    html = '<table class="table"><thead><tr><th>Name</th><th>Territory</th><th>Address</th><th>Capacity</th></tr></thead><tbody>';
-                    kitchens.forEach(kitchen => {
+                    html = '<div class="table-container"><table class="table"><thead><tr><th>Name</th><th>Territory</th><th>Address</th><th>Capacity</th></tr></thead><tbody>';
+                    items.forEach(item => {
                         html += `<tr>
-                            <td><strong>${kitchen.name}</strong></td>
-                            <td>${kitchen.territory_name || '-'}</td>
-                            <td>${kitchen.address || '-'}</td>
-                            <td>${kitchen.capacity || '-'} meals/day</td>
+                            <td><strong>${item.name}</strong></td>
+                            <td>${item.territory_name || '-'}</td>
+                            <td>${item.address || '-'}</td>
+                            <td>${item.capacity || '-'} meals/day</td>
                         </tr>`;
                     });
-                    html += '</tbody></table>';
+                    html += '</tbody></table></div>';
                 }
                 document.getElementById('kitchensList').innerHTML = html;
             } catch (err) {
-                console.error('Error:', err);
+                document.getElementById('kitchensList').innerHTML = `<div class="empty-state">Error loading</div>`;
             }
         }
 
-        function showAddKitchenModal() {
+        function showKitchenModal() {
             document.getElementById('kitchenName').value = '';
-            document.getElementById('kitchenAddress').value = '';
-            document.getElementById('kitchenCapacity').value = '';
-            showModal('addKitchenModal');
+            document.getElementById('kitchenAddr').value = '';
+            document.getElementById('kitchenCap').value = '';
+            document.getElementById('kitchenModal').classList.add('active');
+        }
+
+        function closeKitchenModal() {
+            document.getElementById('kitchenModal').classList.remove('active');
         }
 
         async function addKitchen() {
             const name = document.getElementById('kitchenName').value;
             const territory_id = document.getElementById('kitchenTerritory').value;
-            const address = document.getElementById('kitchenAddress').value;
-            const capacity = document.getElementById('kitchenCapacity').value;
-            const errorDiv = document.getElementById('kitchenError');
-            const successDiv = document.getElementById('kitchenSuccess');
+            const address = document.getElementById('kitchenAddr').value;
+            const capacity = document.getElementById('kitchenCap').value;
 
-            if (!name || !territory_id) {
-                errorDiv.textContent = 'Name and territory required';
-                errorDiv.style.display = 'block';
-                return;
-            }
+            if (!name || !territory_id) return;
 
-            try {
-                const response = await fetch(`${API}/admin/kitchens`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${authToken}`
-                    },
-                    body: JSON.stringify({ name, territory_id, address, capacity })
-                });
+            const res = await fetch(`${API}/admin/kitchens`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ name, territory_id, address, capacity })
+            });
 
-                const data = await response.json();
-
-                if (!response.ok) {
-                    errorDiv.textContent = data.error || 'Error creating kitchen';
-                    errorDiv.style.display = 'block';
-                    return;
-                }
-
-                successDiv.textContent = 'Kitchen created successfully!';
-                successDiv.style.display = 'block';
-                setTimeout(() => successDiv.style.display = 'none', 3000);
-                
-                closeModal('addKitchenModal');
+            const data = await res.json();
+            if (res.ok) {
+                showAlert(document.getElementById('kitchenSuccess'), '✅ Kitchen created!');
+                closeKitchenModal();
                 loadKitchens();
-            } catch (err) {
-                errorDiv.textContent = 'Error: ' + err.message;
-                errorDiv.style.display = 'block';
+            } else {
+                showAlert(document.getElementById('kitchenError'), data.error);
             }
         }
 
-        // ==================== SUBSCRIPTION PLANS ====================
+        // ===== PLANS =====
 
-        async function loadSubscriptionPlans() {
+        async function loadPlans() {
             try {
-                const response = await fetch(`${API}/admin/subscription-plans`, {
-                    headers: { 'Authorization': `Bearer ${authToken}` }
+                const res = await fetch(`${API}/admin/subscription-plans`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
-                const plans = await response.json();
-                
+                const items = await res.json();
+
                 let html = '';
-                if (plans.length === 0) {
-                    html = '<p>No subscription plans yet. Click "Add Plan" to create one.</p>';
+                if (items.length === 0) {
+                    html = '<div class="empty-state"><i class="fas fa-inbox"></i><p>No plans yet</p></div>';
                 } else {
-                    html = '<table class="table"><thead><tr><th>Name</th><th>Duration</th><th>Deliveries</th><th>Diet Type</th><th>Price</th></tr></thead><tbody>';
-                    plans.forEach(plan => {
+                    html = '<div class="table-container"><table class="table"><thead><tr><th>Name</th><th>Duration</th><th>Deliveries</th><th>Diet Type</th><th>Price</th></tr></thead><tbody>';
+                    items.forEach(item => {
                         html += `<tr>
-                            <td><strong>${plan.name}</strong></td>
-                            <td>${plan.duration_days} days</td>
-                            <td>${plan.num_deliveries}</td>
-                            <td>${plan.diet_type.replace('_', ' ').toUpperCase()}</td>
-                            <td>₹${plan.price}</td>
+                            <td><strong>${item.name}</strong></td>
+                            <td>${item.duration_days} days</td>
+                            <td>${item.num_deliveries}</td>
+                            <td>${item.diet_type.replace('_', ' ').toUpperCase()}</td>
+                            <td>₹${item.price}</td>
                         </tr>`;
                     });
-                    html += '</tbody></table>';
+                    html += '</tbody></table></div>';
                 }
-                document.getElementById('subscriptionPlansList').innerHTML = html;
+                document.getElementById('plansList').innerHTML = html;
             } catch (err) {
-                console.error('Error:', err);
+                document.getElementById('plansList').innerHTML = `<div class="empty-state">Error loading</div>`;
             }
         }
 
-        function showAddSubscriptionModal() {
-            document.getElementById('subName').value = '';
-            document.getElementById('subDuration').value = '';
-            document.getElementById('subDeliveries').value = '';
-            document.getElementById('subPrice').value = '';
-            document.getElementById('subDescription').value = '';
-            document.getElementById('subMealSelection').value = '';
-            showModal('addSubscriptionModal');
+        function showPlanModal() {
+            document.getElementById('planName').value = '';
+            document.getElementById('planDays').value = '';
+            document.getElementById('planDeliveries').value = '';
+            document.getElementById('planPrice').value = '';
+            document.getElementById('planMeals').value = '';
+            document.getElementById('planModal').classList.add('active');
         }
 
-        async function addSubscription() {
-            const name = document.getElementById('subName').value;
-            const duration_days = parseInt(document.getElementById('subDuration').value);
-            const num_deliveries = parseInt(document.getElementById('subDeliveries').value);
-            const diet_type = document.getElementById('subDietType').value;
-            const price = parseFloat(document.getElementById('subPrice').value);
-            const meal_selection = document.getElementById('subMealSelection').value;
-            const description = document.getElementById('subDescription').value;
-            const errorDiv = document.getElementById('subscriptionError');
-            const successDiv = document.getElementById('subscriptionSuccess');
+        function closePlanModal() {
+            document.getElementById('planModal').classList.remove('active');
+        }
 
-            if (!name || !duration_days || !num_deliveries || !diet_type || !price || !meal_selection) {
-                errorDiv.textContent = 'Please fill all required fields';
-                errorDiv.style.display = 'block';
-                return;
+        async function addPlan() {
+            const name = document.getElementById('planName').value;
+            const duration_days = parseInt(document.getElementById('planDays').value);
+            const num_deliveries = parseInt(document.getElementById('planDeliveries').value);
+            const diet_type = document.getElementById('planDietType').value;
+            const price = parseFloat(document.getElementById('planPrice').value);
+            const meal_selection = document.getElementById('planMeals').value;
+
+            if (!name || !duration_days || !num_deliveries || !diet_type || !price || !meal_selection) return;
+
+            const res = await fetch(`${API}/admin/subscription-plans`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ name, duration_days, num_deliveries, diet_type, price, meal_selection })
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                showAlert(document.getElementById('planSuccess'), '✅ Plan created!');
+                closePlanModal();
+                loadPlans();
+            } else {
+                showAlert(document.getElementById('planError'), data.error);
             }
+        }
 
-            try {
-                const response = await fetch(`${API}/admin/subscription-plans`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${authToken}`
-                    },
-                    body: JSON.stringify({
-                        name, duration_days, num_deliveries, diet_type, price,
-                        meal_selection,
-                        description
-                    })
-                });
+        // ===== LOAD ALL =====
 
-                const data = await response.json();
-
-                if (!response.ok) {
-                    errorDiv.textContent = data.error || 'Error creating subscription';
-                    errorDiv.style.display = 'block';
-                    return;
-                }
-
-                successDiv.textContent = 'Subscription plan created successfully!';
-                successDiv.style.display = 'block';
-                setTimeout(() => successDiv.style.display = 'none', 3000);
-                
-                closeModal('addSubscriptionModal');
-                loadSubscriptionPlans();
-            } catch (err) {
-                errorDiv.textContent = 'Error: ' + err.message;
-                errorDiv.style.display = 'block';
-            }
+        async function loadAllData() {
+            await loadCategories();
+            await loadMeals();
+            await loadTerritories();
+            await loadKitchens();
+            await loadPlans();
         }
     </script>
-
 </body>
 </html>
