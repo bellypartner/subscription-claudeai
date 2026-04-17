@@ -184,7 +184,7 @@ app.post('/api/auth/login', (req, res) => {
         const { email, password } = req.body;
         if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
 
-        const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+        const user = db.prepare(`SELECT * FROM users WHERE email = ?`).get(email);
         if (!user || !bcrypt.compareSync(password, user.password)) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
@@ -210,14 +210,14 @@ app.post('/api/auth/login', (req, res) => {
 
 app.get('/api/admin/stats', verifyToken, (req, res) => {
     try {
-        const totalCustomers = db.prepare('SELECT COUNT(*) as count FROM customers WHERE status = "active"').get();
-        const totalOrders = db.prepare('SELECT COUNT(*) as count FROM orders').get();
-        const activeOrders = db.prepare('SELECT COUNT(*) as count FROM orders WHERE order_status = "active"').get();
-        const totalRevenue = db.prepare('SELECT COALESCE(SUM(paid_amount), 0) as total FROM orders').get();
-        const pendingDeliveries = db.prepare('SELECT COUNT(*) as count FROM deliveries WHERE status = "pending" AND delivery_date = date("now")').get();
-        const todayDeliveries = db.prepare('SELECT COUNT(*) as count FROM deliveries WHERE delivery_date = date("now")').get();
-        const totalMeals = db.prepare('SELECT COUNT(*) as count FROM meal_items WHERE status = "active"').get();
-        const totalPlans = db.prepare('SELECT COUNT(*) as count FROM subscription_plans WHERE status = "active"').get();
+        const totalCustomers = db.prepare(`SELECT COUNT(*) as count FROM customers WHERE status = 'active'`).get();
+        const totalOrders = db.prepare(`SELECT COUNT(*) as count FROM orders`).get();
+        const activeOrders = db.prepare(`SELECT COUNT(*) as count FROM orders WHERE order_status = 'active'`).get();
+        const totalRevenue = db.prepare(`SELECT COALESCE(SUM(paid_amount), 0) as total FROM orders`).get();
+        const pendingDeliveries = db.prepare(`SELECT COUNT(*) as count FROM deliveries WHERE status = 'pending' AND delivery_date = date('now')`).get();
+        const todayDeliveries = db.prepare(`SELECT COUNT(*) as count FROM deliveries WHERE delivery_date = date('now')`).get();
+        const totalMeals = db.prepare(`SELECT COUNT(*) as count FROM meal_items WHERE status = 'active'`).get();
+        const totalPlans = db.prepare(`SELECT COUNT(*) as count FROM subscription_plans WHERE status = 'active'`).get();
 
         // Recent orders
         const recentOrders = db.prepare(`
@@ -260,7 +260,7 @@ app.get('/api/admin/stats', verifyToken, (req, res) => {
 
 app.get('/api/admin/categories', verifyToken, (req, res) => {
     try {
-        const categories = db.prepare('SELECT * FROM meal_categories WHERE status = "active" ORDER BY created_at DESC').all();
+        const categories = db.prepare(`SELECT * FROM meal_categories WHERE status = 'active' ORDER BY created_at DESC`).all();
         res.json(categories || []);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -271,7 +271,7 @@ app.post('/api/admin/categories', verifyToken, (req, res) => {
     try {
         const { name, description } = req.body;
         if (!name) return res.status(400).json({ error: 'Name required' });
-        const result = db.prepare('INSERT INTO meal_categories (name, description) VALUES (?, ?)').run(name, description || '');
+        const result = db.prepare(`INSERT INTO meal_categories (name, description) VALUES (?, ?)`).run(name, description || '');
         res.status(201).json({ message: 'Category created', categoryId: result.lastInsertRowid });
     } catch (err) {
         res.status(400).json({ error: err.message });
@@ -280,7 +280,7 @@ app.post('/api/admin/categories', verifyToken, (req, res) => {
 
 app.delete('/api/admin/categories/:id', verifyToken, (req, res) => {
     try {
-        db.prepare('UPDATE meal_categories SET status = "inactive" WHERE id = ?').run(req.params.id);
+        db.prepare(`UPDATE meal_categories SET status = 'inactive' WHERE id = ?`).run(req.params.id);
         res.json({ message: 'Category deleted' });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -295,7 +295,7 @@ app.get('/api/admin/meal-items', verifyToken, (req, res) => {
             SELECT m.*, c.name as category_name 
             FROM meal_items m 
             LEFT JOIN meal_categories c ON m.category_id = c.id 
-            WHERE m.status = "active" ORDER BY m.created_at DESC
+            WHERE m.status = 'active' ORDER BY m.created_at DESC
         `).all();
         res.json(items || []);
     } catch (err) {
@@ -319,7 +319,7 @@ app.post('/api/admin/meal-items', verifyToken, (req, res) => {
 
 app.delete('/api/admin/meal-items/:id', verifyToken, (req, res) => {
     try {
-        db.prepare('UPDATE meal_items SET status = "inactive" WHERE id = ?').run(req.params.id);
+        db.prepare(`UPDATE meal_items SET status = 'inactive' WHERE id = ?`).run(req.params.id);
         res.json({ message: 'Meal deleted' });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -330,7 +330,7 @@ app.delete('/api/admin/meal-items/:id', verifyToken, (req, res) => {
 
 app.get('/api/admin/territories', verifyToken, (req, res) => {
     try {
-        const territories = db.prepare('SELECT * FROM territories WHERE status = "active" ORDER BY created_at DESC').all();
+        const territories = db.prepare(`SELECT * FROM territories WHERE status = 'active' ORDER BY created_at DESC`).all();
         res.json(territories || []);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -341,7 +341,7 @@ app.post('/api/admin/territories', verifyToken, (req, res) => {
     try {
         const { name, description } = req.body;
         if (!name) return res.status(400).json({ error: 'Name required' });
-        const result = db.prepare('INSERT INTO territories (name, description) VALUES (?, ?)').run(name, description || '');
+        const result = db.prepare(`INSERT INTO territories (name, description) VALUES (?, ?)`).run(name, description || '');
         res.status(201).json({ message: 'Territory created', territoryId: result.lastInsertRowid });
     } catch (err) {
         res.status(400).json({ error: err.message });
@@ -356,7 +356,7 @@ app.get('/api/admin/kitchens', verifyToken, (req, res) => {
             SELECT k.*, t.name as territory_name 
             FROM kitchens k 
             LEFT JOIN territories t ON k.territory_id = t.id 
-            WHERE k.status = "active" ORDER BY k.created_at DESC
+            WHERE k.status = 'active' ORDER BY k.created_at DESC
         `).all();
         res.json(kitchens || []);
     } catch (err) {
@@ -368,7 +368,7 @@ app.post('/api/admin/kitchens', verifyToken, (req, res) => {
     try {
         const { name, territory_id, address, capacity } = req.body;
         if (!name || !territory_id) return res.status(400).json({ error: 'Name and territory required' });
-        const result = db.prepare('INSERT INTO kitchens (name, territory_id, address, capacity) VALUES (?, ?, ?, ?)').run(name, territory_id, address || '', capacity || 100);
+        const result = db.prepare(`INSERT INTO kitchens (name, territory_id, address, capacity) VALUES (?, ?, ?, ?)`).run(name, territory_id, address || '', capacity || 100);
         res.status(201).json({ message: 'Kitchen created', kitchenId: result.lastInsertRowid });
     } catch (err) {
         res.status(400).json({ error: err.message });
@@ -379,7 +379,7 @@ app.post('/api/admin/kitchens', verifyToken, (req, res) => {
 
 app.get('/api/admin/subscription-plans', verifyToken, (req, res) => {
     try {
-        const plans = db.prepare('SELECT * FROM subscription_plans WHERE status = "active" ORDER BY created_at DESC').all();
+        const plans = db.prepare(`SELECT * FROM subscription_plans WHERE status = 'active' ORDER BY created_at DESC`).all();
         res.json(plans || []);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -404,7 +404,7 @@ app.post('/api/admin/subscription-plans', verifyToken, (req, res) => {
 
 app.delete('/api/admin/subscription-plans/:id', verifyToken, (req, res) => {
     try {
-        db.prepare('UPDATE subscription_plans SET status = "inactive" WHERE id = ?').run(req.params.id);
+        db.prepare(`UPDATE subscription_plans SET status = 'inactive' WHERE id = ?`).run(req.params.id);
         res.json({ message: 'Plan deleted' });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -421,7 +421,7 @@ app.get('/api/admin/customers', verifyToken, (req, res) => {
             FROM customers c
             LEFT JOIN territories t ON c.territory_id = t.id
             LEFT JOIN orders o ON o.customer_id = c.id
-            WHERE c.status = "active"
+            WHERE c.status = 'active'
             GROUP BY c.id
             ORDER BY c.created_at DESC
         `).all();
@@ -459,7 +459,7 @@ app.put('/api/admin/customers/:id', verifyToken, (req, res) => {
 
 app.delete('/api/admin/customers/:id', verifyToken, (req, res) => {
     try {
-        db.prepare('UPDATE customers SET status = "inactive" WHERE id = ?').run(req.params.id);
+        db.prepare(`UPDATE customers SET status = 'inactive' WHERE id = ?`).run(req.params.id);
         res.json({ message: 'Customer deleted' });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -493,7 +493,7 @@ app.post('/api/admin/orders', verifyToken, (req, res) => {
             return res.status(400).json({ error: 'Customer, plan and start date required' });
         }
 
-        const plan = db.prepare('SELECT * FROM subscription_plans WHERE id = ?').get(plan_id);
+        const plan = db.prepare(`SELECT * FROM subscription_plans WHERE id = ?`).get(plan_id);
         if (!plan) return res.status(404).json({ error: 'Plan not found' });
 
         const endDate = new Date(start_date);
