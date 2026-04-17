@@ -1,1513 +1,860 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Salad Caffe — My Account</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --green: #22c55e;
-            --green-dark: #16a34a;
-            --green-light: #dcfce7;
-            --green-mid: #86efac;
-            --dark: #0f172a;
-            --dark2: #1e293b;
-            --mid: #475569;
-            --muted: #94a3b8;
-            --border: #e2e8f0;
-            --bg: #f8fafc;
-            --white: #ffffff;
-            --red: #ef4444;
-            --red-light: #fef2f2;
-            --amber: #f59e0b;
-            --amber-light: #fffbeb;
-            --blue: #3b82f6;
-            --blue-light: #eff6ff;
-            --shadow: 0 1px 4px rgba(0,0,0,0.07);
-            --shadow-md: 0 4px 20px rgba(0,0,0,0.09);
-            --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
-            --radius: 14px;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: 'DM Sans', sans-serif;
-            background: var(--bg);
-            color: var(--dark);
-            font-size: 14px;
-            min-height: 100vh;
-        }
-
-        /* ===== AUTH SCREENS ===== */
-        #authScreen {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(145deg, #0f2027, #203a43, #2c5364);
-            position: relative;
-            overflow: hidden;
-        }
-
-        #authScreen::before {
-            content: '';
-            position: absolute;
-            width: 500px; height: 500px;
-            background: radial-gradient(circle, rgba(34,197,94,0.18) 0%, transparent 70%);
-            top: -100px; right: -100px; border-radius: 50%;
-        }
-
-        .auth-card {
-            background: white;
-            border-radius: 20px;
-            padding: 0;
-            width: 100%;
-            max-width: 440px;
-            box-shadow: var(--shadow-lg);
-            overflow: hidden;
-            position: relative;
-            z-index: 1;
-        }
-
-        .auth-header {
-            background: linear-gradient(135deg, var(--green-dark), #15803d);
-            padding: 32px 36px 28px;
-            color: white;
-        }
-
-        .auth-logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 8px;
-        }
-
-        .auth-logo-icon {
-            width: 44px; height: 44px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 22px;
-            backdrop-filter: blur(10px);
-        }
-
-        .auth-logo h1 {
-            font-family: 'Playfair Display', serif;
-            font-size: 22px;
-            font-weight: 700;
-        }
-
-        .auth-tagline {
-            font-size: 13px;
-            opacity: 0.8;
-        }
-
-        .auth-tabs {
-            display: flex;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .auth-tab {
-            flex: 1;
-            padding: 14px;
-            text-align: center;
-            cursor: pointer;
-            font-size: 13.5px;
-            font-weight: 600;
-            color: var(--muted);
-            border: none;
-            background: none;
-            font-family: 'DM Sans', sans-serif;
-            border-bottom: 2.5px solid transparent;
-            transition: all 0.2s;
-        }
-
-        .auth-tab.active { color: var(--green-dark); border-bottom-color: var(--green); }
-
-        .auth-body { padding: 28px 36px 32px; }
-
-        .auth-form { display: none; }
-        .auth-form.active { display: block; }
-
-        .form-group { margin-bottom: 16px; }
-
-        .form-label {
-            display: block;
-            font-size: 11.5px;
-            font-weight: 700;
-            color: var(--mid);
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            margin-bottom: 6px;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 11px 14px;
-            border: 1.5px solid var(--border);
-            border-radius: 9px;
-            font-size: 14px;
-            font-family: 'DM Sans', sans-serif;
-            color: var(--dark);
-            background: white;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: var(--green);
-            box-shadow: 0 0 0 3px rgba(34,197,94,0.12);
-        }
-
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-        .btn-full {
-            width: 100%;
-            padding: 12px;
-            background: var(--green);
-            color: white;
-            border: none;
-            border-radius: 9px;
-            font-size: 15px;
-            font-weight: 700;
-            font-family: 'DM Sans', sans-serif;
-            cursor: pointer;
-            transition: background 0.2s, transform 0.1s;
-            margin-top: 8px;
-        }
-
-        .btn-full:hover { background: var(--green-dark); }
-        .btn-full:active { transform: scale(0.99); }
-
-        .auth-error {
-            background: var(--red-light);
-            color: var(--red);
-            border: 1px solid #fecaca;
-            padding: 10px 14px;
-            border-radius: 8px;
-            font-size: 13px;
-            margin-bottom: 14px;
-            display: none;
-        }
-
-        .auth-success {
-            background: var(--green-light);
-            color: var(--green-dark);
-            border: 1px solid var(--green-mid);
-            padding: 10px 14px;
-            border-radius: 8px;
-            font-size: 13px;
-            margin-bottom: 14px;
-            display: none;
-        }
-
-        /* ===== MAIN APP ===== */
-        #mainApp { display: none; min-height: 100vh; flex-direction: column; }
-        #mainApp.show { display: flex; }
-
-        /* TOP NAV */
-        .topnav {
-            background: white;
-            border-bottom: 1px solid var(--border);
-            padding: 0 24px;
-            height: 62px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            box-shadow: var(--shadow);
-        }
-
-        .nav-brand {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .nav-brand-icon {
-            width: 36px; height: 36px;
-            background: var(--green);
-            border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 18px;
-        }
-
-        .nav-brand-text {
-            font-family: 'Playfair Display', serif;
-            font-size: 18px;
-            color: var(--dark);
-        }
-
-        .nav-right {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .nav-user {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 12px;
-            background: var(--bg);
-            border-radius: 30px;
-            font-size: 13px;
-            font-weight: 500;
-        }
-
-        .nav-avatar {
-            width: 28px; height: 28px;
-            background: var(--green);
-            border-radius: 50%;
-            color: white;
-            font-size: 12px;
-            font-weight: 700;
-            display: flex; align-items: center; justify-content: center;
-        }
-
-        .btn-signout {
-            padding: 7px 14px;
-            background: none;
-            border: 1.5px solid var(--border);
-            border-radius: 7px;
-            font-size: 12.5px;
-            font-weight: 600;
-            color: var(--mid);
-            cursor: pointer;
-            font-family: 'DM Sans', sans-serif;
-            transition: all 0.2s;
-        }
-
-        .btn-signout:hover { border-color: var(--red); color: var(--red); }
-
-        /* BOTTOM NAV (mobile-style) */
-        .bottom-nav {
-            background: white;
-            border-top: 1px solid var(--border);
-            display: flex;
-            position: fixed;
-            bottom: 0; left: 0; right: 0;
-            z-index: 100;
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.07);
-        }
-
-        .bnav-item {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 10px 6px 8px;
-            border: none;
-            background: none;
-            cursor: pointer;
-            font-family: 'DM Sans', sans-serif;
-            color: var(--muted);
-            font-size: 10.5px;
-            font-weight: 600;
-            gap: 4px;
-            transition: color 0.2s;
-        }
-
-        .bnav-item i { font-size: 18px; }
-        .bnav-item.active { color: var(--green); }
-
-        /* CONTENT */
-        .content {
-            flex: 1;
-            padding: 24px 20px 90px;
-            max-width: 680px;
-            margin: 0 auto;
-            width: 100%;
-        }
-
-        /* ===== PAGES ===== */
-        .page { display: none; }
-        .page.active { display: block; }
-
-        /* ===== CARDS ===== */
-        .card {
-            background: white;
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border);
-            overflow: hidden;
-            margin-bottom: 16px;
-        }
-
-        .card-header {
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .card-title { font-size: 15px; font-weight: 700; }
-        .card-subtitle { font-size: 12px; color: var(--muted); margin-top: 2px; }
-        .card-body { padding: 20px; }
-
-        /* ===== SECTION HEADINGS ===== */
-        .page-heading {
-            font-size: 22px;
-            font-weight: 800;
-            font-family: 'Playfair Display', serif;
-            margin-bottom: 4px;
-        }
-        .page-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
-
-        /* ===== STAT ROW ===== */
-        .stat-row {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .stat-box {
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 14px 12px;
-            text-align: center;
-            box-shadow: var(--shadow);
-        }
-
-        .stat-num { font-size: 22px; font-weight: 800; color: var(--green-dark); }
-        .stat-lbl { font-size: 10.5px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
-
-        /* ===== SUBSCRIPTION CARD ===== */
-        .sub-card {
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            overflow: hidden;
-            margin-bottom: 14px;
-            box-shadow: var(--shadow);
-        }
-
-        .sub-card-top {
-            padding: 18px 20px 14px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-        }
-
-        .sub-plan-name {
-            font-size: 16px;
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-
-        .sub-meta {
-            font-size: 12px;
-            color: var(--muted);
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .sub-meta span { display: flex; align-items: center; gap: 4px; }
-
-        .sub-progress {
-            padding: 0 20px 16px;
-        }
-
-        .progress-label {
-            display: flex;
-            justify-content: space-between;
-            font-size: 11.5px;
-            color: var(--muted);
-            margin-bottom: 6px;
-        }
-
-        .progress-bar {
-            height: 6px;
-            background: var(--border);
-            border-radius: 99px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--green), var(--green-dark));
-            border-radius: 99px;
-            transition: width 0.4s ease;
-        }
-
-        .sub-actions {
-            padding: 12px 20px 16px;
-            border-top: 1px solid var(--border);
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        /* ===== MEAL SCHEDULE ===== */
-        .meal-day {
-            margin-bottom: 14px;
-        }
-
-        .meal-day-label {
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .meal-day-label::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--border);
-        }
-
-        .meal-day-label.today { color: var(--green-dark); }
-
-        .meal-item-row {
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 12px 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            box-shadow: var(--shadow);
-        }
-
-        .meal-item-row.skipped {
-            opacity: 0.55;
-            background: var(--bg);
-        }
-
-        .meal-info { display: flex; align-items: center; gap: 12px; }
-
-        .meal-icon {
-            width: 38px; height: 38px;
-            border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 18px;
-        }
-
-        .meal-icon.breakfast { background: #fef9c3; }
-        .meal-icon.lunch { background: var(--green-light); }
-        .meal-icon.dinner { background: #ede9fe; }
-
-        .meal-name { font-size: 14px; font-weight: 600; }
-        .meal-sub { font-size: 11.5px; color: var(--muted); margin-top: 1px; }
-
-        /* ===== HISTORY TABLE ===== */
-        .history-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 0;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .history-row:last-child { border-bottom: none; }
-
-        .history-date { font-size: 13px; font-weight: 600; min-width: 90px; }
-        .history-meal { font-size: 13px; color: var(--mid); flex: 1; margin: 0 12px; }
-
-        /* ===== PROFILE FORM ===== */
-        .profile-section-title {
-            font-size: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--muted);
-            margin-bottom: 14px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        /* ===== BADGES ===== */
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 3px 9px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 700;
-        }
-
-        .badge-green { background: var(--green-light); color: var(--green-dark); }
-        .badge-amber { background: var(--amber-light); color: #92400e; }
-        .badge-red { background: var(--red-light); color: var(--red); }
-        .badge-blue { background: var(--blue-light); color: #1d4ed8; }
-        .badge-gray { background: #f1f5f9; color: var(--muted); }
-
-        /* ===== BUTTONS ===== */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 16px;
-            border: none;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            font-family: 'DM Sans', sans-serif;
-            cursor: pointer;
-            transition: all 0.15s;
-        }
-
-        .btn-green { background: var(--green); color: white; }
-        .btn-green:hover { background: var(--green-dark); }
-        .btn-outline { background: white; border: 1.5px solid var(--border); color: var(--mid); }
-        .btn-outline:hover { border-color: var(--green); color: var(--green); }
-        .btn-red { background: var(--red-light); color: var(--red); border: 1px solid #fecaca; }
-        .btn-red:hover { background: #fecaca; }
-        .btn-amber { background: var(--amber-light); color: #92400e; border: 1px solid #fde68a; }
-        .btn-sm { padding: 5px 12px; font-size: 12px; border-radius: 7px; }
-
-        /* ===== MODALS ===== */
-        .modal-backdrop {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 500;
-            align-items: flex-end;
-            justify-content: center;
-        }
-
-        .modal-backdrop.show { display: flex; }
-
-        .modal-sheet {
-            background: white;
-            border-radius: 20px 20px 0 0;
-            width: 100%;
-            max-width: 640px;
-            max-height: 85vh;
-            overflow-y: auto;
-            padding: 24px;
-            animation: slideUp 0.25s ease;
-        }
-
-        @keyframes slideUp {
-            from { transform: translateY(40px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        .modal-handle {
-            width: 40px; height: 4px;
-            background: var(--border);
-            border-radius: 99px;
-            margin: 0 auto 20px;
-        }
-
-        .modal-title { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
-        .modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
-
-        /* ===== ALERTS ===== */
-        .alert {
-            padding: 11px 16px;
-            border-radius: 9px;
-            font-size: 13px;
-            margin-bottom: 16px;
-            display: none;
-        }
-
-        .alert-success { background: var(--green-light); color: var(--green-dark); border: 1px solid var(--green-mid); }
-        .alert-error { background: var(--red-light); color: var(--red); border: 1px solid #fecaca; }
-        .alert-warning { background: var(--amber-light); color: #92400e; border: 1px solid #fde68a; }
-
-        /* ===== EMPTY STATE ===== */
-        .empty {
-            text-align: center;
-            padding: 48px 20px;
-            color: var(--muted);
-        }
-
-        .empty-icon { font-size: 42px; margin-bottom: 14px; opacity: 0.4; }
-        .empty-title { font-size: 16px; font-weight: 700; color: var(--mid); margin-bottom: 6px; }
-        .empty-text { font-size: 13px; line-height: 1.6; }
-
-        /* ===== SPINNER ===== */
-        .spinner {
-            width: 18px; height: 18px;
-            border: 2.5px solid var(--border);
-            border-top-color: var(--green);
-            border-radius: 50%;
-            animation: spin 0.7s linear infinite;
-            display: inline-block;
-            vertical-align: middle;
-            margin-right: 6px;
-        }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .loading-block {
-            text-align: center;
-            padding: 32px;
-            color: var(--muted);
-        }
-
-        /* ===== TODAY HIGHLIGHT ===== */
-        .today-banner {
-            background: linear-gradient(135deg, var(--green-dark), #15803d);
-            color: white;
-            border-radius: var(--radius);
-            padding: 20px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .today-banner-title { font-size: 13px; opacity: 0.85; margin-bottom: 4px; }
-        .today-banner-main { font-size: 20px; font-weight: 800; font-family: 'Playfair Display', serif; }
-        .today-banner-icon { font-size: 42px; opacity: 0.7; }
-
-        /* ===== PLAN CARDS ===== */
-        .plan-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-        .plan-card {
-            border: 2px solid var(--border);
-            border-radius: 12px;
-            padding: 16px;
-            cursor: pointer;
-            transition: all 0.2s;
-            position: relative;
-        }
-
-        .plan-card:hover { border-color: var(--green); }
-        .plan-card.selected { border-color: var(--green); background: var(--green-light); }
-
-        .plan-card-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
-        .plan-card-price { font-size: 20px; font-weight: 800; color: var(--green-dark); }
-        .plan-card-meta { font-size: 11px; color: var(--muted); margin-top: 6px; }
-
-        /* ===== RESPONSIVE ===== */
-        @media (min-width: 640px) {
-            .bottom-nav { max-width: 640px; left: 50%; transform: translateX(-50%); border-radius: 16px 16px 0 0; }
-            .content { padding: 28px 24px 100px; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Salad Caffe — My Account</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --g:#22c55e;--gd:#16a34a;--gl:#dcfce7;--gm:#86efac;
+  --dk:#0f172a;--mid:#475569;--muted:#94a3b8;
+  --border:#e2e8f0;--bg:#f8fafc;--white:#fff;
+  --red:#ef4444;--rl:#fef2f2;--amber:#f59e0b;--al:#fffbeb;--blue:#3b82f6;--bl:#eff6ff;
+  --sh:0 1px 4px rgba(0,0,0,.07);--shm:0 4px 20px rgba(0,0,0,.09);
+  --r:14px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--dk);font-size:14px;min-height:100vh;}
+
+/* AUTH */
+#authScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#0f2027,#203a43,#2c5364);padding:20px;}
+.auth-card{background:white;border-radius:20px;width:100%;max-width:440px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.auth-hd{background:linear-gradient(135deg,var(--gd),#15803d);padding:28px 32px;color:white;}
+.auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.auth-logo-ico{width:42px;height:42px;background:rgba(255,255,255,.2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;}
+.auth-logo h1{font-family:'Playfair Display',serif;font-size:22px;}
+.auth-tag{font-size:12.5px;opacity:.8;}
+.auth-tabs{display:flex;border-bottom:1px solid var(--border);}
+.auth-tab{flex:1;padding:13px;text-align:center;cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);border:none;background:none;font-family:'DM Sans',sans-serif;border-bottom:2.5px solid transparent;transition:all .2s;}
+.auth-tab.active{color:var(--gd);border-bottom-color:var(--g);}
+.auth-body{padding:24px 32px 28px;}
+.auth-form{display:none;}.auth-form.active{display:block;}
+.fl{display:block;font-size:11px;font-weight:700;color:var(--mid);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;}
+.fc{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--dk);transition:border-color .2s;}
+.fc:focus{outline:none;border-color:var(--g);box-shadow:0 0 0 3px rgba(34,197,94,.1);}
+.fg{margin-bottom:14px;}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.btn-full{width:100%;padding:12px;background:var(--g);color:white;border:none;border-radius:8px;font-size:14.5px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;margin-top:6px;transition:background .2s;}
+.btn-full:hover{background:var(--gd);}
+.aerr{background:var(--rl);color:var(--red);border:1px solid #fecaca;padding:10px 13px;border-radius:7px;font-size:13px;margin-bottom:12px;display:none;}
+.asuc{background:var(--gl);color:var(--gd);border:1px solid var(--gm);padding:10px 13px;border-radius:7px;font-size:13px;margin-bottom:12px;display:none;}
+
+/* APP */
+#mainApp{display:none;flex-direction:column;min-height:100vh;}
+#mainApp.show{display:flex;}
+.topnav{background:white;border-bottom:1px solid var(--border);padding:0 20px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--sh);}
+.nbrand{display:flex;align-items:center;gap:9px;}
+.nbrand-ico{width:34px;height:34px;background:var(--g);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;}
+.nbrand-txt{font-family:'Playfair Display',serif;font-size:17px;}
+.nright{display:flex;align-items:center;gap:10px;}
+.nuser{display:flex;align-items:center;gap:7px;padding:5px 11px;background:var(--bg);border-radius:20px;font-size:13px;font-weight:500;}
+.navat{width:26px;height:26px;background:var(--g);border-radius:50%;color:white;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.bso{padding:6px 12px;background:none;border:1.5px solid var(--border);border-radius:7px;font-size:12px;font-weight:600;color:var(--mid);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;}
+.bso:hover{border-color:var(--red);color:var(--red);}
+.content{flex:1;padding:20px 16px 90px;max-width:680px;margin:0 auto;width:100%;}
+.page{display:none;}.page.active{display:block;}
+.bnav{background:white;border-top:1px solid var(--border);display:flex;position:fixed;bottom:0;left:0;right:0;z-index:100;box-shadow:0 -4px 16px rgba(0,0,0,.07);}
+.bni{flex:1;display:flex;flex-direction:column;align-items:center;padding:9px 4px 7px;border:none;background:none;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--muted);font-size:10px;font-weight:600;gap:3px;transition:color .15s;}
+.bni i{font-size:17px;}
+.bni.active{color:var(--g);}
+
+/* CARDS */
+.card{background:white;border-radius:var(--r);box-shadow:var(--sh);border:1px solid var(--border);overflow:hidden;margin-bottom:14px;}
+.card-hd{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-size:14.5px;font-weight:700;}
+.card-sub{font-size:11.5px;color:var(--muted);margin-top:2px;}
+.card-body{padding:18px;}
+.pg-heading{font-size:21px;font-weight:800;font-family:'Playfair Display',serif;margin-bottom:3px;}
+.pg-sub{font-size:12.5px;color:var(--muted);margin-bottom:18px;}
+
+/* STATS */
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+.stat-box{background:white;border:1px solid var(--border);border-radius:11px;padding:13px 10px;text-align:center;box-shadow:var(--sh);}
+.stat-n{font-size:22px;font-weight:800;color:var(--gd);}
+.stat-l{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-top:2px;}
+
+/* CALENDAR */
+.cal-nav{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);}
+.cal-month{font-size:15px;font-weight:700;}
+.cal-btn{width:30px;height:30px;border:1.5px solid var(--border);border-radius:7px;background:white;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.cal-btn:hover{border-color:var(--g);color:var(--g);}
+.cal-grid{padding:12px 14px;}
+.cal-dow{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px;}
+.cal-dow-lbl{text-align:center;font-size:10px;font-weight:700;color:var(--muted);padding:4px 0;text-transform:uppercase;}
+.cal-dow-lbl.sun{color:#e2e8f0;}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.cal-day{min-height:52px;border-radius:9px;padding:4px 3px;cursor:default;position:relative;border:1.5px solid transparent;}
+.cal-day.other-month{opacity:.3;}
+.cal-day.sunday{background:#f8fafc;}
+.cal-day.today{border-color:var(--g);}
+.cal-day.has-delivery{cursor:pointer;background:white;border-color:var(--border);box-shadow:var(--sh);}
+.cal-day.has-delivery:hover{border-color:var(--g);}
+.cal-day-num{font-size:11px;font-weight:600;color:var(--mid);text-align:right;padding-right:2px;}
+.cal-day.today .cal-day-num{color:var(--gd);}
+.cal-day.sunday .cal-day-num{color:#cbd5e1;}
+.cal-slots{display:flex;flex-direction:column;gap:2px;margin-top:2px;}
+.cal-slot{border-radius:4px;padding:1px 3px;font-size:8.5px;font-weight:700;text-align:center;white-space:nowrap;overflow:hidden;}
+.slot-pending{background:#fef9c3;color:#92400e;}
+.slot-delivered{background:var(--gl);color:var(--gd);}
+.slot-skipped{background:#f1f5f9;color:#94a3b8;text-decoration:line-through;}
+.sun-label{font-size:8px;color:#cbd5e1;text-align:center;margin-top:4px;}
+
+/* DAY DETAIL PANEL */
+.day-panel{background:white;border:1px solid var(--border);border-radius:var(--r);margin-bottom:14px;overflow:hidden;box-shadow:var(--shm);}
+.day-panel-hd{padding:14px 18px;background:linear-gradient(135deg,var(--gd),#15803d);color:white;display:flex;align-items:center;justify-content:space-between;}
+.day-panel-date{font-size:14px;font-weight:700;}
+.day-panel-close{background:rgba(255,255,255,.2);border:none;color:white;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;}
+.meal-slot-row{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.meal-slot-row:last-child{border-bottom:none;}
+.meal-slot-left{display:flex;align-items:center;gap:12px;}
+.meal-ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
+.ico-b{background:#fef9c3;}.ico-l{background:var(--gl);}.ico-d{background:#ede9fe;}
+.meal-name{font-size:14px;font-weight:600;}
+.meal-item-name{font-size:11.5px;color:var(--muted);margin-top:2px;}
+.meal-kcal{font-size:11px;color:var(--muted);}
+
+/* SUBSCRIPTION CARD */
+.sub-card{background:white;border:1px solid var(--border);border-radius:var(--r);margin-bottom:12px;overflow:hidden;box-shadow:var(--sh);}
+.sub-top{padding:16px 18px 12px;display:flex;justify-content:space-between;align-items:flex-start;}
+.sub-name{font-size:15px;font-weight:700;margin-bottom:4px;}
+.sub-meta{font-size:11.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px;}
+.sub-meta span{display:flex;align-items:center;gap:4px;}
+.sub-prog{padding:0 18px 14px;}
+.prog-lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:5px;}
+.prog-bar{height:5px;background:var(--border);border-radius:99px;overflow:hidden;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--g),var(--gd));border-radius:99px;}
+.sub-acts{padding:10px 18px 14px;border-top:1px solid var(--border);display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
+.no-refund-note{font-size:10.5px;color:var(--muted);margin-left:auto;font-style:italic;}
+
+/* HISTORY */
+.hist-row{display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);}
+.hist-row:last-child{border-bottom:none;}
+.hist-date{font-size:12.5px;font-weight:700;min-width:70px;color:var(--mid);}
+.hist-info{flex:1;margin:0 10px;}
+.hist-meal{font-size:13px;font-weight:600;}
+.hist-item{font-size:11px;color:var(--muted);}
+
+/* PROFILE */
+.prof-section{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid var(--border);}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;}
+.bg{background:var(--gl);color:var(--gd);}
+.ba{background:var(--al);color:#92400e;}
+.br{background:var(--rl);color:var(--red);}
+.bb{background:var(--bl);color:#1d4ed8;}
+.bgr{background:#f1f5f9;color:var(--muted);}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border:none;border-radius:7px;font-size:12.5px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .15s;}
+.btn-g{background:var(--g);color:white;}.btn-g:hover{background:var(--gd);}
+.btn-o{background:white;border:1.5px solid var(--border);color:var(--mid);}.btn-o:hover{border-color:var(--g);color:var(--g);}
+.btn-r{background:var(--rl);color:var(--red);border:1px solid #fecaca;}.btn-r:hover{background:#fecaca;}
+.btn-a{background:var(--al);color:#92400e;border:1px solid #fde68a;}.btn-a:hover{background:#fde68a;}
+.btn-sm{padding:5px 10px;font-size:11.5px;border-radius:6px;}
+
+/* MODALS */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:flex-end;justify-content:center;}
+.modal-bg.show{display:flex;}
+.modal-sheet{background:white;border-radius:20px 20px 0 0;width:100%;max-width:640px;max-height:88vh;overflow-y:auto;padding:20px 22px 28px;animation:su .22s ease;}
+@keyframes su{from{transform:translateY(40px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.mhandle{width:38px;height:4px;background:var(--border);border-radius:99px;margin:0 auto 18px;}
+.mtitle{font-size:16px;font-weight:700;margin-bottom:5px;}
+.msub{font-size:12.5px;color:var(--muted);margin-bottom:16px;}
+.mbtns{display:flex;gap:8px;margin-top:14px;}
+.mbtns .btn{flex:1;justify-content:center;}
+
+.alert{padding:10px 14px;border-radius:8px;font-size:12.5px;margin-bottom:12px;display:none;}
+.alert-s{background:var(--gl);color:var(--gd);border:1px solid var(--gm);}
+.alert-e{background:var(--rl);color:var(--red);border:1px solid #fecaca;}
+.alert-w{background:var(--al);color:#92400e;border:1px solid #fde68a;}
+
+.empty{text-align:center;padding:40px 20px;color:var(--muted);}
+.empty i{font-size:38px;margin-bottom:12px;display:block;opacity:.35;}
+.empty-t{font-size:15px;font-weight:700;color:var(--mid);margin-bottom:5px;}
+.empty-s{font-size:12.5px;line-height:1.6;}
+.spinner{width:17px;height:17px;border:2.5px solid var(--border);border-top-color:var(--g);border-radius:50%;animation:sp .7s linear infinite;display:inline-block;vertical-align:middle;margin-right:5px;}
+@keyframes sp{to{transform:rotate(360deg);}}
+.loading{text-align:center;padding:28px;color:var(--muted);}
+
+/* No-refund banner */
+.noref{background:#fff7ed;border:1px solid #fed7aa;border-radius:9px;padding:10px 14px;font-size:12px;color:#9a3412;margin-bottom:14px;}
+.noref i{margin-right:5px;}
+</style>
 </head>
 <body>
 
-<!-- ===== AUTH SCREEN ===== -->
+<!-- AUTH -->
 <div id="authScreen">
-    <div class="auth-card">
-        <div class="auth-header">
-            <div class="auth-logo">
-                <div class="auth-logo-icon">🥗</div>
-                <h1>Salad Caffe</h1>
-            </div>
-            <p class="auth-tagline">Your daily healthy meal subscription</p>
-        </div>
-
-        <div class="auth-tabs">
-            <button class="auth-tab active" onclick="switchAuthTab('login')">Sign In</button>
-            <button class="auth-tab" onclick="switchAuthTab('register')">Register</button>
-        </div>
-
-        <div class="auth-body">
-            <!-- Login -->
-            <div id="loginForm" class="auth-form active">
-                <div class="auth-error" id="loginError"></div>
-                <div class="form-group">
-                    <label class="form-label">Email</label>
-                    <input type="email" class="form-control" id="loginEmail" placeholder="your@email.com" value="customer@test.com">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Password</label>
-                    <input type="password" class="form-control" id="loginPassword" placeholder="••••••••" value="customer123">
-                </div>
-                <button class="btn-full" onclick="handleLogin()">Sign In</button>
-                <p style="text-align:center;margin-top:14px;font-size:12px;color:var(--muted);">Demo: customer@test.com / customer123</p>
-            </div>
-
-            <!-- Register -->
-            <div id="registerForm" class="auth-form">
-                <div class="auth-error" id="registerError"></div>
-                <div class="auth-success" id="registerSuccess"></div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">Full Name *</label>
-                        <input type="text" class="form-control" id="regName" placeholder="Your name">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Phone</label>
-                        <input type="text" class="form-control" id="regPhone" placeholder="9876543210">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Email *</label>
-                    <input type="email" class="form-control" id="regEmail" placeholder="your@email.com">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Password *</label>
-                    <input type="password" class="form-control" id="regPassword" placeholder="Min 6 characters">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Delivery Address</label>
-                    <input type="text" class="form-control" id="regAddress" placeholder="Full address">
-                </div>
-                <button class="btn-full" onclick="handleRegister()">Create Account</button>
-            </div>
-        </div>
+ <div class="auth-card">
+  <div class="auth-hd">
+   <div class="auth-logo"><div class="auth-logo-ico">🥗</div><h1>Salad Caffe</h1></div>
+   <p class="auth-tag">Your daily healthy meal subscription</p>
+  </div>
+  <div class="auth-tabs">
+   <button class="auth-tab active" onclick="switchTab('login')">Sign In</button>
+   <button class="auth-tab" onclick="switchTab('register')">Register</button>
+  </div>
+  <div class="auth-body">
+   <div id="loginForm" class="auth-form active">
+    <div class="aerr" id="loginErr"></div>
+    <div class="fg"><label class="fl">Email</label><input type="email" class="fc" id="lEmail" value="customer@test.com"></div>
+    <div class="fg"><label class="fl">Password</label><input type="password" class="fc" id="lPass" value="customer123"></div>
+    <button class="btn-full" onclick="doLogin()">Sign In</button>
+    <p style="text-align:center;margin-top:12px;font-size:11.5px;color:var(--muted)">Demo: customer@test.com / customer123</p>
+   </div>
+   <div id="regForm" class="auth-form">
+    <div class="aerr" id="regErr"></div>
+    <div class="asuc" id="regOk"></div>
+    <div class="frow">
+     <div class="fg"><label class="fl">Full Name *</label><input type="text" class="fc" id="rName"></div>
+     <div class="fg"><label class="fl">Phone</label><input type="text" class="fc" id="rPhone"></div>
     </div>
+    <div class="fg"><label class="fl">Email *</label><input type="email" class="fc" id="rEmail"></div>
+    <div class="fg"><label class="fl">Password *</label><input type="password" class="fc" id="rPass" placeholder="Min 6 characters"></div>
+    <div class="fg"><label class="fl">Delivery Address</label><input type="text" class="fc" id="rAddr"></div>
+    <button class="btn-full" onclick="doRegister()">Create Account</button>
+   </div>
+  </div>
+ </div>
 </div>
 
-<!-- ===== MAIN APP ===== -->
+<!-- MAIN APP -->
 <div id="mainApp">
-    <!-- Top Nav -->
-    <nav class="topnav">
-        <div class="nav-brand">
-            <div class="nav-brand-icon">🥗</div>
-            <span class="nav-brand-text">Salad Caffe</span>
-        </div>
-        <div class="nav-right">
-            <div class="nav-user">
-                <div class="nav-avatar" id="navAvatar">C</div>
-                <span id="navName">Customer</span>
-            </div>
-            <button class="btn-signout" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i></button>
-        </div>
-    </nav>
+ <nav class="topnav">
+  <div class="nbrand"><div class="nbrand-ico">🥗</div><span class="nbrand-txt">Salad Caffe</span></div>
+  <div class="nright">
+   <div class="nuser"><div class="navat" id="navAv">C</div><span id="navNm">Customer</span></div>
+   <button class="bso" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i></button>
+  </div>
+ </nav>
 
-    <!-- Content -->
-    <div class="content">
+ <div class="content">
 
-        <!-- HOME PAGE -->
-        <div id="page-home" class="page active">
-            <div class="today-banner" id="todayBanner">
-                <div>
-                    <div class="today-banner-title">Good morning 👋</div>
-                    <div class="today-banner-main" id="todayBannerName">Loading...</div>
-                    <div style="font-size:12px;margin-top:4px;opacity:0.8;" id="todayBannerDate"></div>
-                </div>
-                <div class="today-banner-icon">🥗</div>
-            </div>
+  <!-- HOME -->
+  <div id="page-home" class="page active">
+   <div class="stat-row">
+    <div class="stat-box"><div class="stat-n" id="hs1">—</div><div class="stat-l">Active Plans</div></div>
+    <div class="stat-box"><div class="stat-n" id="hs2">—</div><div class="stat-l">Today's Meals</div></div>
+    <div class="stat-box"><div class="stat-n" id="hs3">—</div><div class="stat-l">This Month</div></div>
+   </div>
 
-            <div class="stat-row">
-                <div class="stat-box">
-                    <div class="stat-num" id="hs-active">—</div>
-                    <div class="stat-lbl">Active Subs</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-num" id="hs-today">—</div>
-                    <div class="stat-lbl">Today's Meals</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-num" id="hs-delivered">—</div>
-                    <div class="stat-lbl">Delivered</div>
-                </div>
-            </div>
+   <!-- Today's meals -->
+   <div class="card">
+    <div class="card-hd">
+     <div><div class="card-title">Today's Meals</div><div class="card-sub" id="todayLbl"></div></div>
+    </div>
+    <div id="todaySlots"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+   </div>
 
-            <div class="card">
-                <div class="card-header">
-                    <div>
-                        <div class="card-title">Today's Schedule</div>
-                        <div class="card-subtitle" id="todayDateLabel"></div>
-                    </div>
-                </div>
-                <div class="card-body" id="todayMeals">
-                    <div class="loading-block"><span class="spinner"></span> Loading...</div>
-                </div>
-            </div>
+   <!-- Upcoming -->
+   <div class="card">
+    <div class="card-hd"><div class="card-title">Upcoming — Next 7 Days</div></div>
+    <div class="card-body" id="upcomingList"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+   </div>
+  </div>
 
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">This Week</div>
-                    <span style="font-size:12px;color:var(--muted);">Next 7 days</span>
-                </div>
-                <div class="card-body" id="weekMeals">
-                    <div class="loading-block"><span class="spinner"></span> Loading...</div>
-                </div>
-            </div>
-        </div>
+  <!-- CALENDAR -->
+  <div id="page-calendar" class="page">
+   <div class="pg-heading">Meal Calendar</div>
+   <p class="pg-sub">Tap a day to see meals and skip options</p>
 
-        <!-- SUBSCRIPTIONS PAGE -->
-        <div id="page-subscriptions" class="page">
-            <div class="page-heading">My Subscriptions</div>
-            <p class="page-sub">Manage your active meal plans</p>
+   <div class="alert alert-s" id="calAlert"></div>
 
-            <div class="alert alert-success" id="subSuccess"></div>
-            <div class="alert alert-error" id="subError"></div>
+   <!-- Day detail panel (hidden by default) -->
+   <div id="dayPanel" class="day-panel" style="display:none;">
+    <div class="day-panel-hd">
+     <div class="day-panel-date" id="panelDateLabel"></div>
+     <button class="day-panel-close" onclick="closePanel()"><i class="fas fa-times"></i></button>
+    </div>
+    <div id="panelSlots"></div>
+   </div>
 
-            <div id="subscriptionsList">
-                <div class="loading-block"><span class="spinner"></span> Loading...</div>
-            </div>
-        </div>
+   <div class="card" style="overflow:visible;">
+    <div class="cal-nav">
+     <button class="cal-btn" onclick="prevMonth()"><i class="fas fa-chevron-left"></i></button>
+     <div class="cal-month" id="calMonthLabel"></div>
+     <button class="cal-btn" onclick="nextMonth()"><i class="fas fa-chevron-right"></i></button>
+    </div>
+    <div class="cal-grid">
+     <div class="cal-dow">
+      <div class="cal-dow-lbl sun">SUN</div>
+      <div class="cal-dow-lbl">MON</div>
+      <div class="cal-dow-lbl">TUE</div>
+      <div class="cal-dow-lbl">WED</div>
+      <div class="cal-dow-lbl">THU</div>
+      <div class="cal-dow-lbl">FRI</div>
+      <div class="cal-dow-lbl">SAT</div>
+     </div>
+     <div class="cal-days" id="calDays"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+    </div>
+   </div>
 
-        <!-- HISTORY PAGE -->
-        <div id="page-history" class="page">
-            <div class="page-heading">Delivery History</div>
-            <p class="page-sub">Your past 30 deliveries</p>
+   <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--muted);padding:4px 0;">
+    <span><span style="display:inline-block;width:10px;height:10px;background:#fef9c3;border-radius:2px;"></span> Pending</span>
+    <span><span style="display:inline-block;width:10px;height:10px;background:var(--gl);border-radius:2px;"></span> Delivered</span>
+    <span><span style="display:inline-block;width:10px;height:10px;background:#f1f5f9;border-radius:2px;"></span> Skipped</span>
+    <span>No delivery on Sundays</span>
+   </div>
+  </div>
 
-            <div class="card">
-                <div class="card-body" id="historyList">
-                    <div class="loading-block"><span class="spinner"></span> Loading...</div>
-                </div>
-            </div>
-        </div>
+  <!-- SUBSCRIPTIONS -->
+  <div id="page-subs" class="page">
+   <div class="pg-heading">My Subscriptions</div>
+   <p class="pg-sub">Manage your active meal plans</p>
+   <div class="noref"><i class="fas fa-info-circle"></i> <strong>No Refund Policy:</strong> Skipped, paused, or cancelled meals are non-refundable. Skipping extends your subscription by 1 working day (max 45 days).</div>
+   <div class="alert alert-s" id="subOk"></div>
+   <div class="alert alert-e" id="subErr"></div>
+   <div id="subList"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+  </div>
 
-        <!-- PROFILE PAGE -->
-        <div id="page-profile" class="page">
-            <div class="page-heading">My Profile</div>
-            <p class="page-sub">Manage your account and preferences</p>
+  <!-- HISTORY -->
+  <div id="page-history" class="page">
+   <div class="pg-heading">Delivery History</div>
+   <p class="pg-sub">Your past deliveries</p>
+   <div class="card">
+    <div class="card-body" id="histList"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+   </div>
+  </div>
 
-            <div class="alert alert-success" id="profileSuccess"></div>
-            <div class="alert alert-error" id="profileError"></div>
+  <!-- PROFILE -->
+  <div id="page-profile" class="page">
+   <div class="pg-heading">My Profile</div>
+   <p class="pg-sub">Update your preferences and details</p>
+   <div class="alert alert-s" id="profOk"></div>
+   <div class="alert alert-e" id="profErr"></div>
+   <div class="card">
+    <div class="card-body">
+     <div class="prof-section">Personal Info</div>
+     <div class="frow">
+      <div class="fg"><label class="fl">Full Name</label><input type="text" class="fc" id="pName"></div>
+      <div class="fg"><label class="fl">Phone</label><input type="text" class="fc" id="pPhone"></div>
+     </div>
+     <div class="fg"><label class="fl">Primary Address</label><input type="text" class="fc" id="pAddr"></div>
+     <div class="fg"><label class="fl">Alternate Address</label><input type="text" class="fc" id="pAlt" placeholder="Office or second address"></div>
+     <div class="prof-section" style="margin-top:20px;">Health & Diet</div>
+     <div class="fg"><label class="fl">Diet Preference</label>
+      <select class="fc" id="pDiet">
+       <option value="both">Both Veg & Non-Veg</option>
+       <option value="veg">Vegetarian Only</option>
+       <option value="non_veg">Non-Veg Only</option>
+      </select>
+     </div>
+     <div class="fg"><label class="fl">Allergies / Avoid</label><input type="text" class="fc" id="pAllergies" placeholder="e.g. nuts, dairy, shellfish"></div>
+     <div class="fg"><label class="fl">Health Notes</label><textarea class="fc" id="pHealth" rows="3" placeholder="Diabetes, low sodium diet..."></textarea></div>
+     <button class="btn btn-g" style="width:100%;justify-content:center;margin-top:6px;" onclick="saveProfile()"><i class="fas fa-save"></i> Save Profile</button>
+    </div>
+   </div>
+   <div class="card">
+    <div class="card-body">
+     <div class="prof-section">Account</div>
+     <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;">
+      <div><div style="font-weight:600;" id="pEmail">—</div><div style="font-size:11.5px;color:var(--muted);">Email (cannot be changed)</div></div>
+      <span class="badge bg">Active</span>
+     </div>
+     <button class="btn btn-r" style="width:100%;justify-content:center;margin-top:12px;" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+    </div>
+   </div>
+  </div>
 
-            <div class="card">
-                <div class="card-body">
-                    <div class="profile-section-title">Personal Info</div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Full Name</label>
-                            <input type="text" class="form-control" id="profName">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Phone</label>
-                            <input type="text" class="form-control" id="profPhone">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Primary Address</label>
-                        <input type="text" class="form-control" id="profAddress" placeholder="Full delivery address">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Alternate Address</label>
-                        <input type="text" class="form-control" id="profAltAddress" placeholder="Office or second address">
-                    </div>
+ </div><!-- /content -->
 
-                    <div class="profile-section-title" style="margin-top:24px;">Health & Dietary Preferences</div>
-                    <div class="form-group">
-                        <label class="form-label">Diet Preference</label>
-                        <select class="form-control" id="profDiet">
-                            <option value="both">Both Veg & Non-Veg</option>
-                            <option value="veg">Vegetarian Only</option>
-                            <option value="non_veg">Non-Veg Only</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Allergies / Ingredients to avoid</label>
-                        <input type="text" class="form-control" id="profAllergies" placeholder="e.g. nuts, dairy, shellfish">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Health Notes</label>
-                        <textarea class="form-control" id="profHealthNotes" rows="3" placeholder="Diabetes, BP medication, low sodium diet..."></textarea>
-                    </div>
-
-                    <button class="btn btn-green" style="width:100%;justify-content:center;margin-top:8px;" onclick="saveProfile()">
-                        <i class="fas fa-save"></i> Save Profile
-                    </button>
-                </div>
-            </div>
-
-            <div class="card" style="margin-top:8px;">
-                <div class="card-body">
-                    <div class="profile-section-title">Account</div>
-                    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;">
-                        <div>
-                            <div style="font-size:13px;font-weight:600;" id="profEmail">—</div>
-                            <div style="font-size:12px;color:var(--muted);">Email address</div>
-                        </div>
-                        <span class="badge badge-green">Active</span>
-                    </div>
-                    <button class="btn btn-red" style="width:100%;justify-content:center;margin-top:12px;" onclick="handleLogout()">
-                        <i class="fas fa-sign-out-alt"></i> Sign Out
-                    </button>
-                </div>
-            </div>
-        </div>
-
-    </div><!-- /content -->
-
-    <!-- Bottom Nav -->
-    <nav class="bottom-nav">
-        <button class="bnav-item active" onclick="showPage('home', this)">
-            <i class="fas fa-home"></i>
-            Home
-        </button>
-        <button class="bnav-item" onclick="showPage('subscriptions', this)">
-            <i class="fas fa-box"></i>
-            My Plans
-        </button>
-        <button class="bnav-item" onclick="showPage('history', this)">
-            <i class="fas fa-history"></i>
-            History
-        </button>
-        <button class="bnav-item" onclick="showPage('profile', this)">
-            <i class="fas fa-user"></i>
-            Profile
-        </button>
-    </nav>
+ <nav class="bnav">
+  <button class="bni active" onclick="showPage('home',this)"><i class="fas fa-home"></i>Home</button>
+  <button class="bni" onclick="showPage('calendar',this)"><i class="fas fa-calendar-alt"></i>Calendar</button>
+  <button class="bni" onclick="showPage('subs',this)"><i class="fas fa-box"></i>My Plans</button>
+  <button class="bni" onclick="showPage('history',this)"><i class="fas fa-history"></i>History</button>
+  <button class="bni" onclick="showPage('profile',this)"><i class="fas fa-user"></i>Profile</button>
+ </nav>
 </div>
 
-<!-- ===== MODALS ===== -->
-
-<!-- Pause Modal -->
-<div class="modal-backdrop" id="pauseModal">
-    <div class="modal-sheet">
-        <div class="modal-handle"></div>
-        <div class="modal-title">⏸️ Pause Subscription</div>
-        <div class="modal-sub">Deliveries in this range will be skipped and your end date will be extended.</div>
-        <input type="hidden" id="pauseOrderId">
-        <div class="alert alert-error" id="pauseError"></div>
-        <div class="form-row">
-            <div class="form-group">
-                <label class="form-label">Pause From</label>
-                <input type="date" class="form-control" id="pauseStart">
-            </div>
-            <div class="form-group">
-                <label class="form-label">Resume On</label>
-                <input type="date" class="form-control" id="pauseEnd">
-            </div>
-        </div>
-        <div class="alert alert-warning" style="display:block;">Max pause duration is 30 days. Your end date will be extended automatically.</div>
-        <div style="display:flex;gap:10px;margin-top:8px;">
-            <button class="btn btn-outline" style="flex:1;justify-content:center;" onclick="closeModal('pauseModal')">Cancel</button>
-            <button class="btn btn-amber" style="flex:2;justify-content:center;" onclick="confirmPause()"><i class="fas fa-pause"></i> Confirm Pause</button>
-        </div>
-    </div>
+<!-- MODALS -->
+<div class="modal-bg" id="skipModal">
+ <div class="modal-sheet">
+  <div class="mhandle"></div>
+  <div class="mtitle">Skip this meal?</div>
+  <div class="msub" id="skipModalSub">—</div>
+  <input type="hidden" id="skipId">
+  <div class="noref"><i class="fas fa-info-circle"></i> No refund. Your subscription will be extended by 1 working day (max 45 days).</div>
+  <div class="fg"><label class="fl">Reason (optional)</label><input type="text" class="fc" id="skipReason" placeholder="Travelling, not hungry…"></div>
+  <div class="alert alert-w" id="skipWarn" style="display:block;"><i class="fas fa-clock"></i> Deadline: 10:00 PM the night before delivery</div>
+  <div class="mbtns">
+   <button class="btn btn-o" onclick="closeModal('skipModal')">Cancel</button>
+   <button class="btn btn-a" onclick="doSkip()"><i class="fas fa-forward"></i> Skip Meal</button>
+  </div>
+ </div>
 </div>
 
-<!-- Cancel Modal -->
-<div class="modal-backdrop" id="cancelModal">
-    <div class="modal-sheet">
-        <div class="modal-handle"></div>
-        <div class="modal-title">❌ Cancel Subscription</div>
-        <div class="modal-sub">Are you sure? All remaining deliveries will be cancelled. This cannot be undone.</div>
-        <input type="hidden" id="cancelOrderId">
-        <div class="alert alert-error" style="display:block;background:#fef2f2;color:#dc2626;border-color:#fecaca;">All pending meals will be cancelled immediately.</div>
-        <div style="display:flex;gap:10px;margin-top:8px;">
-            <button class="btn btn-outline" style="flex:1;justify-content:center;" onclick="closeModal('cancelModal')">Keep Subscription</button>
-            <button class="btn btn-red" style="flex:1;justify-content:center;" onclick="confirmCancel()"><i class="fas fa-times"></i> Yes, Cancel</button>
-        </div>
-    </div>
+<div class="modal-bg" id="pauseModal">
+ <div class="modal-sheet">
+  <div class="mhandle"></div>
+  <div class="mtitle">⏸ Pause Subscription</div>
+  <div class="msub">Deliveries in this range will be skipped. Your end date will be extended by the same number of working days.</div>
+  <input type="hidden" id="pauseOrdId">
+  <div class="noref"><i class="fas fa-ban"></i> No refund for paused days as per our cancellation policy.</div>
+  <div class="alert alert-e" id="pauseErr"></div>
+  <div class="frow">
+   <div class="fg"><label class="fl">Pause From</label><input type="date" class="fc" id="pauseFrom"></div>
+   <div class="fg"><label class="fl">Resume On</label><input type="date" class="fc" id="pauseTo"></div>
+  </div>
+  <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px;">Max pause: 30 days</div>
+  <div class="mbtns">
+   <button class="btn btn-o" onclick="closeModal('pauseModal')">Cancel</button>
+   <button class="btn btn-a" onclick="doPause()"><i class="fas fa-pause"></i> Confirm Pause</button>
+  </div>
+ </div>
 </div>
 
-<!-- Skip Meal Modal -->
-<div class="modal-backdrop" id="skipModal">
-    <div class="modal-sheet">
-        <div class="modal-handle"></div>
-        <div class="modal-title">⏭️ Skip This Meal</div>
-        <div class="modal-sub">Your subscription will be extended by 1 day (max 45 days rollover).</div>
-        <input type="hidden" id="skipDeliveryId">
-        <div class="form-group">
-            <label class="form-label">Reason (optional)</label>
-            <input type="text" class="form-control" id="skipReason" placeholder="Travelling, not hungry, etc.">
-        </div>
-        <div class="alert alert-warning" style="display:block;"><i class="fas fa-clock"></i> Skip deadline: 10:00 PM the previous day</div>
-        <div style="display:flex;gap:10px;margin-top:8px;">
-            <button class="btn btn-outline" style="flex:1;justify-content:center;" onclick="closeModal('skipModal')">Cancel</button>
-            <button class="btn btn-amber" style="flex:2;justify-content:center;" onclick="confirmSkip()"><i class="fas fa-forward"></i> Skip Meal</button>
-        </div>
-    </div>
+<div class="modal-bg" id="cancelModal">
+ <div class="modal-sheet">
+  <div class="mhandle"></div>
+  <div class="mtitle">❌ Cancel Subscription</div>
+  <div class="msub">All remaining scheduled meals will be cancelled immediately.</div>
+  <input type="hidden" id="cancelOrdId">
+  <div class="noref" style="background:var(--rl);border-color:#fecaca;color:#9f1239;">
+   <i class="fas fa-exclamation-triangle"></i> <strong>No refund will be issued.</strong> Cancellations are final as per our policy. Your account balance remains unchanged.
+  </div>
+  <div class="mbtns">
+   <button class="btn btn-o" onclick="closeModal('cancelModal')" style="flex:2;">Keep My Subscription</button>
+   <button class="btn btn-r" onclick="doCancel()" style="flex:1;"><i class="fas fa-times"></i> Cancel</button>
+  </div>
+ </div>
 </div>
 
 <script>
-    const API = '/api';
-    let token = null;
-    let currentUser = null;
-    let customerProfile = null;
-    let upcomingMeals = [];
+const API='/api';
+let token=null,user=null,profile=null;
+let calYear=new Date().getFullYear(),calMonth=new Date().getMonth();
+let calData={}; // {dateStr: [delivery, ...]}
 
-    // ===== AUTH TAB SWITCHING =====
-    function switchAuthTab(tab) {
-        document.querySelectorAll('.auth-tab').forEach((t, i) => t.classList.toggle('active', (i === 0) === (tab === 'login')));
-        document.getElementById('loginForm').classList.toggle('active', tab === 'login');
-        document.getElementById('registerForm').classList.toggle('active', tab === 'register');
-    }
-
-    // ===== AUTH =====
-    async function handleLogin() {
-        const email = document.getElementById('loginEmail').value;
-        const password = document.getElementById('loginPassword').value;
-        const errorDiv = document.getElementById('loginError');
-        errorDiv.style.display = 'none';
-
-        if (!email || !password) { showAuthError('loginError', 'Fill all fields'); return; }
-
-        try {
-            const res = await fetch(`${API}/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
-            });
-            const data = await res.json();
-            if (!res.ok) { showAuthError('loginError', data.error); return; }
-            if (data.user.authority !== 'customer' && data.user.authority !== 'super_admin') {
-                showAuthError('loginError', 'Please use the admin dashboard to login.'); return;
-            }
-            token = data.token;
-            currentUser = data.user;
-            customerProfile = data.customer;
-            sessionStorage.setItem('customerToken', token);
-            sessionStorage.setItem('customerUser', JSON.stringify(currentUser));
-            sessionStorage.setItem('customerProfile', JSON.stringify(customerProfile));
+// ===== AUTH =====
+function switchTab(t){
+    document.querySelectorAll('.auth-tab').forEach((b,i)=>b.classList.toggle('active',(i===0)===(t==='login')));
+    document.getElementById('loginForm').classList.toggle('active',t==='login');
+    document.getElementById('regForm').classList.toggle('active',t==='register');
+}
+async function doLogin(){
+    const email=v('lEmail'),password=v('lPass');
+    hide('loginErr');
+    if(!email||!password){showErr('loginErr','Fill all fields');return;}
+    try{
+        const r=await post('/api/auth/login',{email,password});
+        if(r.error){showErr('loginErr',r.error);return;}
+        if(r.user.authority!=='customer'&&r.user.authority!=='super_admin'){
+            showErr('loginErr','Use the admin dashboard for staff logins.');return;
+        }
+        token=r.token;user=r.user;profile=r.customer;
+        sessionStorage.setItem('cTok',token);
+        sessionStorage.setItem('cUser',JSON.stringify(user));
+        sessionStorage.setItem('cProf',JSON.stringify(profile));
+        showApp();
+    }catch(e){showErr('loginErr','Connection error');}
+}
+async function doRegister(){
+    const name=v('rName'),email=v('rEmail'),password=v('rPass'),phone=v('rPhone'),address=v('rAddr');
+    hide('regErr');hide('regOk');
+    if(!name||!email||!password){showErr('regErr','Name, email and password required');return;}
+    if(password.length<6){showErr('regErr','Password min 6 characters');return;}
+    try{
+        const r=await post('/api/auth/register',{name,email,password,phone,address});
+        if(r.error){showErr('regErr',r.error);return;}
+        showSuc('regOk','✅ Account created! Signing you in…');
+        token=r.token;
+        setTimeout(async()=>{
+            const pr=await apiFetch('/api/customer/profile');
+            profile=pr;user={name,email,authority:'customer'};
+            sessionStorage.setItem('cTok',token);
+            sessionStorage.setItem('cUser',JSON.stringify(user));
+            sessionStorage.setItem('cProf',JSON.stringify(profile));
             showApp();
-        } catch (err) {
-            showAuthError('loginError', 'Connection error. Is the server running?');
+        },1000);
+    }catch(e){showErr('regErr','Connection error');}
+}
+function doLogout(){sessionStorage.clear();location.reload();}
+
+// ===== APP =====
+function showApp(){
+    document.getElementById('authScreen').style.display='none';
+    document.getElementById('mainApp').classList.add('show');
+    const nm=user?.name||'Customer';
+    document.getElementById('navAv').textContent=nm.charAt(0).toUpperCase();
+    document.getElementById('navNm').textContent=nm.split(' ')[0];
+    const now=new Date();
+    document.getElementById('todayLbl').textContent=now.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+    if(profile){
+        document.getElementById('pName').value=profile.name||'';
+        document.getElementById('pPhone').value=profile.phone||'';
+        document.getElementById('pAddr').value=profile.address||'';
+        document.getElementById('pAlt').value=profile.alternate_address||'';
+        document.getElementById('pDiet').value=profile.diet_preference||'both';
+        document.getElementById('pAllergies').value=profile.allergies||'';
+        document.getElementById('pHealth').value=profile.health_notes||'';
+        document.getElementById('pEmail').textContent=profile.email||user.email;
+    }
+    loadHomeData();
+}
+
+// ===== NAVIGATION =====
+function showPage(name,btn){
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('page-'+name).classList.add('active');
+    document.querySelectorAll('.bni').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    if(name==='calendar') loadCalendar();
+    if(name==='subs') loadSubs();
+    if(name==='history') loadHistory();
+}
+
+// ===== HOME =====
+async function loadHomeData(){
+    try{
+        const [subs,meals]=await Promise.all([
+            apiFetch('/api/customer/subscriptions'),
+            apiFetch('/api/customer/upcoming-meals')
+        ]);
+        const active=(subs||[]).filter(s=>s.order_status==='active').length;
+        const today=new Date().toISOString().split('T')[0];
+        const todayMeals=(meals||[]).filter(m=>m.delivery_date===today);
+        const month=today.substring(0,7);
+        // count this month from upcoming + we don't have history here so just count upcoming in month
+        const thisMonth=(meals||[]).filter(m=>m.delivery_date.startsWith(month)&&m.status!=='skipped').length;
+        document.getElementById('hs1').textContent=active;
+        document.getElementById('hs2').textContent=todayMeals.length;
+        document.getElementById('hs3').textContent=thisMonth;
+        renderTodaySlots(todayMeals);
+        renderUpcoming((meals||[]).filter(m=>m.delivery_date>today));
+    }catch(e){
+        document.getElementById('todaySlots').innerHTML='<div class="empty"><i class="fas fa-wifi"></i><div class="empty-t">Could not load</div></div>';
+    }
+}
+
+function renderTodaySlots(meals){
+    const el=document.getElementById('todaySlots');
+    if(!meals||!meals.length){
+        el.innerHTML='<div class="empty"><i class="fas fa-sun"></i><div class="empty-t">No deliveries today</div><div class="empty-s">Check your calendar for upcoming meals</div></div>';
+        return;
+    }
+    el.innerHTML=meals.map(m=>mealSlotHTML(m,true)).join('');
+}
+
+function renderUpcoming(meals){
+    const el=document.getElementById('upcomingList');
+    if(!meals||!meals.length){el.innerHTML='<div class="empty"><i class="fas fa-calendar"></i><div class="empty-t">No upcoming meals</div></div>';return;}
+    const grouped={};
+    meals.forEach(m=>{if(!grouped[m.delivery_date])grouped[m.delivery_date]=[];grouped[m.delivery_date].push(m);});
+    let html='';
+    Object.keys(grouped).sort().slice(0,7).forEach(date=>{
+        html+=`<div style="margin-bottom:12px;"><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;">${fmtDateLabel(date)}</div>`;
+        html+=grouped[date].map(m=>mealSlotHTML(m,false)).join('');
+        html+='</div>';
+    });
+    el.innerHTML=html;
+}
+
+function mealSlotHTML(m,showSkip){
+    const icons={breakfast:'🌅',lunch:'☀️',dinner:'🌙'};
+    const ic=icons[m.meal_type]||'🍽️';
+    const icoClass={breakfast:'ico-b',lunch:'ico-l',dinner:'ico-d'}[m.meal_type]||'ico-l';
+    const skipped=m.status==='skipped',delivered=m.status==='delivered';
+    const badge=skipped?'<span class="badge bgr">Skipped</span>':delivered?'<span class="badge bg">✓ Delivered</span>':'<span class="badge ba">Pending</span>';
+    const skipBtn=(showSkip&&!skipped&&!delivered)?`<button class="btn btn-o btn-sm" onclick="openSkip(${m.id},'${m.meal_type}','${m.delivery_date}')"><i class="fas fa-forward"></i> Skip</button>`:'';
+    const opacity=skipped?'opacity:.5;':'';
+    return `<div class="meal-slot-row" style="${opacity}border-bottom:1px solid var(--border);">
+     <div class="meal-slot-left">
+      <div class="meal-ico ${icoClass}">${ic}</div>
+      <div>
+       <div class="meal-name">${cap(m.meal_type)}</div>
+       <div class="meal-item-name">${m.meal_item_name||'Menu not assigned yet'}</div>
+       ${m.calories?`<div class="meal-kcal">${m.calories} kcal</div>`:''}
+      </div>
+     </div>
+     <div style="display:flex;align-items:center;gap:7px;">${badge}${skipBtn}</div>
+    </div>`;
+}
+
+// ===== CALENDAR =====
+async function loadCalendar(){
+    const monthStr=`${calYear}-${String(calMonth+1).padStart(2,'0')}`;
+    document.getElementById('calMonthLabel').textContent=new Date(calYear,calMonth,1).toLocaleDateString('en-IN',{month:'long',year:'numeric'});
+    try{
+        const data=await apiFetch(`/api/customer/calendar?month=${monthStr}`);
+        calData={};
+        (data||[]).forEach(d=>{
+            if(!calData[d.delivery_date])calData[d.delivery_date]=[];
+            calData[d.delivery_date].push(d);
+        });
+        renderCalendar();
+    }catch(e){document.getElementById('calDays').innerHTML='<p style="color:var(--muted);padding:10px;">Error loading</p>';}
+}
+
+function renderCalendar(){
+    const el=document.getElementById('calDays');
+    const today=new Date().toISOString().split('T')[0];
+    const firstDay=new Date(calYear,calMonth,1).getDay();
+    const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+    const daysInPrev=new Date(calYear,calMonth,0).getDate();
+    let html='';
+    // prev month padding
+    for(let i=firstDay-1;i>=0;i--){
+        const d=daysInPrev-i;
+        html+=`<div class="cal-day other-month"><div class="cal-day-num">${d}</div></div>`;
+    }
+    for(let d=1;d<=daysInMonth;d++){
+        const ds=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const isSun=new Date(ds+'T12:00:00').getDay()===0;
+        const isToday=ds===today;
+        const delivs=calData[ds]||[];
+        let cls='cal-day';
+        if(isSun) cls+=' sunday';
+        if(isToday) cls+=' today';
+        if(delivs.length&&!isSun) cls+=' has-delivery';
+        let slots='';
+        if(isSun){
+            slots='<div class="sun-label">No delivery</div>';
+        } else if(delivs.length){
+            slots=`<div class="cal-slots">${delivs.slice(0,3).map(m=>{
+                const sc=m.status==='delivered'?'slot-delivered':m.status==='skipped'?'slot-skipped':'slot-pending';
+                return `<div class="cal-slot ${sc}">${m.meal_type.substring(0,1).toUpperCase()}</div>`;
+            }).join('')}</div>`;
         }
+        const onclick=(!isSun&&delivs.length)?`onclick="openDayPanel('${ds}')"` : '';
+        html+=`<div class="${cls}" ${onclick}><div class="cal-day-num">${d}</div>${slots}</div>`;
     }
-
-    async function handleRegister() {
-        const name = document.getElementById('regName').value;
-        const email = document.getElementById('regEmail').value;
-        const password = document.getElementById('regPassword').value;
-        const phone = document.getElementById('regPhone').value;
-        const address = document.getElementById('regAddress').value;
-
-        document.getElementById('registerError').style.display = 'none';
-        document.getElementById('registerSuccess').style.display = 'none';
-
-        if (!name || !email || !password) { showAuthError('registerError', 'Name, email and password are required'); return; }
-        if (password.length < 6) { showAuthError('registerError', 'Password must be at least 6 characters'); return; }
-
-        try {
-            const res = await fetch(`${API}/auth/register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, password, phone, address })
-            });
-            const data = await res.json();
-            if (!res.ok) { showAuthError('registerError', data.error); return; }
-            const el = document.getElementById('registerSuccess');
-            el.textContent = '✅ Account created! Signing you in...';
-            el.style.display = 'block';
-            token = data.token;
-            setTimeout(async () => {
-                const meRes = await fetch(`${API}/customer/profile`, { headers: authH() });
-                customerProfile = await meRes.json();
-                currentUser = { name, email, authority: 'customer' };
-                sessionStorage.setItem('customerToken', token);
-                sessionStorage.setItem('customerUser', JSON.stringify(currentUser));
-                sessionStorage.setItem('customerProfile', JSON.stringify(customerProfile));
-                showApp();
-            }, 1000);
-        } catch (err) {
-            showAuthError('registerError', 'Connection error');
-        }
+    // next month padding to complete grid
+    const total=firstDay+daysInMonth;
+    const remainder=total%7===0?0:7-(total%7);
+    for(let d=1;d<=remainder;d++){
+        html+=`<div class="cal-day other-month"><div class="cal-day-num">${d}</div></div>`;
     }
+    el.innerHTML=html;
+}
 
-    function handleLogout() {
-        sessionStorage.clear();
-        location.reload();
-    }
+function prevMonth(){
+    calMonth--;if(calMonth<0){calMonth=11;calYear--;}
+    loadCalendar();closePanel();
+}
+function nextMonth(){
+    calMonth++;if(calMonth>11){calMonth=0;calYear++;}
+    loadCalendar();closePanel();
+}
 
-    function showAuthError(id, msg) {
-        const el = document.getElementById(id);
-        el.textContent = msg;
-        el.style.display = 'block';
-    }
+function openDayPanel(dateStr){
+    const delivs=calData[dateStr]||[];
+    const d=new Date(dateStr+'T12:00:00');
+    document.getElementById('panelDateLabel').textContent=d.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    const today=new Date().toISOString().split('T')[0];
+    const isPast=dateStr<today;
+    const icons={breakfast:'🌅',lunch:'☀️',dinner:'🌙'};
+    const icoClass={breakfast:'ico-b',lunch:'ico-l',dinner:'ico-d'};
+    let html=delivs.map(m=>{
+        const skipped=m.status==='skipped',delivered=m.status==='delivered';
+        const badge=skipped?'<span class="badge bgr">Skipped</span>':delivered?'<span class="badge bg">✓ Delivered</span>':'<span class="badge ba">Pending</span>';
+        const skipBtn=(!skipped&&!delivered&&!isPast)?`<button class="btn btn-a btn-sm" onclick="openSkip(${m.id},'${m.meal_type}','${dateStr}')"><i class="fas fa-forward"></i> Skip</button>`:'';
+        const dietIco=m.veg_tag?'🟢':m.non_veg_tag?'🔴':'';
+        return `<div class="meal-slot-row" style="${skipped?'opacity:.5':''}">
+         <div class="meal-slot-left">
+          <div class="meal-ico ${icoClass[m.meal_type]||'ico-l'}">${icons[m.meal_type]||'🍽️'}</div>
+          <div>
+           <div class="meal-name">${cap(m.meal_type)} ${dietIco}</div>
+           <div class="meal-item-name">${m.meal_item_name||'Menu TBA'} ${m.category_name?'· '+m.category_name:''}</div>
+           ${m.calories?`<div class="meal-kcal">${m.calories} kcal</div>`:''}
+           ${skipped&&m.skipped_reason?`<div style="font-size:10.5px;color:var(--muted);margin-top:2px;">Reason: ${m.skipped_reason}</div>`:''}
+          </div>
+         </div>
+         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;">${badge}${skipBtn}</div>
+        </div>`;
+    }).join('');
+    document.getElementById('panelSlots').innerHTML=html||'<div class="empty"><p>No meals this day</p></div>';
+    document.getElementById('dayPanel').style.display='block';
+    document.getElementById('dayPanel').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
 
-    function authH() {
-        return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
-    }
+function closePanel(){document.getElementById('dayPanel').style.display='none';}
 
-    // ===== SHOW APP =====
-    function showApp() {
-        document.getElementById('authScreen').style.display = 'none';
-        document.getElementById('mainApp').classList.add('show');
-
-        const name = currentUser?.name || 'Customer';
-        document.getElementById('navAvatar').textContent = name.charAt(0).toUpperCase();
-        document.getElementById('navName').textContent = name.split(' ')[0];
-
-        const now = new Date();
-        const hour = now.getHours();
-        const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-        document.getElementById('todayBannerName').textContent = `${greeting}, ${name.split(' ')[0]}! 🌿`;
-        document.getElementById('todayBannerDate').textContent = now.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-        document.getElementById('todayDateLabel').textContent = now.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
-
-        if (customerProfile) {
-            document.getElementById('profName').value = customerProfile.name || '';
-            document.getElementById('profPhone').value = customerProfile.phone || '';
-            document.getElementById('profAddress').value = customerProfile.address || '';
-            document.getElementById('profAltAddress').value = customerProfile.alternate_address || '';
-            document.getElementById('profDiet').value = customerProfile.diet_preference || 'both';
-            document.getElementById('profAllergies').value = customerProfile.allergies || '';
-            document.getElementById('profHealthNotes').value = customerProfile.health_notes || '';
-            document.getElementById('profEmail').textContent = customerProfile.email || currentUser.email;
-        }
-
-        loadHomeData();
-    }
-
-    // ===== NAVIGATION =====
-    function showPage(name, btn) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.getElementById('page-' + name).classList.add('active');
-        document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-
-        if (name === 'subscriptions') loadSubscriptions();
-        if (name === 'history') loadHistory();
-    }
-
-    // ===== HOME =====
-    async function loadHomeData() {
-        try {
-            const [subRes, mealRes] = await Promise.all([
-                fetch(`${API}/customer/subscriptions`, { headers: authH() }),
-                fetch(`${API}/customer/upcoming-meals`, { headers: authH() })
-            ]);
-            const subs = await subRes.json();
-            const meals = await mealRes.json();
-            upcomingMeals = meals;
-
-            // Stats
-            const activeSubs = (subs || []).filter(s => s.order_status === 'active').length;
-            const todayStr = new Date().toISOString().split('T')[0];
-            const todayMeals = (meals || []).filter(m => m.delivery_date === todayStr);
-            const delivered = (meals || []).filter(m => m.status === 'delivered').length;
-
-            document.getElementById('hs-active').textContent = activeSubs;
-            document.getElementById('hs-today').textContent = todayMeals.length;
-            document.getElementById('hs-delivered').textContent = delivered;
-
-            // Today's meals
-            renderTodayMeals(todayMeals);
-            renderWeekMeals(meals, todayStr);
-
-        } catch (err) {
-            document.getElementById('todayMeals').innerHTML = '<p style="color:var(--muted);text-align:center;">Could not load meals</p>';
-        }
-    }
-
-    function renderTodayMeals(meals) {
-        const container = document.getElementById('todayMeals');
-        if (!meals || meals.length === 0) {
-            container.innerHTML = `<div class="empty"><div class="empty-icon">🌿</div><div class="empty-title">No deliveries today</div><div class="empty-text">Check your upcoming schedule below</div></div>`;
+// ===== SUBSCRIPTIONS =====
+async function loadSubs(){
+    document.getElementById('subList').innerHTML='<div class="loading"><span class="spinner"></span>Loading...</div>';
+    try{
+        const data=await apiFetch('/api/customer/subscriptions');
+        if(!data||!data.length){
+            document.getElementById('subList').innerHTML='<div class="empty"><i class="fas fa-box-open"></i><div class="empty-t">No subscriptions</div><div class="empty-s">Contact us to subscribe to a plan</div></div>';
             return;
         }
-        container.innerHTML = meals.map(m => mealRow(m, true)).join('');
+        document.getElementById('subList').innerHTML=data.map(subCard).join('');
+    }catch(e){document.getElementById('subList').innerHTML='<div class="empty"><i class="fas fa-exclamation"></i><div class="empty-t">Failed to load</div></div>';}
+}
+
+function subCard(s){
+    const total=(s.delivered_count||0)+(s.pending_count||0)+(s.skipped_count||0);
+    const pct=total>0?Math.round((s.delivered_count/total)*100):0;
+    const sbadge={active:'<span class="badge bg">● Active</span>',paused:'<span class="badge ba">⏸ Paused</span>',cancelled:'<span class="badge br">✕ Cancelled</span>',completed:'<span class="badge bb">✓ Completed</span>'}[s.order_status]||'<span class="badge bgr">—</span>';
+    const dietIco={pure_veg:'🟢',non_veg:'🔴',mixed:'🟡'}[s.diet_type]||'🍽️';
+    const mealTypes=s.meal_types?s.meal_types.split(',').map(m=>cap(m.trim())).join(' + '):'—';
+    const balance=(s.total_amount||0)-(s.paid_amount||0);
+    const canAct=['active','paused'].includes(s.order_status);
+    return `<div class="sub-card">
+     <div class="sub-top">
+      <div>
+       <div class="sub-name">${s.plan_name||'Subscription'}</div>
+       <div class="sub-meta">
+        <span>${dietIco} ${(s.diet_type||'').replace('_',' ')}</span>
+        <span><i class="fas fa-utensils" style="font-size:9px"></i> ${mealTypes}</span>
+        <span><i class="fas fa-calendar" style="font-size:9px"></i> ${s.start_date} → ${s.end_date}</span>
+        ${s.kitchen_name?`<span><i class="fas fa-store" style="font-size:9px"></i> ${s.kitchen_name}</span>`:''}
+       </div>
+       ${balance>0?`<div style="margin-top:7px;font-size:11.5px;color:var(--red);font-weight:600;"><i class="fas fa-exclamation-circle"></i> Balance due: ₹${balance}</div>`:''}
+       ${s.order_status==='paused'?`<div style="margin-top:5px;font-size:11px;color:var(--amber);"><i class="fas fa-pause-circle"></i> Paused: ${s.pause_start} → ${s.pause_end}</div>`:''}
+      </div>
+      ${sbadge}
+     </div>
+     <div class="sub-prog">
+      <div class="prog-lbl"><span>${s.delivered_count||0} delivered</span><span>${s.pending_count||0} remaining · ${s.skipped_count||0} skipped</span></div>
+      <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+     </div>
+     ${canAct?`<div class="sub-acts">
+      <button class="btn btn-a btn-sm" onclick="openPause(${s.id})"><i class="fas fa-pause"></i> Pause</button>
+      <button class="btn btn-r btn-sm" onclick="openCancel(${s.id})"><i class="fas fa-times"></i> Cancel</button>
+      <span class="no-refund-note">No refund on cancellation</span>
+     </div>`:''}
+    </div>`;
+}
+
+// ===== HISTORY =====
+async function loadHistory(){
+    document.getElementById('histList').innerHTML='<div class="loading"><span class="spinner"></span>Loading...</div>';
+    try{
+        const data=await apiFetch('/api/customer/delivery-history');
+        if(!data||!data.length){document.getElementById('histList').innerHTML='<div class="empty"><i class="fas fa-history"></i><div class="empty-t">No history yet</div></div>';return;}
+        const sb=s=>({delivered:'<span class="badge bg">✓</span>',skipped:'<span class="badge bgr">—</span>',pending:'<span class="badge ba">⏳</span>'}[s]||'');
+        document.getElementById('histList').innerHTML=data.map(d=>`
+         <div class="hist-row">
+          <div class="hist-date">${fmtShort(d.delivery_date)}</div>
+          <div class="hist-info">
+           <div class="hist-meal">${cap(d.meal_type)}</div>
+           <div class="hist-item">${d.meal_item_name||d.plan_name||'—'}</div>
+          </div>
+          ${sb(d.status)}
+         </div>`).join('');
+    }catch(e){document.getElementById('histList').innerHTML='<p style="color:var(--muted)">Failed to load</p>';}
+}
+
+// ===== PROFILE =====
+async function saveProfile(){
+    const body={name:v('pName'),phone:v('pPhone'),address:v('pAddr'),alternate_address:v('pAlt'),diet_preference:v('pDiet'),allergies:v('pAllergies'),health_notes:v('pHealth')};
+    try{
+        const r=await fetch('/api/customer/profile',{method:'PUT',headers:ah(),body:JSON.stringify(body)});
+        const d=await r.json();
+        if(r.ok){
+            showSuc('profOk','✅ Profile saved!');
+            user.name=body.name;
+            document.getElementById('navNm').textContent=body.name.split(' ')[0];
+            document.getElementById('navAv').textContent=body.name.charAt(0).toUpperCase();
+        } else showAlert2('profErr',d.error||'Error');
+    }catch(e){showAlert2('profErr','Connection error');}
+}
+
+// ===== SKIP =====
+function openSkip(id,meal,date){
+    document.getElementById('skipId').value=id;
+    document.getElementById('skipModalSub').textContent=`${cap(meal)} on ${fmtDateLabel(date)}`;
+    document.getElementById('skipReason').value='';
+    openModal('skipModal');
+}
+async function doSkip(){
+    const id=document.getElementById('skipId').value;
+    const reason=v('skipReason');
+    try{
+        const r=await fetch(`/api/customer/skip-meal/${id}`,{method:'POST',headers:ah(),body:JSON.stringify({reason})});
+        const d=await r.json();
+        if(r.ok){
+            closeModal('skipModal');
+            showAlert2('calAlert',d.message);
+            loadHomeData();loadCalendar();
+        } else alert(d.error||'Error');
+    }catch(e){alert('Error');}
+}
+
+// ===== PAUSE =====
+function openPause(id){
+    document.getElementById('pauseOrdId').value=id;
+    document.getElementById('pauseErr').style.display='none';
+    const t=new Date();t.setDate(t.getDate()+1);
+    const t2=new Date();t2.setDate(t2.getDate()+7);
+    document.getElementById('pauseFrom').value=t.toISOString().split('T')[0];
+    document.getElementById('pauseTo').value=t2.toISOString().split('T')[0];
+    openModal('pauseModal');
+}
+async function doPause(){
+    const id=document.getElementById('pauseOrdId').value;
+    const pause_start=v('pauseFrom'),pause_end=v('pauseTo');
+    if(!pause_start||!pause_end){showAlert2('pauseErr','Select both dates');return;}
+    if(new Date(pause_end)<=new Date(pause_start)){showAlert2('pauseErr','End must be after start');return;}
+    try{
+        const r=await fetch(`/api/customer/pause-subscription/${id}`,{method:'POST',headers:ah(),body:JSON.stringify({pause_start,pause_end})});
+        const d=await r.json();
+        if(r.ok){closeModal('pauseModal');showSuc('subOk',d.message);loadSubs();}
+        else showAlert2('pauseErr',d.error||'Error');
+    }catch(e){showAlert2('pauseErr','Error');}
+}
+
+// ===== CANCEL =====
+function openCancel(id){document.getElementById('cancelOrdId').value=id;openModal('cancelModal');}
+async function doCancel(){
+    const id=document.getElementById('cancelOrdId').value;
+    try{
+        const r=await fetch(`/api/customer/cancel-subscription/${id}`,{method:'POST',headers:ah()});
+        const d=await r.json();
+        if(r.ok){closeModal('cancelModal');showSuc('subOk',d.message);loadSubs();}
+        else alert(d.error||'Error');
+    }catch(e){alert('Error');}
+}
+
+// ===== MODAL HELPERS =====
+function openModal(id){document.getElementById(id).classList.add('show');}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+document.querySelectorAll('.modal-bg').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('show');}));
+
+// ===== UTILS =====
+const ah=()=>({'Content-Type':'application/json','Authorization':'Bearer '+token});
+const v=id=>document.getElementById(id)?.value||'';
+const cap=s=>s?s.charAt(0).toUpperCase()+s.slice(1):s;
+const hide=id=>document.getElementById(id).style.display='none';
+function showErr(id,msg){const el=document.getElementById(id);el.textContent=msg;el.style.display='block';}
+function showSuc(id,msg){const el=document.getElementById(id);el.textContent=msg;el.style.display='block';setTimeout(()=>el.style.display='none',5000);}
+function showAlert2(id,msg){const el=document.getElementById(id);if(!el)return;el.textContent=msg;el.style.display='block';setTimeout(()=>el.style.display='none',5000);}
+
+async function apiFetch(url){
+    const r=await fetch(url,{headers:ah()});
+    return r.json();
+}
+async function post(url,body){
+    const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    return r.json();
+}
+
+function fmtDateLabel(ds){
+    const d=new Date(ds+'T12:00:00');
+    const t=new Date();t.setHours(0,0,0,0);
+    const tm=new Date(t);tm.setDate(t.getDate()+1);
+    if(d.toDateString()===t.toDateString()) return '📍 Today';
+    if(d.toDateString()===tm.toDateString()) return '⭐ Tomorrow';
+    return d.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'short'});
+}
+function fmtShort(ds){return new Date(ds+'T12:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'});}
+
+// ===== INIT =====
+window.addEventListener('load',()=>{
+    const t=sessionStorage.getItem('cTok');
+    if(t){
+        token=t;
+        user=JSON.parse(sessionStorage.getItem('cUser')||'{}');
+        profile=JSON.parse(sessionStorage.getItem('cProf')||'null');
+        showApp();
     }
-
-    function renderWeekMeals(meals, todayStr) {
-        const container = document.getElementById('weekMeals');
-        const upcoming = (meals || []).filter(m => m.delivery_date > todayStr);
-        if (upcoming.length === 0) {
-            container.innerHTML = `<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">No upcoming meals</div><div class="empty-text">Subscribe to a plan to see your schedule</div></div>`;
-            return;
-        }
-
-        const grouped = {};
-        upcoming.forEach(m => {
-            if (!grouped[m.delivery_date]) grouped[m.delivery_date] = [];
-            grouped[m.delivery_date].push(m);
-        });
-
-        let html = '';
-        Object.keys(grouped).sort().forEach(date => {
-            const label = formatDateLabel(date);
-            html += `<div class="meal-day"><div class="meal-day-label">${label}</div>`;
-            html += grouped[date].map(m => mealRow(m, false)).join('');
-            html += '</div>';
-        });
-        container.innerHTML = html;
-    }
-
-    function mealRow(m, showSkip) {
-        const icons = { breakfast: '🌅', lunch: '☀️', dinner: '🌙' };
-        const icon = icons[m.meal_type] || '🍽️';
-        const isSkipped = m.status === 'skipped';
-        const isDelivered = m.status === 'delivered';
-
-        let statusBadge = '';
-        if (isSkipped) statusBadge = '<span class="badge badge-gray">Skipped</span>';
-        else if (isDelivered) statusBadge = '<span class="badge badge-green">✓ Delivered</span>';
-        else statusBadge = '<span class="badge badge-amber">Pending</span>';
-
-        const skipBtn = (showSkip && !isSkipped && !isDelivered)
-            ? `<button class="btn btn-outline btn-sm" onclick="openSkipModal(${m.id})"><i class="fas fa-forward"></i> Skip</button>`
-            : '';
-
-        return `
-            <div class="meal-item-row ${isSkipped ? 'skipped' : ''}">
-                <div class="meal-info">
-                    <div class="meal-icon ${m.meal_type}">${icon}</div>
-                    <div>
-                        <div class="meal-name">${capitalize(m.meal_type)}</div>
-                        <div class="meal-sub">${m.plan_name || 'Subscription'} ${m.kitchen_name ? '· ' + m.kitchen_name : ''}</div>
-                    </div>
-                </div>
-                <div style="display:flex;align-items:center;gap:8px;">
-                    ${statusBadge}
-                    ${skipBtn}
-                </div>
-            </div>
-        `;
-    }
-
-    // ===== SUBSCRIPTIONS =====
-    async function loadSubscriptions() {
-        const container = document.getElementById('subscriptionsList');
-        container.innerHTML = '<div class="loading-block"><span class="spinner"></span> Loading...</div>';
-        try {
-            const res = await fetch(`${API}/customer/subscriptions`, { headers: authH() });
-            const data = await res.json();
-            if (!data || data.length === 0) {
-                container.innerHTML = `<div class="empty"><div class="empty-icon">📦</div><div class="empty-title">No subscriptions yet</div><div class="empty-text">Contact us to subscribe to a meal plan</div></div>`;
-                return;
-            }
-            container.innerHTML = data.map(sub => subCard(sub)).join('');
-        } catch (err) {
-            container.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Failed to load</div></div>`;
-        }
-    }
-
-    function subCard(sub) {
-        const total = (sub.delivered_count || 0) + (sub.pending_count || 0) + (sub.skipped_count || 0);
-        const pct = total > 0 ? Math.round((sub.delivered_count / total) * 100) : 0;
-
-        const statusBadge = {
-            active: '<span class="badge badge-green">● Active</span>',
-            paused: '<span class="badge badge-amber">⏸ Paused</span>',
-            cancelled: '<span class="badge badge-red">✕ Cancelled</span>',
-            completed: '<span class="badge badge-blue">✓ Completed</span>',
-        }[sub.order_status] || '<span class="badge badge-gray">—</span>';
-
-        const dietIcon = { pure_veg: '🟢', non_veg: '🔴', mixed: '🟡' }[sub.diet_type] || '🍽️';
-        const balance = (sub.total_amount || 0) - (sub.paid_amount || 0);
-
-        const canManage = ['active', 'paused'].includes(sub.order_status);
-
-        return `
-            <div class="sub-card">
-                <div class="sub-card-top">
-                    <div>
-                        <div class="sub-plan-name">${sub.plan_name || 'Subscription'}</div>
-                        <div class="sub-meta">
-                            <span>${dietIcon} ${sub.diet_type?.replace('_',' ') || '—'}</span>
-                            <span><i class="fas fa-calendar" style="font-size:10px;"></i> ${sub.start_date || '—'} → ${sub.end_date || '—'}</span>
-                            ${sub.kitchen_name ? `<span><i class="fas fa-store" style="font-size:10px;"></i> ${sub.kitchen_name}</span>` : ''}
-                        </div>
-                        ${balance > 0 ? `<div style="margin-top:8px;font-size:12px;color:var(--red);font-weight:600;"><i class="fas fa-exclamation-circle"></i> Balance due: ₹${balance}</div>` : ''}
-                    </div>
-                    ${statusBadge}
-                </div>
-
-                <div class="sub-progress">
-                    <div class="progress-label">
-                        <span>${sub.delivered_count || 0} delivered</span>
-                        <span>${sub.pending_count || 0} remaining · ${sub.skipped_count || 0} skipped</span>
-                    </div>
-                    <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
-                </div>
-
-                ${canManage ? `
-                <div class="sub-actions">
-                    <button class="btn btn-amber btn-sm" onclick="openPauseModal(${sub.id})"><i class="fas fa-pause"></i> Pause</button>
-                    <button class="btn btn-red btn-sm" onclick="openCancelModal(${sub.id})"><i class="fas fa-times"></i> Cancel</button>
-                    <div style="margin-left:auto;text-align:right;font-size:12px;color:var(--muted);">
-                        ₹${sub.paid_amount||0} / ₹${sub.total_amount||0}
-                    </div>
-                </div>` : ''}
-            </div>
-        `;
-    }
-
-    // ===== HISTORY =====
-    async function loadHistory() {
-        const container = document.getElementById('historyList');
-        container.innerHTML = '<div class="loading-block"><span class="spinner"></span> Loading...</div>';
-        try {
-            const res = await fetch(`${API}/customer/delivery-history`, { headers: authH() });
-            const data = await res.json();
-            if (!data || data.length === 0) {
-                container.innerHTML = `<div class="empty"><div class="empty-icon">📜</div><div class="empty-title">No history yet</div></div>`;
-                return;
-            }
-            const statusBadge = s => ({
-                delivered: '<span class="badge badge-green">✓</span>',
-                skipped: '<span class="badge badge-gray">—</span>',
-                pending: '<span class="badge badge-amber">⏳</span>',
-            }[s] || '<span class="badge badge-gray">—</span>');
-
-            container.innerHTML = data.map(d => `
-                <div class="history-row">
-                    <div class="history-date">${formatDateShort(d.delivery_date)}</div>
-                    <div class="history-meal">${capitalize(d.meal_type)} · ${d.plan_name || '—'}</div>
-                    ${statusBadge(d.status)}
-                </div>
-            `).join('');
-        } catch (err) {
-            container.innerHTML = '<p style="color:var(--muted)">Failed to load history</p>';
-        }
-    }
-
-    // ===== PROFILE =====
-    async function saveProfile() {
-        const body = {
-            name: document.getElementById('profName').value,
-            phone: document.getElementById('profPhone').value,
-            address: document.getElementById('profAddress').value,
-            alternate_address: document.getElementById('profAltAddress').value,
-            diet_preference: document.getElementById('profDiet').value,
-            allergies: document.getElementById('profAllergies').value,
-            health_notes: document.getElementById('profHealthNotes').value,
-        };
-
-        try {
-            const res = await fetch(`${API}/customer/profile`, {
-                method: 'PUT', headers: authH(), body: JSON.stringify(body)
-            });
-            const data = await res.json();
-            if (res.ok) {
-                showAlert('profileSuccess', '✅ Profile saved!');
-                currentUser.name = body.name;
-                document.getElementById('navName').textContent = body.name.split(' ')[0];
-                document.getElementById('navAvatar').textContent = body.name.charAt(0).toUpperCase();
-            } else {
-                showAlert('profileError', data.error || 'Error saving', 'error');
-            }
-        } catch (err) {
-            showAlert('profileError', 'Connection error', 'error');
-        }
-    }
-
-    // ===== MODALS =====
-    function openModal(id) { document.getElementById(id).classList.add('show'); }
-    function closeModal(id) { document.getElementById(id).classList.remove('show'); }
-
-    document.querySelectorAll('.modal-backdrop').forEach(el => {
-        el.addEventListener('click', e => { if (e.target === el) el.classList.remove('show'); });
-    });
-
-    function openSkipModal(deliveryId) {
-        document.getElementById('skipDeliveryId').value = deliveryId;
-        document.getElementById('skipReason').value = '';
-        openModal('skipModal');
-    }
-
-    async function confirmSkip() {
-        const id = document.getElementById('skipDeliveryId').value;
-        const reason = document.getElementById('skipReason').value;
-        try {
-            const res = await fetch(`${API}/customer/skip-meal/${id}`, {
-                method: 'POST', headers: authH(), body: JSON.stringify({ reason })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                closeModal('skipModal');
-                showAlert('subSuccess', '✅ ' + data.message);
-                loadHomeData();
-            } else {
-                alert(data.error || 'Could not skip');
-            }
-        } catch (err) { alert('Error'); }
-    }
-
-    function openPauseModal(orderId) {
-        document.getElementById('pauseOrderId').value = orderId;
-        document.getElementById('pauseError').style.display = 'none';
-        const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
-        const nextWeek = new Date(); nextWeek.setDate(nextWeek.getDate() + 7);
-        document.getElementById('pauseStart').value = tomorrow.toISOString().split('T')[0];
-        document.getElementById('pauseEnd').value = nextWeek.toISOString().split('T')[0];
-        openModal('pauseModal');
-    }
-
-    async function confirmPause() {
-        const id = document.getElementById('pauseOrderId').value;
-        const pause_start = document.getElementById('pauseStart').value;
-        const pause_end = document.getElementById('pauseEnd').value;
-
-        if (!pause_start || !pause_end) { showModalError('pauseError', 'Select dates'); return; }
-        if (new Date(pause_end) <= new Date(pause_start)) { showModalError('pauseError', 'End must be after start'); return; }
-
-        try {
-            const res = await fetch(`${API}/customer/pause-subscription/${id}`, {
-                method: 'POST', headers: authH(), body: JSON.stringify({ pause_start, pause_end })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                closeModal('pauseModal');
-                showAlert('subSuccess', '✅ ' + data.message);
-                loadSubscriptions();
-            } else {
-                showModalError('pauseError', data.error);
-            }
-        } catch (err) { showModalError('pauseError', 'Error'); }
-    }
-
-    function openCancelModal(orderId) {
-        document.getElementById('cancelOrderId').value = orderId;
-        openModal('cancelModal');
-    }
-
-    async function confirmCancel() {
-        const id = document.getElementById('cancelOrderId').value;
-        try {
-            const res = await fetch(`${API}/customer/cancel-subscription/${id}`, {
-                method: 'POST', headers: authH()
-            });
-            const data = await res.json();
-            if (res.ok) {
-                closeModal('cancelModal');
-                showAlert('subSuccess', '✅ Subscription cancelled');
-                loadSubscriptions();
-            } else {
-                alert(data.error || 'Error cancelling');
-            }
-        } catch (err) { alert('Error'); }
-    }
-
-    function showAlert(id, msg) {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.textContent = msg;
-        el.style.display = 'block';
-        setTimeout(() => el.style.display = 'none', 4000);
-    }
-
-    function showModalError(id, msg) {
-        const el = document.getElementById(id);
-        el.textContent = msg;
-        el.style.display = 'block';
-    }
-
-    // ===== UTILS =====
-    function capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
-
-    function formatDateLabel(dateStr) {
-        const d = new Date(dateStr + 'T00:00:00');
-        const today = new Date(); today.setHours(0,0,0,0);
-        const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
-        if (d.toDateString() === today.toDateString()) return '📍 Today';
-        if (d.toDateString() === tomorrow.toDateString()) return '⭐ Tomorrow';
-        return d.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' });
-    }
-
-    function formatDateShort(dateStr) {
-        return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
-    }
-
-    // ===== INIT =====
-    window.addEventListener('load', () => {
-        const saved = sessionStorage.getItem('customerToken');
-        if (saved) {
-            token = saved;
-            currentUser = JSON.parse(sessionStorage.getItem('customerUser') || '{}');
-            customerProfile = JSON.parse(sessionStorage.getItem('customerProfile') || 'null');
-            showApp();
-        }
-    });
-
-    document.getElementById('loginPassword').addEventListener('keydown', e => {
-        if (e.key === 'Enter') handleLogin();
-    });
+});
+document.getElementById('lPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 </script>
 </body>
 </html>
