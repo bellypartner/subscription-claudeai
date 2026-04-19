@@ -7,12 +7,10 @@
     "start": "node server_extended.js",
     "dev": "nodemon server_extended.js"
   },
-  "keywords": ["meal", "subscription", "delivery"],
-  "author": "",
   "license": "ISC",
   "dependencies": {
     "express": "^4.18.2",
-    "better-sqlite3": "^8.5.0",
+    "pg": "^8.11.3",
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.0",
     "cors": "^2.8.5",
@@ -23,7 +21,6 @@
     "nodemon": "^2.0.20"
   },
   "engines": {
-    "node": "16.x",
-    "npm": "8.x"
+    "node": ">=18.x"
   }
 }
