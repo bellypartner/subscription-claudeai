@@ -30,10 +30,11 @@ const db = {
 async function initDB() {
     await db.query(`CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, password TEXT NOT NULL, phone TEXT, authority TEXT DEFAULT 'customer', status TEXT DEFAULT 'active', created_at TIMESTAMPTZ DEFAULT NOW())`);
     await db.query(`CREATE TABLE IF NOT EXISTS meal_categories (id SERIAL PRIMARY KEY, name TEXT NOT NULL UNIQUE, description TEXT, status TEXT DEFAULT 'active', created_at TIMESTAMPTZ DEFAULT NOW())`);
-    await db.query(`CREATE TABLE IF NOT EXISTS meal_items (id SERIAL PRIMARY KEY, name TEXT NOT NULL, category_id INTEGER NOT NULL REFERENCES meal_categories(id), veg_tag INTEGER DEFAULT 0, non_veg_tag INTEGER DEFAULT 0, description TEXT, ingredients TEXT, allergy_info TEXT, calories INTEGER, proteins DECIMAL(6,2), carbs DECIMAL(6,2), fiber DECIMAL(6,2), sugar DECIMAL(6,2), vitamins TEXT, weight TEXT, mrp DECIMAL(10,2), prep_time_minutes INTEGER, image_base64 TEXT, status TEXT DEFAULT 'active', created_at TIMESTAMPTZ DEFAULT NOW())`);
+    await db.query(`CREATE TABLE IF NOT EXISTS meal_items (id SERIAL PRIMARY KEY, name TEXT NOT NULL, category_id INTEGER NOT NULL REFERENCES meal_categories(id), veg_tag INTEGER DEFAULT 0, non_veg_tag INTEGER DEFAULT 0, eggetarian_tag INTEGER DEFAULT 0, vegan_tag INTEGER DEFAULT 0, description TEXT, ingredients TEXT, allergy_info TEXT, calories INTEGER, proteins DECIMAL(6,2), carbs DECIMAL(6,2), fiber DECIMAL(6,2), sugar DECIMAL(6,2), vitamins TEXT, mrp DECIMAL(10,2), image_base64 TEXT, status TEXT DEFAULT 'active', created_at TIMESTAMPTZ DEFAULT NOW())`);
     await db.query(`CREATE TABLE IF NOT EXISTS territories (id SERIAL PRIMARY KEY, name TEXT NOT NULL UNIQUE, description TEXT, status TEXT DEFAULT 'active', created_at TIMESTAMPTZ DEFAULT NOW())`);
     await db.query(`CREATE TABLE IF NOT EXISTS kitchens (id SERIAL PRIMARY KEY, name TEXT NOT NULL, territory_id INTEGER NOT NULL REFERENCES territories(id), address TEXT, capacity INTEGER, status TEXT DEFAULT 'active', created_at TIMESTAMPTZ DEFAULT NOW())`);
-    await db.query(`CREATE TABLE IF NOT EXISTS subscription_plans (id SERIAL PRIMARY KEY, name TEXT NOT NULL UNIQUE, duration_days INTEGER, num_deliveries INTEGER, diet_type TEXT, price DECIMAL(10,2), meal_types TEXT, breakfast_category_id INTEGER, lunch_category_id INTEGER, dinner_category_id INTEGER, status TEXT DEFAULT 'active', created_at TIMESTAMPTZ DEFAULT NOW())`);
+    await db.query(`CREATE TABLE IF NOT EXISTS subscription_plans (id SERIAL PRIMARY KEY, name TEXT NOT NULL UNIQUE, duration_days INTEGER, num_deliveries INTEGER, diet_type TEXT, price DECIMAL(10,2), meal_types TEXT, plan_menu_id INTEGER, status TEXT DEFAULT 'active', created_at TIMESTAMPTZ DEFAULT NOW())`)
+    await db.query(`CREATE TABLE IF NOT EXISTS plan_menus (id SERIAL PRIMARY KEY, name TEXT NOT NULL, diet_type TEXT, meal_types TEXT, num_days INTEGER, days_of_week TEXT, categories TEXT, generated_slots JSONB, status TEXT DEFAULT 'active', created_at TIMESTAMPTZ DEFAULT NOW())`);
     await db.query(`CREATE TABLE IF NOT EXISTS customers (id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id), name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, phone TEXT, address TEXT, alternate_address TEXT, territory_id INTEGER, allergies TEXT, health_notes TEXT, diet_preference TEXT DEFAULT 'both', status TEXT DEFAULT 'active', created_at TIMESTAMPTZ DEFAULT NOW())`);
     await db.query(`CREATE TABLE IF NOT EXISTS orders (id SERIAL PRIMARY KEY, customer_id INTEGER NOT NULL REFERENCES customers(id), plan_id INTEGER NOT NULL REFERENCES subscription_plans(id), kitchen_id INTEGER, start_date DATE NOT NULL, end_date DATE NOT NULL, total_amount DECIMAL(10,2), paid_amount DECIMAL(10,2) DEFAULT 0, payment_status TEXT DEFAULT 'pending', order_status TEXT DEFAULT 'active', pause_start DATE, pause_end DATE, extended_days INTEGER DEFAULT 0, notes TEXT, created_at TIMESTAMPTZ DEFAULT NOW())`);
     await db.query(`CREATE TABLE IF NOT EXISTS deliveries (id SERIAL PRIMARY KEY, order_id INTEGER NOT NULL REFERENCES orders(id), customer_id INTEGER NOT NULL REFERENCES customers(id), kitchen_id INTEGER, delivery_date DATE NOT NULL, meal_type TEXT NOT NULL, meal_item_id INTEGER REFERENCES meal_items(id), status TEXT DEFAULT 'pending', delivery_agent TEXT, delivered_at TIMESTAMPTZ, skipped_reason TEXT, is_sunday_skip INTEGER DEFAULT 0, notes TEXT, created_at TIMESTAMPTZ DEFAULT NOW())`);
@@ -48,7 +49,17 @@ async function initDB() {
     try { await db.query(`ALTER TABLE meal_items ADD COLUMN IF NOT EXISTS sugar DECIMAL(6,2)`); } catch(e){}
     try { await db.query(`ALTER TABLE meal_items ADD COLUMN IF NOT EXISTS vitamins TEXT`); } catch(e){}
     try { await db.query(`ALTER TABLE meal_items ADD COLUMN IF NOT EXISTS image_base64 TEXT`); } catch(e){}
-    try { await db.query(`ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS days_of_week TEXT`); } catch(e){}
+    try { await db.query(`ALTER TABLE meal_items ADD COLUMN IF NOT EXISTS eggetarian_tag INTEGER DEFAULT 0`); } catch(e){}
+    try { await db.query(`ALTER TABLE meal_items ADD COLUMN IF NOT EXISTS vegan_tag INTEGER DEFAULT 0`); } catch(e){}
+    try { await db.query(`ALTER TABLE meal_items ADD COLUMN IF NOT EXISTS allergy_info TEXT`); } catch(e){}
+    try { await db.query(`ALTER TABLE meal_items ADD COLUMN IF NOT EXISTS proteins DECIMAL(6,2)`); } catch(e){}
+    try { await db.query(`ALTER TABLE meal_items ADD COLUMN IF NOT EXISTS carbs DECIMAL(6,2)`); } catch(e){}
+    try { await db.query(`ALTER TABLE meal_items ADD COLUMN IF NOT EXISTS fiber DECIMAL(6,2)`); } catch(e){}
+    try { await db.query(`ALTER TABLE meal_items ADD COLUMN IF NOT EXISTS sugar DECIMAL(6,2)`); } catch(e){}
+    try { await db.query(`ALTER TABLE meal_items ADD COLUMN IF NOT EXISTS vitamins TEXT`); } catch(e){}
+    try { await db.query(`ALTER TABLE meal_items ADD COLUMN IF NOT EXISTS image_base64 TEXT`); } catch(e){}
+    try { await db.query(`ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS plan_menu_id INTEGER`); } catch(e){}
+    try { await db.query(`CREATE TABLE IF NOT EXISTS plan_menus (id SERIAL PRIMARY KEY, name TEXT NOT NULL, diet_type TEXT, meal_types TEXT, num_days INTEGER, days_of_week TEXT, categories TEXT, generated_slots JSONB, status TEXT DEFAULT 'active', created_at TIMESTAMPTZ DEFAULT NOW())`); } catch(e){}
 
     const sa = await db.one(`SELECT id FROM users WHERE email=$1`, ['super@test.com']);
     if (!sa) {
@@ -224,7 +235,7 @@ app.delete('/api/admin/categories/:id', verifyToken, async (req, res) => { try {
 
 // ADMIN MEALS
 app.get('/api/admin/meal-items', verifyToken, async (req, res) => { try { res.json(await db.all(`SELECT m.*,c.name as category_name FROM meal_items m LEFT JOIN meal_categories c ON m.category_id=c.id WHERE m.status='active' ORDER BY c.name,m.name`)); } catch(e){res.status(500).json({error:e.message});} });
-app.post('/api/admin/meal-items', verifyToken, async (req, res) => { try { const{name,category_id,veg_tag,non_veg_tag,description,ingredients,allergy_info,calories,proteins,carbs,fiber,sugar,vitamins,weight,mrp,prep_time_minutes,image_base64}=req.body; if(!name||!category_id) return res.status(400).json({error:'Name and category required'}); const r=await db.one(`INSERT INTO meal_items (name,category_id,veg_tag,non_veg_tag,description,ingredients,allergy_info,calories,proteins,carbs,fiber,sugar,vitamins,weight,mrp,prep_time_minutes,image_base64) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18) RETURNING id`,[name,category_id,veg_tag?1:0,non_veg_tag?1:0,description||'',ingredients||'',allergy_info||'',calories||0,proteins||null,carbs||null,fiber||null,sugar||null,vitamins||'',weight||'',mrp||0,prep_time_minutes||0,image_base64||null]); res.status(201).json({message:'Created',mealItemId:r.id}); } catch(e){res.status(400).json({error:e.message});} });
+app.post('/api/admin/meal-items', verifyToken, async (req, res) => { try { const{name,category_id,veg_tag,non_veg_tag,eggetarian_tag,vegan_tag,description,ingredients,allergy_info,calories,proteins,carbs,fiber,sugar,vitamins,mrp,image_base64}=req.body; if(!name||!category_id) return res.status(400).json({error:'Name and category required'}); const r=await db.one(`INSERT INTO meal_items (name,category_id,veg_tag,non_veg_tag,eggetarian_tag,vegan_tag,description,ingredients,allergy_info,calories,proteins,carbs,fiber,sugar,vitamins,mrp,image_base64) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING id`,[name,category_id,veg_tag?1:0,non_veg_tag?1:0,eggetarian_tag?1:0,vegan_tag?1:0,description||'',ingredients||'',allergy_info||'',calories||0,proteins||null,carbs||null,fiber||null,sugar||null,vitamins||'',mrp||0,image_base64||null]); res.status(201).json({message:'Created',mealItemId:r.id}); } catch(e){res.status(400).json({error:e.message});} });
 app.delete('/api/admin/meal-items/:id', verifyToken, async (req, res) => { try { await db.query(`UPDATE meal_items SET status='inactive' WHERE id=$1`,[req.params.id]); res.json({message:'Deleted'}); } catch(e){res.status(500).json({error:e.message});} });
 
 // ADMIN TERRITORIES
@@ -300,12 +311,16 @@ app.post('/api/admin/plan-menu/generate', verifyToken, async (req, res) => {
         // rotating through all available items to avoid repetition
         const itemCache = {};
         for (const mt of mts) {
-            const catId = catIds[mt];
-            if (!catId) continue;
-            let q = `SELECT id,name,calories,veg_tag,non_veg_tag FROM meal_items WHERE category_id=$1 AND status='active'`;
-            const params = [catId];
+            const catIds_arr = catIds[mt]; // now an array
+            if (!catIds_arr || !catIds_arr.length) continue;
+            const placeholders = catIds_arr.map((_, i) => `$${i+1}`).join(',');
+            let q = `SELECT id,name,calories,veg_tag,non_veg_tag,eggetarian_tag,vegan_tag FROM meal_items WHERE category_id IN (${placeholders}) AND status='active'`;
+            const params = catIds_arr;
             if (diet_type === 'pure_veg') { q += ' AND veg_tag=1'; }
             else if (diet_type === 'non_veg') { q += ' AND non_veg_tag=1'; }
+            else if (diet_type === 'vegan') { q += ' AND vegan_tag=1'; }
+            else if (diet_type === 'eggetarian') { q += ' AND eggetarian_tag=1'; }
+            // mixed = all items, alternated by day in loop below
             itemCache[mt] = await db.all(q, params);
         }
 
@@ -315,12 +330,22 @@ app.post('/api/admin/plan-menu/generate', verifyToken, async (req, res) => {
         const idxMap = {};
         mts.forEach(m => idxMap[m] = 0);
 
+        // Mixed alternating types: day 1=veg, day 2=egg, day 3=nonveg, repeat
+        const mixedTypes = ['pure_veg', 'eggetarian', 'non_veg'];
+        const mixedFields = { pure_veg: 'veg_tag', eggetarian: 'eggetarian_tag', non_veg: 'non_veg_tag' };
+
         while (dayCount < num_days) {
-            const dow = ((offset) % 7 + 1) % 7; // 0=Sun,1=Mon...6=Sat in JS Date
             const jsDow = (offset) % 7;
-            if (allowedDays.includes((jsDow + 1) % 7 === 0 ? 7 : (jsDow + 1) % 7) && jsDow !== 0) {
+            if (allowedDays.includes(jsDow === 0 ? 0 : jsDow) && jsDow !== 0) {
                 for (const mt of mts) {
-                    const items = itemCache[mt] || [];
+                    let items = itemCache[mt] || [];
+                    // For mixed plans, filter by alternating diet type for this day
+                    if (diet_type === 'mixed' && items.length) {
+                        const dayDiet = mixedTypes[dayCount % 3];
+                        const field = mixedFields[dayDiet];
+                        const filtered = items.filter(i => i[field] === 1);
+                        if (filtered.length) items = filtered;
+                    }
                     if (!items.length) { menu.push({ day: dayCount+1, offset, meal_type: mt, meal_item_id: null, meal_item_name: 'No items in category' }); continue; }
                     const item = items[idxMap[mt] % items.length];
                     idxMap[mt]++;
@@ -329,11 +354,35 @@ app.post('/api/admin/plan-menu/generate', verifyToken, async (req, res) => {
                 dayCount++;
             }
             offset++;
-            if (offset > num_days * 3) break; // safety
+            if (offset > num_days * 3) break;
         }
 
         res.json({ menu, total_slots: menu.length });
     } catch(e) { console.error(e); res.status(500).json({ error: e.message }); }
+});
+
+
+// ===== PLAN MENUS =====
+app.get('/api/admin/plan-menus', verifyToken, async (req, res) => {
+    try { res.json(await db.all(`SELECT * FROM plan_menus WHERE status='active' ORDER BY created_at DESC`)); }
+    catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/admin/plan-menus/save', verifyToken, async (req, res) => {
+    try {
+        const { name, diet_type, meal_types, num_days, days_of_week, categories, generated_slots } = req.body;
+        if (!name || !generated_slots) return res.status(400).json({ error: 'Name and generated slots required' });
+        const r = await db.one(
+            `INSERT INTO plan_menus (name,diet_type,meal_types,num_days,days_of_week,categories,generated_slots) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`,
+            [name, diet_type, meal_types, num_days, JSON.stringify(days_of_week), JSON.stringify(categories), JSON.stringify(generated_slots)]
+        );
+        res.status(201).json({ message: 'Plan menu saved', menuId: r.id });
+    } catch(e) { res.status(400).json({ error: e.message }); }
+});
+
+app.delete('/api/admin/plan-menus/:id', verifyToken, async (req, res) => {
+    try { await db.query(`UPDATE plan_menus SET status='inactive' WHERE id=$1`, [req.params.id]); res.json({ message: 'Deleted' }); }
+    catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));
