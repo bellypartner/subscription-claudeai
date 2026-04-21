@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Salad Caffe — Kitchen</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{--g:#2ecc71;--gd:#27ae60;--gl:#eafaf1;--gm:#a9dfbf;--dk:#111827;--mid:#374151;--muted:#6b7280;--border:#e5e7eb;--bg:#f9fafb;--red:#ef4444;--rl:#fef2f2;--amber:#f59e0b;--al:#fffbeb;--blue:#3b82f6;--bl:#eff6ff;--sh:0 1px 3px rgba(0,0,0,.08);}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--dk);font-size:14px;}
+#loginPage{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);}
+.lcard{background:white;padding:44px 40px;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.4);width:100%;max-width:400px;}
+.lbrand{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.lbrand-ico{width:44px;height:44px;background:#f59e0b;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;}
+.lbrand h1{font-family:"Playfair Display",serif;font-size:22px;}
+.lsub{color:var(--muted);font-size:13px;margin-bottom:28px;}
+.li{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:"DM Sans",sans-serif;margin-bottom:12px;}
+.li:focus{outline:none;border-color:#f59e0b;}
+.lbtn{width:100%;padding:12px;background:#f59e0b;color:white;border:none;border-radius:8px;font-size:15px;font-weight:700;font-family:"DM Sans",sans-serif;cursor:pointer;}
+.lbtn:hover{background:#d97706;}
+.lerr{background:var(--rl);color:var(--red);padding:10px 13px;border-radius:7px;margin-bottom:14px;font-size:13px;display:none;}
+#app{display:none;min-height:100vh;flex-direction:column;}
+#app.show{display:flex;}
+.topbar{background:#1f2937;padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.tb-brand{display:flex;align-items:center;gap:10px;color:white;}
+.tb-ico{width:36px;height:36px;background:#f59e0b;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.tb-txt{font-family:"Playfair Display",serif;font-size:17px;}
+.tb-txt span{display:block;font-size:10px;color:rgba(255,255,255,.4);font-family:"DM Sans",sans-serif;text-transform:uppercase;letter-spacing:.1em;}
+.tb-right{display:flex;align-items:center;gap:12px;color:white;}
+.tb-date{font-size:12px;color:rgba(255,255,255,.6);}
+.tb-logout{padding:6px 14px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:7px;color:white;cursor:pointer;font-size:12px;font-family:"DM Sans",sans-serif;}
+.content{padding:24px;max-width:1100px;margin:0 auto;width:100%;}
+.controls{display:flex;gap:12px;align-items:center;margin-bottom:24px;flex-wrap:wrap;}
+.fc{padding:10px 13px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:"DM Sans",sans-serif;color:var(--dk);background:white;}
+.fc:focus{outline:none;border-color:#f59e0b;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:9px 18px;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;font-family:"DM Sans",sans-serif;}
+.btn-amber{background:#f59e0b;color:white;}.btn-amber:hover{background:#d97706;}
+.btn-g{background:var(--g);color:white;}.btn-g:hover{background:var(--gd);}
+.btn-o{background:white;border:1.5px solid var(--border);color:var(--mid);}
+.btn-sm{padding:5px 10px;font-size:11.5px;border-radius:6px;}
+
+/* SUMMARY CARD */
+.summary-card{background:white;border-radius:14px;box-shadow:var(--sh);border:1px solid var(--border);margin-bottom:20px;overflow:hidden;}
+.sc-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.sc-mealtype{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;}
+.sc-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;}
+.sc-body{padding:20px;}
+
+/* PREPARE SECTION */
+.prepare-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-bottom:20px;}
+.item-card{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;align-items:center;gap:14px;}
+.item-img{width:56px;height:56px;border-radius:10px;object-fit:cover;background:#e5e7eb;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:24px;}
+.item-name{font-size:14px;font-weight:700;margin-bottom:4px;}
+.item-count{font-size:22px;font-weight:800;color:var(--gd);line-height:1;}
+.item-split{font-size:11.5px;color:var(--muted);margin-top:3px;}
+
+/* STATS ROW */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.stat-box{background:white;border:1px solid var(--border);border-radius:10px;padding:14px 16px;text-align:center;}
+.stat-val{font-size:26px;font-weight:800;line-height:1;}
+.stat-lbl{font-size:11px;color:var(--muted);margin-top:3px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
+.stat-split{font-size:10.5px;color:var(--muted);margin-top:4px;}
+
+/* SKIPPED BREAKDOWN */
+.skip-bar{background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.skip-title{font-size:13px;font-weight:700;color:var(--red);display:flex;align-items:center;gap:6px;}
+.skip-detail{display:flex;gap:20px;}
+.skip-item{text-align:center;}
+.skip-num{font-size:18px;font-weight:800;color:var(--red);}
+.skip-lbl{font-size:10.5px;color:var(--muted);}
+
+/* NET PREPARE BAR */
+.net-bar{background:var(--gl);border:1px solid var(--gm);border-radius:10px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.net-title{font-size:13px;font-weight:700;color:var(--gd);display:flex;align-items:center;gap:6px;}
+.net-detail{display:flex;gap:20px;}
+.net-item{text-align:center;}
+.net-num{font-size:20px;font-weight:800;color:var(--gd);}
+.net-lbl{font-size:10.5px;color:var(--muted);}
+
+/* CUSTOMER LIST */
+.cust-list-toggle{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--mid);padding:10px 0;border-top:1px solid var(--border);user-select:none;}
+.cust-table{display:none;margin-top:10px;}
+.cust-table.open{display:block;}
+table{width:100%;border-collapse:collapse;}
+thead th{background:var(--bg);padding:9px 13px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);}
+tbody td{padding:10px 13px;border-bottom:1px solid var(--border);font-size:13px;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover{background:var(--bg);}
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;}
+.bg{background:var(--gl);color:var(--gd);}
+.br{background:var(--rl);color:var(--red);}
+.ba{background:var(--al);color:#92400e;}
+.bgr{background:#f3f4f6;color:var(--muted);}
+
+.empty{text-align:center;padding:48px 20px;color:var(--muted);}
+.empty i{font-size:40px;margin-bottom:14px;display:block;opacity:.3;}
+.spinner{display:inline-block;width:22px;height:22px;border:3px solid var(--border);border-top-color:#f59e0b;border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle;}
+@keyframes sp{to{transform:rotate(360deg);}}
+.loading{text-align:center;padding:40px;color:var(--muted);}
+.last-updated{font-size:11px;color:rgba(255,255,255,.4);margin-left:8px;}
+
+/* PRINT */
+@media print{.topbar,.controls,button{display:none!important;}.content{padding:10px;}}
+</style>
+</head>
+<body>
+
+<div id="loginPage">
+  <div class="lcard">
+    <div class="lbrand"><div class="lbrand-ico">&#127859;</div><h1>Kitchen Dashboard</h1></div>
+    <p class="lsub">Salad Caffe — Kitchen Operations</p>
+    <div class="lerr" id="loginErr"></div>
+    <input type="email" class="li" id="lEmail" placeholder="Email" value="kitchen@test.com">
+    <input type="password" class="li" id="lPass" placeholder="Password" value="kitchen123">
+    <button class="lbtn" onclick="doLogin()">Sign In</button>
+    <p style="text-align:center;margin-top:12px;font-size:11.5px;color:var(--muted)">Demo: kitchen@test.com / kitchen123</p>
+  </div>
+</div>
+
+<div id="app">
+  <div class="topbar">
+    <div class="tb-brand">
+      <div class="tb-ico">&#127859;</div>
+      <div class="tb-txt">Kitchen Dashboard<span>Salad Caffe</span></div>
+    </div>
+    <div class="tb-right">
+      <span class="tb-date" id="tbDate"></span>
+      <span class="last-updated" id="lastUpdated"></span>
+      <button class="tb-logout" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="controls">
+      <div>
+        <input type="date" class="fc" id="dateFilter" onchange="loadSummary()">
+      </div>
+      <div>
+        <select class="fc" id="kitchenFilter" onchange="loadSummary()">
+          <option value="">All Kitchens</option>
+        </select>
+      </div>
+      <button class="btn btn-amber" onclick="loadSummary()"><i class="fas fa-sync"></i> Refresh</button>
+      <button class="btn btn-o" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
+    </div>
+
+    <div id="summaryArea">
+      <div class="loading"><span class="spinner"></span> Loading kitchen summary...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = "/api";
+let token = null;
+let autoRefreshInterval = null;
+
+// Set today as default date
+document.getElementById("dateFilter").value = new Date().toISOString().split("T")[0];
+document.getElementById("tbDate").textContent = new Date().toLocaleDateString("en-IN", {weekday:"long",day:"numeric",month:"long",year:"numeric"});
+
+window.addEventListener("load", () => {
+    const t = sessionStorage.getItem("kToken");
+    if (t) { token = t; showApp(); }
+});
+
+async function doLogin() {
+    const email = document.getElementById("lEmail").value;
+    const pwd = document.getElementById("lPass").value;
+    const err = document.getElementById("loginErr");
+    err.style.display = "none";
+    if (!email || !pwd) { err.textContent = "Fill all fields"; err.style.display = "block"; return; }
+    try {
+        const r = await fetch(`${API}/auth/login`, {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,password:pwd})});
+        const d = await r.json();
+        if (d.error) { err.textContent = d.error; err.style.display = "block"; return; }
+        // Allow kitchen and admin roles
+        if (!["kitchen_manager","kitchen_staff","super_admin","admin"].includes(d.user.authority)) {
+            err.textContent = "Kitchen staff access only"; err.style.display = "block"; return;
+        }
+        token = d.token;
+        sessionStorage.setItem("kToken", token);
+        showApp();
+    } catch(e) { err.textContent = "Connection error"; err.style.display = "block"; }
+}
+
+function doLogout() { sessionStorage.removeItem("kToken"); clearInterval(autoRefreshInterval); location.reload(); }
+
+function showApp() {
+    document.getElementById("loginPage").style.display = "none";
+    document.getElementById("app").classList.add("show");
+    loadKitchens();
+    loadSummary();
+    // Auto-refresh every 60 seconds
+    autoRefreshInterval = setInterval(loadSummary, 60000);
+}
+
+async function loadKitchens() {
+    try {
+        const r = await fetch(`${API}/kitchen/list`, {headers: {"Authorization": "Bearer " + token}});
+        const kitchens = await r.json();
+        const sel = document.getElementById("kitchenFilter");
+        (kitchens || []).forEach(k => {
+            const o = document.createElement("option");
+            o.value = k.id; o.text = k.name;
+            sel.appendChild(o);
+        });
+    } catch(e) {}
+}
+
+async function loadSummary() {
+    const date = document.getElementById("dateFilter").value;
+    const kitchenId = document.getElementById("kitchenFilter").value;
+    const area = document.getElementById("summaryArea");
+    area.innerHTML = "<div class='loading'><span class='spinner'></span> Loading...</div>";
+
+    let url = `${API}/kitchen/daily-summary?date=${date}`;
+    if (kitchenId) url += `&kitchen_id=${kitchenId}`;
+
+    try {
+        const r = await fetch(url, {headers: {"Authorization": "Bearer " + token}});
+        const d = await r.json();
+        if (d.error) { area.innerHTML = `<div class="empty"><i class="fas fa-exclamation-circle"></i><p>${d.error}</p></div>`; return; }
+        document.getElementById("lastUpdated").textContent = "Updated " + new Date().toLocaleTimeString("en-IN");
+        renderSummary(d);
+    } catch(e) {
+        area.innerHTML = "<div class='empty'><i class='fas fa-wifi'></i><p>Connection error. Is the server running?</p></div>";
+    }
+}
+
+function renderSummary(data) {
+    const area = document.getElementById("summaryArea");
+    const { summary, date } = data;
+    const mealTypes = Object.keys(summary);
+
+    if (!mealTypes.length) {
+        area.innerHTML = "<div class='empty'><i class='fas fa-check-circle'></i><p style='font-size:16px;font-weight:700;color:var(--gd)'>No deliveries scheduled for this date</p><p>It may be a Sunday or no orders are active.</p></div>";
+        return;
+    }
+
+    const mealIcons = {breakfast:"&#127749;", lunch:"&#9728;", dinner:"&#127769;"};
+    const mealColors = {breakfast:"background:#fef9c3;color:#92400e;", lunch:"background:var(--gl);color:var(--gd);", dinner:"background:#ede9fe;color:#5b21b6;"};
+
+    let html = "";
+    for (const mt of mealTypes) {
+        const s = summary[mt];
+        const icon = mealIcons[mt] || "&#127869;";
+        const color = mealColors[mt] || "background:var(--bg);color:var(--mid);";
+
+        html += `<div class="summary-card">
+            <div class="sc-header">
+                <div class="sc-mealtype">${icon} ${mt.charAt(0).toUpperCase()+mt.slice(1)}
+                    <span class="sc-badge" style="${color}">${s.total_customers} customers</span>
+                </div>
+                <div style="font-size:12px;color:var(--muted);">${date}</div>
+            </div>
+            <div class="sc-body">`;
+
+        // ITEMS TO PREPARE
+        html += `<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:10px;">Prepare Today</div>`;
+        html += `<div class="prepare-grid">`;
+        if (!s.items_to_prepare.length) {
+            html += `<div style="color:var(--muted);font-size:13px;padding:10px 0;">All meals skipped or delivered</div>`;
+        } else {
+            for (const item of s.items_to_prepare) {
+                const imgHtml = item.image_base64
+                    ? `<img src="${item.image_base64}" class="item-img" alt="">`
+                    : `<div class="item-img">&#127869;</div>`;
+                const dietTag = item.veg_tag
+                    ? `<span style="font-size:10px;font-weight:700;color:var(--gd);">&#128994; Veg</span>`
+                    : `<span style="font-size:10px;font-weight:700;color:var(--red);">&#128308; Non-Veg</span>`;
+                html += `<div class="item-card">
+                    ${imgHtml}
+                    <div>
+                        <div class="item-name">${item.meal_item_name}</div>
+                        <div class="item-count">&times; ${item.total}</div>
+                        <div class="item-split">
+                            &#128994; ${item.veg_count} veg &nbsp;|&nbsp; &#128308; ${item.non_veg_count} non-veg
+                        </div>
+                        ${item.calories ? `<div style="font-size:10.5px;color:var(--muted);margin-top:2px;">${item.calories} kcal</div>` : ""}
+                    </div>
+                </div>`;
+            }
+        }
+        html += `</div>`;
+
+        // STATS ROW
+        html += `<div class="stats-row">
+            <div class="stat-box">
+                <div class="stat-val" style="color:var(--blue)">${s.total_customers}</div>
+                <div class="stat-lbl">Total</div>
+                <div class="stat-split">&#128994; ${s.items_to_prepare.reduce((a,i)=>a+i.veg_count,0)+s.skipped_veg+s.delivered_veg} veg &nbsp; &#128308; ${s.items_to_prepare.reduce((a,i)=>a+i.non_veg_count,0)+s.skipped_non_veg+s.delivered_non_veg} non-veg</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-val" style="color:var(--g)">${s.delivered_total}</div>
+                <div class="stat-lbl">Delivered</div>
+                <div class="stat-split">&#128994; ${s.delivered_veg} &nbsp; &#128308; ${s.delivered_non_veg}</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-val" style="color:var(--amber)">${s.pending_total}</div>
+                <div class="stat-lbl">Pending</div>
+                <div class="stat-split">&#128994; ${s.pending_veg} &nbsp; &#128308; ${s.pending_non_veg}</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-val" style="color:var(--red)">${s.skipped_total}</div>
+                <div class="stat-lbl">Skipped</div>
+                <div class="stat-split">&#128994; ${s.skipped_veg} &nbsp; &#128308; ${s.skipped_non_veg}</div>
+            </div>
+        </div>`;
+
+        // SKIPPED BREAKDOWN
+        if (s.skipped_total > 0) {
+            html += `<div class="skip-bar">
+                <div class="skip-title"><i class="fas fa-times-circle"></i> Skipped Today &mdash; Do NOT prepare these</div>
+                <div class="skip-detail">
+                    <div class="skip-item"><div class="skip-num">${s.skipped_total}</div><div class="skip-lbl">Total Skipped</div></div>
+                    <div class="skip-item"><div class="skip-num" style="color:#92400e">${s.skipped_veg}</div><div class="skip-lbl">&#128994; Veg Skips</div></div>
+                    <div class="skip-item"><div class="skip-num">${s.skipped_non_veg}</div><div class="skip-lbl">&#128308; Non-Veg Skips</div></div>
+                </div>
+            </div>`;
+        }
+
+        // NET TO PREPARE
+        html += `<div class="net-bar">
+            <div class="net-title"><i class="fas fa-check-circle"></i> Net to Prepare (after skips)</div>
+            <div class="net-detail">
+                <div class="net-item"><div class="net-num">${s.net_to_prepare}</div><div class="net-lbl">Total</div></div>
+                <div class="net-item"><div class="net-num" style="color:#166534">${s.net_veg}</div><div class="net-lbl">&#128994; Veg</div></div>
+                <div class="net-item"><div class="net-num" style="color:#991b1b">${s.net_non_veg}</div><div class="net-lbl">&#128308; Non-Veg</div></div>
+            </div>
+        </div>`;
+
+        // CUSTOMER LIST (collapsible)
+        html += `<div class="cust-list-toggle" onclick="toggleCustList(this, 'cust-${mt}')">
+            <i class="fas fa-chevron-right" style="font-size:11px;transition:transform .2s;"></i>
+            View Customer List (${s.customer_list.length})
+        </div>
+        <div class="cust-table" id="cust-${mt}">
+            <table>
+                <thead><tr><th>#</th><th>Customer</th><th>Phone</th><th>Diet</th><th>Item</th><th>Address</th><th>Status</th></tr></thead>
+                <tbody>`;
+        s.customer_list.forEach((c, i) => {
+            const statusBadge = c.status === "delivered" ? "<span class='badge bg'>&#10003; Done</span>" :
+                c.status === "skipped" ? "<span class='badge bgr'>Skipped</span>" :
+                "<span class='badge ba'>Pending</span>";
+            const dietBadge = c.is_veg ? "&#128994;" : "&#128308;";
+            html += `<tr>
+                <td style="color:var(--muted);font-size:12px;">${i+1}</td>
+                <td><strong>${c.name}</strong></td>
+                <td>${c.phone || "?"}</td>
+                <td>${dietBadge} ${c.diet || "?"}</td>
+                <td style="font-size:12.5px;">${c.item}</td>
+                <td style="font-size:12px;color:var(--muted);max-width:180px;">${c.address || "?"}</td>
+                <td>${statusBadge}</td>
+            </tr>`;
+        });
+        html += `</tbody></table></div></div></div>`;
+    }
+
+    area.innerHTML = html;
+}
+
+function toggleCustList(header, tableId) {
+    const table = document.getElementById(tableId);
+    const icon = header.querySelector("i");
+    table.classList.toggle("open");
+    icon.style.transform = table.classList.contains("open") ? "rotate(90deg)" : "rotate(0)";
+}
+</script>
+</body>
+</html>
