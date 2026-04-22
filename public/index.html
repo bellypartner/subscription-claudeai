@@ -571,7 +571,7 @@ function openMealModal(){
 document.querySelectorAll(".modal-bg").forEach(el=>el.addEventListener("click",e=>{if(e.target===el)el.classList.remove("show");}));
 document.querySelectorAll(".achip").forEach(c=>c.addEventListener("click",()=>c.classList.toggle("on")));
 document.querySelectorAll(".dchip:not(.no)").forEach(c=>c.addEventListener("click",()=>c.classList.toggle("sel")));
-// pmDiet listener removed - new system
+
 function toggleDiet(el){
   el.classList.toggle("sel");
   const sel=Array.from(document.querySelectorAll(".diet-opt.sel")).map(d=>d.dataset.v);
@@ -606,7 +606,7 @@ async function loadCategories(){
 }
 function refreshCatDropdowns(){
   const mc=document.getElementById("mCat");if(mc)mc.innerHTML="<option value=''>Select Category</option>"+cats.map(c=>`<option value="${c.id}">${c.name}</option>`).join("");
-  renderPmCats();
+  // initCatPicker called separately when planmenu tab opens
 }
 async function addCategory(){
   const name=document.getElementById("catName").value.trim();
@@ -665,37 +665,14 @@ async function addMeal(){
 }
 async function deleteMeal(id){if(!confirm("Delete?"))return;await api(`${API}/admin/meal-items/${id}`,{method:"DELETE"});await loadMeals();}
 
-// PLAN MENU
-// renderPmCats replaced by new system
 
-// generateMenu replaced - see new version below
-
-// saveMenu replaced - see saveGeneratedMenu below
-
-async function loadSavedMenus(){
-  try{
-    const data=await api(`${API}/admin/plan-menus`);savedMenus=data||[];
-    const body=document.getElementById("savedMenuBody");
-    if(!savedMenus.length){body.innerHTML="<tr><td colspan='6'><div class='empty'><i class='fas fa-calendar'></i><p>No saved menus yet. Generate one above.</p></div></td></tr>";return;}
-    body.innerHTML=savedMenus.map(m=>`<tr>
-      <td><strong>${m.name}</strong></td>
-      <td>${dietLabel(m.diet_type)}</td>
-      <td>${m.num_days||"?"} days</td>
-      <td>${m.meal_types||"?"}</td>
-      <td style="font-size:11.5px;color:var(--muted);">${fmtDate(m.created_at)}</td>
-      <td><button class="btn btn-r btn-sm" onclick="deleteMenu(${m.id})"><i class="fas fa-trash"></i></button></td>
-    </tr>`).join("");
-  }catch(e){}
-}
-
-async function deleteMenu(id){if(!confirm("Delete this menu?"))return;await api(`${API}/admin/plan-menus/${id}`,{method:"DELETE"});await loadSavedMenus();}
 
 async function loadSavedMenusForPlan(){
   try{
     const data=await api(`${API}/admin/plan-menus`);
     const sel=document.getElementById("pMenuId");if(!sel)return;
     sel.innerHTML="<option value=''>None (assign manually later)</option>";
-    (data||[]).forEach(m=>{const o=document.createElement("option");o.value=m.id;o.text=m.name+" ("+dietLabel(m.diet_type)+" | "+m.num_days+" days)";sel.appendChild(o);});
+    (data||[]).forEach(m=>{const o=document.createElement("option");o.value=m.id;o.text=m.name+" ("+( m.meal_type||"lunch")+", "+(m.slots_filled||0)+"/24 slots)";sel.appendChild(o);});
   }catch(e){}
 }
 
