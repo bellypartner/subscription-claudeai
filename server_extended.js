@@ -155,6 +155,7 @@ async function initDB() {
         `ALTER TABLE plan_menu_slots ADD COLUMN IF NOT EXISTS weekday INTEGER DEFAULT 1`,
         `ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS delivery_days TEXT DEFAULT '1,2,3,4,5,6'`,
         `ALTER TABLE orders ADD COLUMN IF NOT EXISTS menu_start_slot INTEGER DEFAULT 1`,
+        `ALTER TABLE plan_menus ADD COLUMN IF NOT EXISTS meal_type TEXT DEFAULT 'lunch'`,
     ];
     for (const sql of alters) { try { await db.query(sql); } catch(e) {} }
 
