@@ -225,60 +225,76 @@ select[multiple].fc{height:120px;}
       <div id="page-planmenu" class="page">
         <div class="sec-hd"><span class="sec-title">Plan Menu Generator</span></div>
         <div class="alert as" id="pmOk"></div><div class="alert ae" id="pmErr"></div>
+
         <div class="card">
-          <div class="card-hd"><span class="card-title"><i class="fas fa-magic" style="color:var(--g);margin-right:6px;"></i>Auto-Generate Meal Schedule</span></div>
+          <div class="card-hd"><span class="card-title"><i class="fas fa-magic" style="color:var(--g);margin-right:6px;"></i>Step 1 &mdash; Configure &amp; Generate 24-Slot Menu</span></div>
           <div class="card-body">
-            <div class="frow">
-              <div class="fg"><label class="fl">Diet Type *</label>
-                <select class="fc" id="pmDiet">
-                  <option value="">Select</option>
-                  <option value="pure_veg">Pure Veg</option>
-                  <option value="eggetarian">Eggetarian</option>
-                  <option value="vegan">Vegan</option>
-                  <option value="non_veg">Non-Veg</option>
-                  <option value="mixed">Mixed (alternating)</option>
+            <div class="frow" style="margin-bottom:14px;">
+              <div class="fg" style="margin-bottom:0;">
+                <label class="fl">Meal Type *</label>
+                <select class="fc" id="pmMealType">
+                  <option value="lunch">Lunch</option>
+                  <option value="breakfast">Breakfast</option>
+                  <option value="dinner">Dinner</option>
                 </select>
               </div>
-              <div class="fg"><label class="fl">Number of Days *</label><input type="number" class="fc" id="pmDays" placeholder="30" min="1" max="90"></div>
-            </div>
-            <div class="info-note" id="mixedNote" style="display:none;"><i class="fas fa-info-circle"></i> <strong>Mixed Plan:</strong> Meals alternate day by day — Day 1: Veg, Day 2: Eggetarian, Day 3: Non-Veg, then repeats.</div>
-            <div class="fg"><label class="fl">Meal Types *</label>
-              <div style="display:flex;gap:16px;margin-top:5px;">
-                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:600;"><input type="checkbox" id="pmB" style="accent-color:var(--g);width:15px;height:15px;" onchange="renderPmCats()"> Breakfast</label>
-                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:600;"><input type="checkbox" id="pmL" checked style="accent-color:var(--g);width:15px;height:15px;" onchange="renderPmCats()"> Lunch</label>
-                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:600;"><input type="checkbox" id="pmD" style="accent-color:var(--g);width:15px;height:15px;" onchange="renderPmCats()"> Dinner</label>
+              <div class="fg" style="margin-bottom:0;">
+                <label class="fl">Menu Name *</label>
+                <input type="text" class="fc" id="pmMenuName" placeholder="e.g. Monthly Veg-NonVeg Lunch">
               </div>
             </div>
-            <div class="fg"><label class="fl">Delivery Days</label>
-              <div class="day-row">
-                <div class="dchip no" data-d="0">SUN</div>
-                <div class="dchip sel" data-d="1">MON</div><div class="dchip sel" data-d="2">TUE</div>
-                <div class="dchip sel" data-d="3">WED</div><div class="dchip sel" data-d="4">THU</div>
-                <div class="dchip sel" data-d="5">FRI</div><div class="dchip sel" data-d="6">SAT</div>
+
+            <div class="fg">
+              <label class="fl">Categories * &mdash; click to add in order (order = weekday assignment)</label>
+              <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;">
+                <strong>Rule:</strong> 6 cats = 1 per weekday. 4 cats = Mon+Tue share same, Wed+Thu share etc. 7+ cats = rotates each week.
               </div>
-              <div style="font-size:11px;color:var(--muted);margin-top:4px;">Sunday always excluded. Click to toggle.</div>
+              <div id="catPickerArea" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;min-height:36px;">
+                <span style="color:var(--muted);font-size:12px;align-self:center;">Loading categories...</span>
+              </div>
+              <div id="catOrderList" style="display:flex;flex-direction:column;gap:6px;min-height:52px;border:1.5px dashed var(--border);border-radius:8px;padding:10px;background:var(--bg);">
+                <div style="color:var(--muted);font-size:12px;text-align:center;padding:6px;">Click categories above to add them here in order</div>
+              </div>
+              <div style="font-size:11px;color:var(--muted);margin-top:4px;"><i class="fas fa-info-circle"></i> First added = Monday. Shows which weekday each category maps to.</div>
             </div>
-            <div id="pmCatSection"></div>
-            <button class="btn btn-g" onclick="generateMenu()" style="margin-top:4px;"><i class="fas fa-magic"></i> Generate Menu</button>
+
+            <div style="display:flex;gap:12px;align-items:center;margin-top:6px;">
+              <button class="btn btn-g" onclick="generateMenu()"><i class="fas fa-magic"></i> Generate 24 Slots</button>
+              <span id="pmGenerating" style="display:none;font-size:12.5px;color:var(--muted);"><span class="spinner"></span> Generating...</span>
+            </div>
           </div>
         </div>
+
         <div id="menuPreview" style="display:none;">
           <div class="sec-hd" style="margin-top:6px;">
-            <div><span class="sec-title">Generated Menu</span><span id="menuSummary" style="font-size:12px;color:var(--muted);margin-left:10px;"></span></div>
+            <span class="sec-title">Step 2 &mdash; Review &amp; Save</span>
+            <span id="menuSummary" style="font-size:12px;color:var(--muted);margin-left:10px;"></span>
+          </div>
+          <div id="menuWarnings" style="display:none;background:var(--al);border:1px solid #fde68a;border-radius:10px;padding:14px 16px;margin-bottom:14px;">
+            <div style="font-weight:700;color:#92400e;margin-bottom:6px;"><i class="fas fa-exclamation-triangle"></i> Warnings &mdash; some items will repeat</div>
+            <ul id="menuWarningList" style="margin-left:16px;font-size:13px;color:#92400e;"></ul>
+          </div>
+          <div class="card" style="overflow-x:auto;">
+            <div style="display:grid;grid-template-columns:60px repeat(6,1fr);gap:4px;padding:12px 16px;background:var(--bg);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);">
+              <div></div><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div>
+            </div>
+            <div id="slotGrid" style="padding:8px 16px 16px;display:flex;flex-direction:column;gap:8px;min-height:100px;"></div>
           </div>
           <div class="save-menu-bar">
-            <div style="flex:1;"><label class="fl" style="margin-bottom:4px;">Save this menu as</label><input type="text" class="fc" id="menuSaveName" placeholder="e.g. Monthly Mixed Lunch Plan"></div>
-            <button class="btn btn-g" onclick="saveMenu()" style="flex-shrink:0;align-self:flex-end;"><i class="fas fa-save"></i> Save Menu</button>
+            <div style="flex:1;font-size:13px;color:var(--gd);font-weight:600;"><i class="fas fa-check-circle"></i> Review the 24 slots above then save</div>
+            <button class="btn btn-g" onclick="saveGeneratedMenu()"><i class="fas fa-save"></i> Save Menu</button>
           </div>
-          <div class="menu-grid" id="menuGrid"></div>
         </div>
+
         <div style="margin-top:24px;">
           <div class="sec-hd"><span class="sec-title">Saved Plan Menus</span></div>
-          <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Diet</th><th>Days</th><th>Meal Types</th><th>Created</th><th></th></tr></thead>
-          <tbody id="savedMenuBody"><tr><td colspan="6" class="loading"><span class="spinner"></span></td></tr></tbody></table></div></div>
+          <div class="card"><div class="tbl-wrap"><table>
+            <thead><tr><th>Name</th><th>Meal Type</th><th>Weekday Map</th><th>Slots Filled</th><th>Created</th><th></th></tr></thead>
+            <tbody id="savedMenuBody"><tr><td colspan="6" class="loading"><span class="spinner"></span></td></tr></tbody>
+          </table></div></div>
         </div>
       </div>
-      <div id="page-plans" class="page">
+            <div id="page-plans" class="page">
         <div class="sec-hd"><span class="sec-title">Subscription Plans</span><button class="btn btn-g" onclick="openModal('planModal')"><i class="fas fa-plus"></i> Add Plan</button></div>
         <div class="alert as" id="planOk"></div><div class="alert ae" id="planErr"></div>
         <div class="card"><div class="tbl-wrap"><table>
