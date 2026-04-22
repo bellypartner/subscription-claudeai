@@ -436,12 +436,12 @@ select[multiple].fc{height:120px;}
       <label class="fl">Delivery Days *</label>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:5px;" id="pDayChips">
         <div class="dchip no" style="opacity:.3;cursor:not-allowed;">SUN</div>
-        <div class="dchip sel" data-day="1" onclick="togglePlanDay(this)">MON</div>
-        <div class="dchip sel" data-day="2" onclick="togglePlanDay(this)">TUE</div>
-        <div class="dchip sel" data-day="3" onclick="togglePlanDay(this)">WED</div>
-        <div class="dchip sel" data-day="4" onclick="togglePlanDay(this)">THU</div>
-        <div class="dchip sel" data-day="5" onclick="togglePlanDay(this)">FRI</div>
-        <div class="dchip sel" data-day="6" onclick="togglePlanDay(this)">SAT</div>
+        <div class="dchip sel" data-day="1">MON</div>
+        <div class="dchip sel" data-day="2">TUE</div>
+        <div class="dchip sel" data-day="3">WED</div>
+        <div class="dchip sel" data-day="4">THU</div>
+        <div class="dchip sel" data-day="5">FRI</div>
+        <div class="dchip sel" data-day="6">SAT</div>
       </div>
       <div id="deliveryCalc" style="font-size:11.5px;color:var(--muted);margin-top:6px;"></div>
     </div>
@@ -586,7 +586,13 @@ function openMealModal(){
 }
 document.querySelectorAll(".modal-bg").forEach(el=>el.addEventListener("click",e=>{if(e.target===el)el.classList.remove("show");}));
 document.querySelectorAll(".achip").forEach(c=>c.addEventListener("click",()=>c.classList.toggle("on")));
-document.querySelectorAll(".dchip:not(.no)").forEach(c=>c.addEventListener("click",()=>c.classList.toggle("sel")));
+// Single delegated click handler for ALL dchip elements (works for hidden modal chips too)
+document.addEventListener("click", function(e){
+  const chip = e.target.closest(".dchip");
+  if(!chip || chip.classList.contains("no")) return;
+  chip.classList.toggle("sel");
+  if(chip.closest("#pDayChips")) updateDeliveryCalc();
+});
 
 function toggleDiet(el){
   el.classList.toggle("sel");
