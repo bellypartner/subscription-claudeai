@@ -133,6 +133,26 @@ select[multiple].fc{height:120px;}
 .meal-thumb{width:40px;height:40px;border-radius:7px;object-fit:cover;}
 .save-menu-bar{background:var(--gl);border:1px solid var(--gm);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-top:14px;}
 .info-note{background:var(--al);border:1px solid #fde68a;border-radius:8px;padding:10px 13px;font-size:12.5px;color:#92400e;margin-bottom:14px;}
+/* SLOT GRID */
+.week-row{display:grid;grid-template-columns:60px repeat(6,1fr);gap:4px;align-items:start;}
+.week-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;padding:10px 0;text-align:center;}
+.slot-cell{border:1.5px solid var(--border);border-radius:9px;padding:9px 10px;background:white;font-size:11.5px;min-height:80px;}
+.slot-cell.veg-day{border-color:#a7f3d0;background:#f0fdf4;}
+.slot-cell.nonveg-day{border-color:#fecaca;background:#fff5f5;}
+.slot-cell.empty-day{background:var(--bg);border-style:dashed;opacity:.5;}
+.slot-num{font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px;}
+.slot-cat{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--blue);margin-bottom:4px;}
+.slot-day-badge{display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;margin-bottom:5px;}
+.slot-item{font-size:11.5px;font-weight:600;margin-bottom:2px;line-height:1.3;}
+.slot-alt{font-size:10.5px;color:var(--muted);line-height:1.3;}
+.slot-warn{color:var(--amber);font-size:10px;margin-top:3px;}
+/* CAT PICKER */
+.cat-picker-chip{padding:5px 12px;border:1.5px solid var(--border);border-radius:20px;cursor:pointer;font-size:12px;font-weight:600;background:white;transition:all .15s;}
+.cat-picker-chip.added{background:var(--bl);border-color:var(--blue);color:var(--blue);cursor:default;}
+.cat-order-item{display:flex;align-items:center;gap:8px;background:white;border:1px solid var(--border);border-radius:7px;padding:7px 10px;cursor:grab;}
+.cat-order-item .cat-num{width:20px;height:20px;background:var(--g);color:white;border-radius:50%;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.cat-order-item .cat-day-assign{font-size:10.5px;color:var(--muted);margin-left:auto;}
+.cat-order-item .cat-remove{background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px;padding:0 2px;}
 </style>
 </head>
 <body>
@@ -262,7 +282,7 @@ select[multiple].fc{height:120px;}
         <div class="sec-hd"><span class="sec-title">Subscription Plans</span><button class="btn btn-g" onclick="openModal('planModal')"><i class="fas fa-plus"></i> Add Plan</button></div>
         <div class="alert as" id="planOk"></div><div class="alert ae" id="planErr"></div>
         <div class="card"><div class="tbl-wrap"><table>
-          <thead><tr><th>Name</th><th>Duration</th><th>Deliveries</th><th>Diet</th><th>Meals</th><th>Price</th><th>Menu</th><th></th></tr></thead>
+          <thead><tr><th>Name</th><th>Duration</th><th>Deliveries</th><th>Diet</th><th>Meals</th><th>Days</th><th>Price</th><th>Menu</th><th></th></tr></thead>
           <tbody id="planBody"><tr><td colspan="8" class="loading"><span class="spinner"></span></td></tr></tbody>
         </table></div></div>
       </div>
@@ -374,13 +394,13 @@ select[multiple].fc{height:120px;}
   </div>
 </div></div>
 
-<div class="modal-bg" id="planModal"><div class="modal-box">
+<div class="modal-bg" id="planModal"><div class="modal-box wide">
   <div class="modal-hd"><span class="modal-title">Add Subscription Plan</span><button class="modal-close" onclick="closeModal('planModal')">&times;</button></div>
   <div class="modal-body">
-    <div class="fg"><label class="fl">Plan Name *</label><input type="text" class="fc" id="pName" placeholder="e.g. Monthly Veg Lunch"></div>
+    <div class="fg"><label class="fl">Plan Name *</label><input type="text" class="fc" id="pName" placeholder="e.g. Mon-Sat Veg Lunch"></div>
     <div class="frow">
-      <div class="fg"><label class="fl">Duration (days) *</label><input type="number" class="fc" id="pDays" placeholder="30"></div>
-      <div class="fg"><label class="fl">No. of Deliveries *</label><input type="number" class="fc" id="pDeliveries" placeholder="26"></div>
+      <div class="fg"><label class="fl">Duration (days) *</label><input type="number" class="fc" id="pDays" placeholder="28"></div>
+      <div class="fg"><label class="fl">No. of Deliveries *</label><input type="number" class="fc" id="pDeliveries" placeholder="24" onchange="updateDeliveryCalc()"></div>
     </div>
     <div class="frow">
       <div class="fg"><label class="fl">Diet Type *</label>
@@ -395,6 +415,21 @@ select[multiple].fc{height:120px;}
       </div>
       <div class="fg"><label class="fl">Price (Rs) *</label><input type="number" class="fc" id="pPrice" placeholder="1499"></div>
     </div>
+
+    <div class="fg">
+      <label class="fl">Delivery Days *</label>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:5px;" id="pDayChips">
+        <div class="dchip no" style="opacity:.3;cursor:not-allowed;">SUN</div>
+        <div class="dchip sel" data-day="1" onclick="togglePlanDay(this)">MON</div>
+        <div class="dchip sel" data-day="2" onclick="togglePlanDay(this)">TUE</div>
+        <div class="dchip sel" data-day="3" onclick="togglePlanDay(this)">WED</div>
+        <div class="dchip sel" data-day="4" onclick="togglePlanDay(this)">THU</div>
+        <div class="dchip sel" data-day="5" onclick="togglePlanDay(this)">FRI</div>
+        <div class="dchip sel" data-day="6" onclick="togglePlanDay(this)">SAT</div>
+      </div>
+      <div id="deliveryCalc" style="font-size:11.5px;color:var(--muted);margin-top:6px;"></div>
+    </div>
+
     <div class="fg"><label class="fl">Meal Types *</label>
       <div style="display:flex;gap:14px;margin-top:5px;">
         <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;font-weight:600;"><input type="checkbox" id="pB" style="accent-color:var(--g)"> Breakfast</label>
@@ -402,12 +437,15 @@ select[multiple].fc{height:120px;}
         <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;font-weight:600;"><input type="checkbox" id="pD" style="accent-color:var(--g)"> Dinner</label>
       </div>
     </div>
+
     <div class="fg">
-      <label class="fl">Attach Plan Menu</label>
+      <label class="fl">Plan Menu *</label>
       <select class="fc" id="pMenuId">
-        <option value="">None (assign manually later)</option>
+        <option value="">None — assign manually later</option>
       </select>
-      <div style="font-size:11px;color:var(--muted);margin-top:4px;">Create menus first in the Plan Menu tab, then attach here.</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;">
+        Create menus first in the <strong>Plan Menu</strong> tab, then attach here. The plan uses only the slots matching the delivery days above.
+      </div>
     </div>
     <button class="btn btn-g" style="width:100%;justify-content:center;" onclick="addPlan()">Create Plan</button>
   </div>
@@ -517,7 +555,7 @@ function showPage(name,btn){
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));document.getElementById("page-"+name)?.classList.add("active");
   document.querySelectorAll(".sb-item").forEach(b=>b.classList.remove("active"));btn?.classList.add("active");
   const m=pageMeta[name]||[name,""];document.getElementById("pgTitle").textContent=m[0];document.getElementById("pgSub").textContent=m[1];
-  if(name==="orders")loadOrders();if(name==="deliveries")loadDeliveries();if(name==="planmenu"){renderPmCats();loadSavedMenus();}
+  if(name==="orders")loadOrders();if(name==="deliveries")loadDeliveries();if(name==="planmenu"){initCatPicker();loadSavedMenus();}
   if(name==="plans")loadSavedMenusForPlan();
 }
 function openModal(id){document.getElementById(id).classList.add("show");}
@@ -533,9 +571,7 @@ function openMealModal(){
 document.querySelectorAll(".modal-bg").forEach(el=>el.addEventListener("click",e=>{if(e.target===el)el.classList.remove("show");}));
 document.querySelectorAll(".achip").forEach(c=>c.addEventListener("click",()=>c.classList.toggle("on")));
 document.querySelectorAll(".dchip:not(.no)").forEach(c=>c.addEventListener("click",()=>c.classList.toggle("sel")));
-document.getElementById("pmDiet").addEventListener("change",function(){
-  document.getElementById("mixedNote").style.display=this.value==="mixed"?"block":"none";
-});
+// pmDiet listener removed - new system
 function toggleDiet(el){
   el.classList.toggle("sel");
   const sel=Array.from(document.querySelectorAll(".diet-opt.sel")).map(d=>d.dataset.v);
@@ -630,55 +666,11 @@ async function addMeal(){
 async function deleteMeal(id){if(!confirm("Delete?"))return;await api(`${API}/admin/meal-items/${id}`,{method:"DELETE"});await loadMeals();}
 
 // PLAN MENU
-function renderPmCats(){
-  const hasB=document.getElementById("pmB")?.checked,hasL=document.getElementById("pmL")?.checked,hasD=document.getElementById("pmD")?.checked;
-  const sec=document.getElementById("pmCatSection");if(!sec)return;
-  const catOpts=cats.map(c=>`<option value="${c.id}">${c.name}</option>`).join("");
-  const multiNote="<div style='font-size:11px;color:var(--muted);margin-top:3px;'>Hold Ctrl/Cmd to select multiple categories</div>";
-  let html="";
-  if(hasB)html+=`<div class="fg"><label class="fl">Breakfast Categories</label><select class="fc" id="pmBCat" multiple size="4">${catOpts}</select>${multiNote}</div>`;
-  if(hasL)html+=`<div class="fg"><label class="fl">Lunch Categories</label><select class="fc" id="pmLCat" multiple size="4">${catOpts}</select>${multiNote}</div>`;
-  if(hasD)html+=`<div class="fg"><label class="fl">Dinner Categories</label><select class="fc" id="pmDCat" multiple size="4">${catOpts}</select>${multiNote}</div>`;
-  if(!hasB&&!hasL&&!hasD)html="<p style='color:var(--muted);font-size:13px;'>Select at least one meal type above.</p>";
-  sec.innerHTML=html;
-}
-function getMultiSelected(id){const el=document.getElementById(id);if(!el)return[];return Array.from(el.selectedOptions).map(o=>parseInt(o.value));}
+// renderPmCats replaced by new system
 
-async function generateMenu(){
-  const diet=document.getElementById("pmDiet").value,numDays=parseInt(document.getElementById("pmDays").value)||0;
-  const hasB=document.getElementById("pmB")?.checked,hasL=document.getElementById("pmL")?.checked,hasD=document.getElementById("pmD")?.checked;
-  if(!diet){showErr2("pmErr","Select diet type");return;}
-  if(numDays<1){showErr2("pmErr","Enter number of days");return;}
-  if(!hasB&&!hasL&&!hasD){showErr2("pmErr","Select at least one meal type");return;}
-  const mealTypes=[];if(hasB)mealTypes.push("breakfast");if(hasL)mealTypes.push("lunch");if(hasD)mealTypes.push("dinner");
-  const categories={};
-  if(hasB){const v=getMultiSelected("pmBCat");if(v.length)categories.breakfast=v;}
-  if(hasL){const v=getMultiSelected("pmLCat");if(v.length)categories.lunch=v;}
-  if(hasD){const v=getMultiSelected("pmDCat");if(v.length)categories.dinner=v;}
-  const selDays=Array.from(document.querySelectorAll(".dchip.sel:not(.no)")).map(c=>parseInt(c.dataset.d));
-  try{
-    const d=await api(`${API}/admin/plan-menu/generate`,{method:"POST",body:JSON.stringify({diet_type:diet,meal_types:mealTypes.join(","),categories,num_days:numDays,days_of_week:selDays})});
-    if(d.error){showErr2("pmErr",d.error);return;}
-    generatedMenuData={diet_type:diet,meal_types:mealTypes.join(","),num_days:numDays,days_of_week:selDays,categories,generated_slots:d.menu};
-    const prev=document.getElementById("menuPreview"),grid=document.getElementById("menuGrid");
-    document.getElementById("menuSummary").textContent=`${d.menu.length} meal slots across ${numDays} days`;
-    prev.style.display="block";
-    const days={};d.menu.forEach(s=>{if(!days[s.day])days[s.day]=[];days[s.day].push(s);});
-    const icons={breakfast:"B",lunch:"L",dinner:"D"};
-    grid.innerHTML=Object.keys(days).sort((a,b)=>a-b).map(day=>`<div class="menu-day"><div class="menu-day-n">Day ${day}${diet==="mixed"?" ("+["Veg","Egg","Non-Veg"][(day-1)%3]+")":""}</div>${days[day].map(s=>`<div class="menu-slot"><div class="menu-slot-type">${icons[s.meal_type]||""} ${s.meal_type}</div><div class="menu-slot-name">${s.meal_item_name||"No items in category"}</div>${s.calories?`<div class="menu-slot-cal">${s.calories} kcal</div>`:""}</div>`).join("")}</div>`).join("");
-    prev.scrollIntoView({behavior:"smooth",block:"nearest"});
-  }catch(e){showErr2("pmErr","Error generating - check server connection");}
-}
+// generateMenu replaced - see new version below
 
-async function saveMenu(){
-  const name=document.getElementById("menuSaveName").value.trim();
-  if(!name){alert("Enter a name for this menu");return;}
-  if(!generatedMenuData){alert("Generate a menu first");return;}
-  const body={...generatedMenuData,name};
-  const d=await api(`${API}/admin/plan-menus/save`,{method:"POST",body:JSON.stringify(body)});
-  if(d.error){alert(d.error);return;}
-  showOk("pmOk","Menu saved as: "+name);document.getElementById("menuSaveName").value="";await loadSavedMenus();await loadSavedMenusForPlan();
-}
+// saveMenu replaced - see saveGeneratedMenu below
 
 async function loadSavedMenus(){
   try{
@@ -745,15 +737,20 @@ async function loadPlans(){
     plans.forEach(p=>{const o=document.createElement("option");o.value=p.id;o.text=p.name+" - Rs "+p.price;o.dataset.price=p.price;o.dataset.info=`${p.duration_days} days, ${p.num_deliveries} deliveries, ${p.meal_types||"lunch"}`;sel.appendChild(o);});
     const body=document.getElementById("planBody");
     if(!plans.length){body.innerHTML="<tr><td colspan='8'><div class='empty'><i class='fas fa-box'></i><p>No plans</p></div></td></tr>";return;}
-    body.innerHTML=plans.map(p=>`<tr><td><strong>${p.name}</strong></td><td>${p.duration_days}d</td><td>${p.num_deliveries}</td><td>${dietLabel(p.diet_type)}</td><td>${p.meal_types||"?"}</td><td><strong>Rs ${p.price}</strong></td><td>${p.plan_menu_id?"<span class='badge bg'>Attached</span>":"<span class='badge bgr'>None</span>"}</td><td><button class="btn btn-r btn-sm" onclick="deletePlan(${p.id})"><i class="fas fa-trash"></i></button></td></tr>`).join("");
+    body.innerHTML=plans.map(p=>{
+    const days=(p.delivery_days||"1,2,3,4,5,6").split(",").map(n=>["","M","T","W","Th","F","Sa"][parseInt(n)]||"?").join(" ");
+    return`<tr><td><strong>${p.name}</strong></td><td>${p.duration_days}d</td><td>${p.num_deliveries}</td><td>${dietLabel(p.diet_type)}</td><td>${p.meal_types||"?"}</td><td style="font-size:12px;font-weight:600;color:var(--blue)">${days}</td><td><strong>Rs ${p.price}</strong></td><td>${p.plan_menu_id?"<span class='badge bg'>Attached</span>":"<span class='badge bgr'>None</span>"}</td><td><button class="btn btn-r btn-sm" onclick="deletePlan(${p.id})"><i class="fas fa-trash"></i></button></td></tr>`;
+  }).join("");
     await loadSavedMenusForPlan();
   }catch(e){}
 }
 async function addPlan(){
   const name=document.getElementById("pName").value.trim(),days=document.getElementById("pDays").value,deliveries=document.getElementById("pDeliveries").value,diet=document.getElementById("pDiet").value,price=document.getElementById("pPrice").value;
   const mts=[];if(document.getElementById("pB").checked)mts.push("breakfast");if(document.getElementById("pL").checked)mts.push("lunch");if(document.getElementById("pD").checked)mts.push("dinner");
+  const selDays=Array.from(document.querySelectorAll("#pDayChips .dchip.sel")).map(c=>parseInt(c.dataset.day));
   if(!name||!days||!deliveries||!diet||!price||!mts.length){showErr2("planErr","Fill all required fields and select meal types");return;}
-  const body={name,duration_days:parseInt(days),num_deliveries:parseInt(deliveries),diet_type:diet,price:parseFloat(price),meal_types:mts.join(","),plan_menu_id:document.getElementById("pMenuId").value||null};
+  if(!selDays.length){showErr2("planErr","Select at least one delivery day");return;}
+  const body={name,duration_days:parseInt(days),num_deliveries:parseInt(deliveries),diet_type:diet,price:parseFloat(price),meal_types:mts.join(","),delivery_days:selDays,plan_menu_id:document.getElementById("pMenuId").value||null};
   const d=await api(`${API}/admin/subscription-plans`,{method:"POST",body:JSON.stringify(body)});
   if(d.error){showErr2("planErr",d.error);return;}
   showOk("planOk","Plan created!");closeModal("planModal");await loadPlans();
@@ -807,6 +804,203 @@ async function updateDelivery(){
   const d=await api(`${API}/admin/deliveries/${id}/status`,{method:"PUT",body:JSON.stringify({status:document.getElementById("delStat").value,delivery_agent:document.getElementById("delAgent").value,notes:document.getElementById("delNotes").value})});
   if(d.error){alert(d.error);return;}closeModal("delModal");await loadDeliveries();
 }
+// ===== CAT PICKER & PLAN MENU GENERATOR =====
+let orderedCats = []; // [{id, name}] in user-defined order
+let generatedSlots = [];
+
+function initCatPicker() {
+  const area = document.getElementById("catPickerArea");
+  if (!area) return;
+  area.innerHTML = cats.map(c =>
+    `<div class="cat-picker-chip" id="chip-${c.id}" onclick="addCatToOrder(${c.id},'${c.name.replace(/'/g,"\'")}')">+ ${c.name}</div>`
+  ).join("");
+  orderedCats = [];
+  renderCatOrderList();
+}
+
+function addCatToOrder(id, name) {
+  if (orderedCats.find(c => c.id === id)) return;
+  orderedCats.push({id, name});
+  const chip = document.getElementById("chip-"+id);
+  if (chip) { chip.classList.add("added"); chip.textContent = "✓ "+name; }
+  renderCatOrderList();
+}
+
+function removeCatFromOrder(id) {
+  orderedCats = orderedCats.filter(c => c.id !== id);
+  const chip = document.getElementById("chip-"+id);
+  const orig = cats.find(c => c.id === id);
+  if (chip && orig) { chip.classList.remove("added"); chip.textContent = "+ "+orig.name; }
+  renderCatOrderList();
+}
+
+function renderCatOrderList() {
+  const list = document.getElementById("catOrderList");
+  const empty = document.getElementById("catOrderEmpty");
+  if (!orderedCats.length) {
+    list.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:6px;" id="catOrderEmpty">Select categories above to add them here</div>';
+    return;
+  }
+  const n = orderedCats.length;
+  const DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat"];
+  list.innerHTML = orderedCats.map((c, i) => {
+    // Show which weekdays this category maps to
+    let dayAssign = "";
+    if (n <= 6) {
+      const daysPerCat = 6 / n;
+      const startDay = Math.floor(i * daysPerCat);
+      const endDay = Math.min(Math.floor((i+1) * daysPerCat) - 1, 5);
+      dayAssign = startDay === endDay ? DAYS[startDay] : DAYS[startDay]+"~"+DAYS[endDay];
+    } else {
+      dayAssign = "Rotates weekly";
+    }
+    return `<div class="cat-order-item" draggable="true">
+      <div class="cat-num">${i+1}</div>
+      <span style="font-size:13px;font-weight:600;">${c.name}</span>
+      <span class="cat-day-assign">→ ${dayAssign}</span>
+      <button class="cat-remove" onclick="removeCatFromOrder(${c.id})"><i class="fas fa-times"></i></button>
+    </div>`;
+  }).join("");
+}
+
+async function generateMenu() {
+  if (!orderedCats.length) { showErr2("pmErr","Add at least one category"); return; }
+  const name = document.getElementById("pmMenuName").value.trim();
+  if (!name) { showErr2("pmErr","Enter a menu name"); return; }
+  const mealType = document.getElementById("pmMealType").value;
+
+  document.getElementById("pmGenerating").style.display = "inline";
+  try {
+    const d = await api(`${API}/admin/plan-menu/generate`, {
+      method:"POST",
+      body: JSON.stringify({ categories: orderedCats, meal_type: mealType })
+    });
+    document.getElementById("pmGenerating").style.display = "none";
+    if (d.error) { showErr2("pmErr", d.error); return; }
+    generatedSlots = d.slots;
+
+    // Show warnings
+    const warnDiv = document.getElementById("menuWarnings");
+    const warnList = document.getElementById("menuWarningList");
+    if (d.warnings && d.warnings.length) {
+      warnList.innerHTML = d.warnings.map(w => `<li>${w}</li>`).join("");
+      warnDiv.style.display = "block";
+    } else {
+      warnDiv.style.display = "none";
+    }
+
+    document.getElementById("menuSummary").textContent = `${d.slots.length} slots | ${orderedCats.length} categories`;
+    document.getElementById("menuPreview").style.display = "block";
+    renderSlotGrid(d.slots);
+    document.getElementById("menuPreview").scrollIntoView({behavior:"smooth",block:"nearest"});
+  } catch(e) {
+    document.getElementById("pmGenerating").style.display = "none";
+    showErr2("pmErr","Error generating — check server connection");
+  }
+}
+
+function renderSlotGrid(slots) {
+  const grid = document.getElementById("slotGrid");
+  const WEEKDAYS = 6;
+  // Group into weeks: week 1 = slots 1-6, week 2 = 7-12 etc.
+  let html = "";
+  for (let week = 0; week < 4; week++) {
+    html += `<div class="week-row"><div class="week-label">Wk ${week+1}</div>`;
+    for (let wd = 1; wd <= WEEKDAYS; wd++) {
+      const slotNum = week * WEEKDAYS + wd;
+      const slot = slots.find(s => s.slot_number === slotNum);
+      if (!slot) { html += `<div class="slot-cell empty-day"></div>`; continue; }
+      const isVeg = slot.day_type === "veg";
+      const dayBadgeStyle = isVeg
+        ? "background:var(--gl);color:var(--gd);"
+        : "background:#fee2e2;color:#991b1b;";
+      const primaryLabel = isVeg ? "🟢 Veg (primary)" : "🔴 Non-Veg (primary)";
+      const altLabel = isVeg ? "🔴 Non-Veg (alt)" : "🟢 Veg (alt)";
+      html += `<div class="slot-cell ${isVeg?"veg-day":"nonveg-day"}">
+        <div class="slot-num">Slot ${slotNum}</div>
+        <div class="slot-cat">${slot.category_name||"?"}</div>
+        <div class="slot-day-badge" style="${dayBadgeStyle}">${isVeg?"Veg Day":"Non-Veg Day"}</div>
+        <div class="slot-item" title="${primaryLabel}">${slot.primary_item_name||'<span style="color:var(--red)">No item</span>'}</div>
+        <div class="slot-alt" title="${altLabel}">↳ ${slot.alternate_item_name||'<span style="color:var(--red)">No alt</span>'}</div>
+        ${!slot.primary_item_id||!slot.alternate_item_id?'<div class="slot-warn"><i class="fas fa-exclamation-triangle"></i> Incomplete</div>':""} 
+      </div>`;
+    }
+    html += `</div>`;
+  }
+  grid.innerHTML = html;
+}
+
+async function saveGeneratedMenu() {
+  const name = document.getElementById("pmMenuName").value.trim();
+  if (!name) { alert("Enter a menu name first"); return; }
+  if (!generatedSlots.length) { alert("Generate the menu first"); return; }
+  const mealType = document.getElementById("pmMealType").value;
+  const d = await api(`${API}/admin/plan-menus/save-generated`, {
+    method:"POST",
+    body: JSON.stringify({ name, meal_type: mealType, slots: generatedSlots })
+  });
+  if (d.error) { showErr2("pmErr", d.error); return; }
+  showOk("pmOk","✅ Menu saved: "+name);
+  document.getElementById("menuPreview").style.display = "none";
+  generatedSlots = [];
+  document.getElementById("pmMenuName").value = "";
+  await loadSavedMenus();
+  await loadSavedMenusForPlan();
+}
+
+async function loadSavedMenus() {
+  try {
+    const data = await api(`${API}/admin/plan-menus`);
+    savedMenus = data || [];
+    const body = document.getElementById("savedMenuBody");
+    if (!savedMenus.length) {
+      body.innerHTML = "<tr><td colspan='6'><div class='empty'><i class='fas fa-calendar'></i><p>No saved menus yet. Generate one above.</p></div></td></tr>";
+      return;
+    }
+    const DAYS = ["","Mon","Tue","Wed","Thu","Fri","Sat"];
+    body.innerHTML = savedMenus.map(m => {
+      // Build weekday map from slot data
+      const catMap = {};
+      (m.slots||[]).forEach(s => {
+        const day = DAYS[s.weekday]||"?";
+        if (!catMap[s.category_name]) catMap[s.category_name] = new Set();
+        catMap[s.category_name].add(day);
+      });
+      const mapStr = Object.entries(catMap).map(([cat,days])=>`${[...days].join("/")}:${cat}`).join(", ") || "—";
+      return `<tr>
+        <td><strong>${m.name}</strong></td>
+        <td><span class="badge bgr">${m.meal_type||"lunch"}</span></td>
+        <td style="font-size:11.5px;max-width:250px;">${mapStr}</td>
+        <td>${m.slots_filled||0} / 24</td>
+        <td style="font-size:11.5px;color:var(--muted);">${fmtDate(m.created_at)}</td>
+        <td><button class="btn btn-r btn-sm" onclick="deleteMenu(${m.id})"><i class="fas fa-trash"></i></button></td>
+      </tr>`;
+    }).join("");
+  } catch(e) {}
+}
+
+async function deleteMenu(id) {
+  if (!confirm("Delete this menu? Plans using it will lose their menu assignment.")) return;
+  await api(`${API}/admin/plan-menus/${id}`, {method:"DELETE"});
+  await loadSavedMenus();
+}
+
+// Plan form delivery days toggle
+function togglePlanDay(el) { el.classList.toggle("sel"); updateDeliveryCalc(); }
+
+function updateDeliveryCalc() {
+  const selDays = document.querySelectorAll("#pDayChips .dchip.sel").length;
+  const deliveries = parseInt(document.getElementById("pDeliveries").value) || 0;
+  const calc = document.getElementById("deliveryCalc");
+  if (selDays && deliveries) {
+    const weeks = Math.ceil(deliveries / selDays);
+    calc.textContent = `${selDays} days/week × ~${weeks} weeks = ${deliveries} total deliveries`;
+  } else {
+    calc.textContent = "";
+  }
+}
+// ===== END NEW PLAN MENU FUNCTIONS =====
+
 </script>
 </body>
 </html>
