@@ -90,10 +90,21 @@ async function initDB() {
         plan_menu_id INTEGER REFERENCES plan_menus(id),
         status TEXT DEFAULT 'active', created_at TIMESTAMPTZ DEFAULT NOW()
     )`);
+    await db.query(`CREATE TABLE IF NOT EXISTS delivery_boys (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id),
+        kitchen_id INTEGER REFERENCES kitchens(id),
+        territory_id INTEGER REFERENCES territories(id),
+        name TEXT NOT NULL, phone TEXT, email TEXT,
+        photo_base64 TEXT, vehicle_type TEXT DEFAULT 'bike',
+        status TEXT DEFAULT 'active', created_at TIMESTAMPTZ DEFAULT NOW()
+    )`)
     await db.query(`CREATE TABLE IF NOT EXISTS customers (
         id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id),
         name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, phone TEXT,
         address TEXT, alternate_address TEXT, territory_id INTEGER,
+        delivery_boy_id INTEGER,
+        delivery_sequence INTEGER DEFAULT 0,
         allergies TEXT, health_notes TEXT,
         diet_preference TEXT DEFAULT 'non_veg',
         status TEXT DEFAULT 'active', created_at TIMESTAMPTZ DEFAULT NOW()
@@ -116,6 +127,8 @@ async function initDB() {
         order_id INTEGER NOT NULL REFERENCES orders(id),
         customer_id INTEGER NOT NULL REFERENCES customers(id),
         kitchen_id INTEGER REFERENCES kitchens(id),
+        delivery_boy_id INTEGER,
+        delivery_sequence INTEGER DEFAULT 0,
         delivery_date DATE NOT NULL,
         meal_type TEXT NOT NULL,
         slot_number INTEGER,
@@ -156,6 +169,12 @@ async function initDB() {
         `ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS delivery_days TEXT DEFAULT '1,2,3,4,5,6'`,
         `ALTER TABLE orders ADD COLUMN IF NOT EXISTS menu_start_slot INTEGER DEFAULT 1`,
         `ALTER TABLE plan_menus ADD COLUMN IF NOT EXISTS meal_type TEXT DEFAULT 'lunch'`,
+        `ALTER TABLE customers ADD COLUMN IF NOT EXISTS delivery_boy_id INTEGER`,
+        `ALTER TABLE customers ADD COLUMN IF NOT EXISTS delivery_sequence INTEGER DEFAULT 0`,
+        `ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS delivery_boy_id INTEGER`,
+        `ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS delivery_sequence INTEGER DEFAULT 0`,
+        `ALTER TABLE users ADD COLUMN IF NOT EXISTS kitchen_id INTEGER`,
+        `CREATE TABLE IF NOT EXISTS delivery_boys (id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id), kitchen_id INTEGER REFERENCES kitchens(id), territory_id INTEGER REFERENCES territories(id), name TEXT NOT NULL, phone TEXT, email TEXT, photo_base64 TEXT, vehicle_type TEXT DEFAULT 'bike', status TEXT DEFAULT 'active', created_at TIMESTAMPTZ DEFAULT NOW())`,
     ];
     for (const sql of alters) { try { await db.query(sql); } catch(e) {} }
 
@@ -172,6 +191,13 @@ async function initDB() {
         const h = bcrypt.hashSync('kitchen123', 10);
         await db.query(`INSERT INTO users (name,email,password,authority) VALUES ($1,$2,$3,'kitchen_manager')`,
             ['Kitchen Manager', 'kitchen@test.com', h]);
+    }
+    // Seed demo delivery boy
+    const dbu = await db.one(`SELECT id FROM users WHERE email=$1`, ['delivery@test.com']);
+    if (!dbu) {
+        const h = bcrypt.hashSync('delivery123', 10);
+        await db.query(`INSERT INTO users (name,email,password,authority) VALUES ($1,$2,$3,'delivery_boy')`,
+            ['Demo Delivery Boy', 'delivery@test.com', h]);
     }
     // Seed demo customer
     const dc = await db.one(`SELECT id FROM users WHERE email=$1`, ['customer@test.com']);
@@ -254,6 +280,12 @@ function reqKitchen(req, res, next) {
     next();
 }
 
+function reqDelivery(req, res, next) {
+    if (!['delivery_boy','kitchen_manager','super_admin','admin'].includes(req.user.authority))
+        return res.status(403).json({ error: 'Access denied' });
+    next();
+}
+
 // ==================== AUTH ====================
 
 app.post('/api/auth/login', async (req, res) => {
@@ -282,6 +314,7 @@ app.post('/api/auth/login', async (req, res) => {
             customer: '/customer',
             kitchen_manager: '/kitchen',
             kitchen_staff: '/kitchen',
+            delivery_boy: '/delivery',
         };
 
         res.json({
@@ -990,6 +1023,229 @@ app.put('/api/admin/deliveries/:id/status', verifyToken, async (req, res) => {
 });
 
 // ==================== HEALTH ====================
+
+// ==================== ADMIN: DELIVERY BOYS ====================
+
+app.get('/api/admin/delivery-boys', verifyToken, async (req, res) => {
+    try {
+        const { kitchen_id } = req.query;
+        let q = `SELECT db.*,
+            k.name as kitchen_name, t.name as territory_name,
+            u.email as login_email,
+            (SELECT COUNT(*)::int FROM customers WHERE delivery_boy_id=db.id AND status='active') as customer_count
+            FROM delivery_boys db
+            LEFT JOIN kitchens k ON db.kitchen_id=k.id
+            LEFT JOIN territories t ON db.territory_id=t.id
+            LEFT JOIN users u ON db.user_id=u.id
+            WHERE db.status='active'`;
+        const params = [];
+        if (kitchen_id) { params.push(kitchen_id); q += ` AND db.kitchen_id=$${params.length}`; }
+        q += ' ORDER BY db.name';
+        res.json(await db.all(q, params));
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/admin/delivery-boys', verifyToken, async (req, res) => {
+    try {
+        const { name, phone, email, kitchen_id, territory_id, vehicle_type, photo_base64, create_login, password } = req.body;
+        if (!name || !kitchen_id) return res.status(400).json({ error: 'Name and kitchen required' });
+        let user_id = null;
+        if (create_login && email && password) {
+            const existing = await db.one(`SELECT id FROM users WHERE email=$1`, [email]);
+            if (existing) return res.status(400).json({ error: 'Email already registered' });
+            const h = bcrypt.hashSync(password, 10);
+            const u = await db.one(`INSERT INTO users (name,email,password,phone,authority,kitchen_id) VALUES ($1,$2,$3,$4,'delivery_boy',$5) RETURNING id`,
+                [name, email, h, phone||'', kitchen_id]);
+            user_id = u.id;
+        }
+        const r = await db.one(`INSERT INTO delivery_boys (name,phone,email,kitchen_id,territory_id,vehicle_type,photo_base64,user_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
+            [name, phone||'', email||'', kitchen_id, territory_id||null, vehicle_type||'bike', photo_base64||null, user_id]);
+        res.status(201).json({ message: 'Delivery boy created', id: r.id });
+    } catch(e) { res.status(400).json({ error: e.message }); }
+});
+
+app.put('/api/admin/delivery-boys/:id', verifyToken, async (req, res) => {
+    try {
+        const { name, phone, email, kitchen_id, territory_id, vehicle_type, photo_base64, status } = req.body;
+        await db.query(`UPDATE delivery_boys SET name=COALESCE($1,name),phone=COALESCE($2,phone),email=COALESCE($3,email),kitchen_id=COALESCE($4,kitchen_id),territory_id=COALESCE($5,territory_id),vehicle_type=COALESCE($6,vehicle_type),photo_base64=COALESCE($7,photo_base64),status=COALESCE($8,status) WHERE id=$9`,
+            [name||null,phone||null,email||null,kitchen_id||null,territory_id||null,vehicle_type||null,photo_base64||null,status||null,req.params.id]);
+        res.json({ message: 'Updated' });
+    } catch(e) { res.status(400).json({ error: e.message }); }
+});
+
+app.delete('/api/admin/delivery-boys/:id', verifyToken, async (req, res) => {
+    try {
+        await db.query(`UPDATE delivery_boys SET status='inactive' WHERE id=$1`, [req.params.id]);
+        res.json({ message: 'Deleted' });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Assign default delivery boy to customer
+app.put('/api/admin/customers/:id/assign-db', verifyToken, async (req, res) => {
+    try {
+        const { delivery_boy_id, delivery_sequence } = req.body;
+        await db.query(`UPDATE customers SET delivery_boy_id=$1,delivery_sequence=COALESCE($2,delivery_sequence) WHERE id=$3`,
+            [delivery_boy_id||null, delivery_sequence||null, req.params.id]);
+        res.json({ message: 'Assigned' });
+    } catch(e) { res.status(400).json({ error: e.message }); }
+});
+
+// ==================== KITCHEN: ASSIGN VIEW ====================
+
+// Get assignment board for a date — per DB with their customers
+app.get('/api/kitchen/assign-board', verifyToken, reqKitchen, async (req, res) => {
+    try {
+        const { date, kitchen_id } = req.query;
+        const targetDate = date || new Date().toISOString().split('T')[0];
+        const kid = parseInt(kitchen_id) || null;
+
+        // Get all delivery boys for this kitchen
+        const boys = await db.all(`SELECT db.*,
+            (SELECT COUNT(*)::int FROM deliveries d WHERE d.delivery_boy_id=db.id AND d.delivery_date=$1 AND d.is_sunday_skip=0 AND d.status!='skipped') as delivery_count
+            FROM delivery_boys db WHERE db.kitchen_id=$2 AND db.status='active' ORDER BY db.name`,
+            [targetDate, kid]);
+
+        // Get all deliveries for this date+kitchen with customer info
+        const deliveries = await db.all(`
+            SELECT d.id, d.customer_id, d.delivery_boy_id, d.delivery_sequence, d.status,
+                d.meal_type, d.is_veg_customer,
+                c.name as customer_name, c.phone as customer_phone,
+                c.address as customer_address, c.delivery_sequence as default_sequence,
+                mi.name as meal_item_name, mi.veg_tag, mi.non_veg_tag
+            FROM deliveries d
+            LEFT JOIN customers c ON d.customer_id=c.id
+            LEFT JOIN meal_items mi ON d.meal_item_id=mi.id
+            WHERE d.delivery_date=$1 AND d.kitchen_id=$2 AND d.is_sunday_skip=0
+            ORDER BY d.delivery_boy_id NULLS LAST, d.delivery_sequence ASC, c.name ASC
+        `, [targetDate, kid]);
+
+        // Group deliveries by delivery_boy_id
+        const board = {
+            date: targetDate,
+            delivery_boys: boys.map(b => ({
+                ...b,
+                deliveries: deliveries.filter(d => d.delivery_boy_id === b.id)
+            })),
+            unassigned: deliveries.filter(d => !d.delivery_boy_id)
+        };
+
+        res.json(board);
+    } catch(e) { console.error(e); res.status(500).json({ error: e.message }); }
+});
+
+// Reassign a delivery to a different delivery boy
+app.put('/api/kitchen/assign/:deliveryId', verifyToken, reqKitchen, async (req, res) => {
+    try {
+        const { delivery_boy_id, delivery_sequence } = req.body;
+        await db.query(`UPDATE deliveries SET delivery_boy_id=$1, delivery_sequence=COALESCE($2,delivery_sequence) WHERE id=$3`,
+            [delivery_boy_id||null, delivery_sequence||null, req.params.deliveryId]);
+        res.json({ message: 'Reassigned' });
+    } catch(e) { res.status(400).json({ error: e.message }); }
+});
+
+// Bulk reorder — save sequence after drag-drop
+app.post('/api/kitchen/assign/reorder', verifyToken, reqKitchen, async (req, res) => {
+    try {
+        const { assignments } = req.body;
+        // assignments: [{delivery_id, delivery_boy_id, delivery_sequence}]
+        for (const a of assignments) {
+            await db.query(`UPDATE deliveries SET delivery_boy_id=$1, delivery_sequence=$2 WHERE id=$3`,
+                [a.delivery_boy_id||null, a.delivery_sequence||0, a.delivery_id]);
+        }
+        res.json({ message: 'Reordered', count: assignments.length });
+    } catch(e) { res.status(400).json({ error: e.message }); }
+});
+
+// Auto-assign all unassigned deliveries based on customer default DB
+app.post('/api/kitchen/assign/auto', verifyToken, reqKitchen, async (req, res) => {
+    try {
+        const { date, kitchen_id } = req.body;
+        const result = await db.query(`
+            UPDATE deliveries d SET delivery_boy_id = c.delivery_boy_id,
+                delivery_sequence = c.delivery_sequence
+            FROM customers c
+            WHERE d.customer_id = c.id
+              AND d.delivery_date = $1
+              AND d.kitchen_id = $2
+              AND d.delivery_boy_id IS NULL
+              AND d.is_sunday_skip = 0
+              AND c.delivery_boy_id IS NOT NULL
+        `, [date, kitchen_id]);
+        res.json({ message: 'Auto-assigned', count: result.rowCount });
+    } catch(e) { res.status(400).json({ error: e.message }); }
+});
+
+// ==================== DELIVERY BOY PORTAL ====================
+
+app.get('/api/delivery/profile', verifyToken, reqDelivery, async (req, res) => {
+    try {
+        const db_row = await db.one(`SELECT db.*, k.name as kitchen_name, t.name as territory_name
+            FROM delivery_boys db
+            LEFT JOIN kitchens k ON db.kitchen_id=k.id
+            LEFT JOIN territories t ON db.territory_id=t.id
+            WHERE db.user_id=$1`, [req.user.id]);
+        if (!db_row) return res.status(404).json({ error: 'Delivery boy profile not found' });
+        res.json(db_row);
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/delivery/today', verifyToken, reqDelivery, async (req, res) => {
+    try {
+        const db_row = await db.one(`SELECT id FROM delivery_boys WHERE user_id=$1`, [req.user.id]);
+        if (!db_row) return res.status(404).json({ error: 'Profile not found' });
+        const date = req.query.date || new Date().toISOString().split('T')[0];
+        const deliveries = await db.all(`
+            SELECT d.*, c.name as customer_name, c.phone as customer_phone,
+                c.address as customer_address,
+                mi.name as meal_item_name, mi.calories,
+                mi.veg_tag, mi.non_veg_tag, mi.image_base64 as item_image,
+                p.name as plan_name
+            FROM deliveries d
+            LEFT JOIN customers c ON d.customer_id=c.id
+            LEFT JOIN meal_items mi ON d.meal_item_id=mi.id
+            LEFT JOIN orders o ON d.order_id=o.id
+            LEFT JOIN subscription_plans p ON o.plan_id=p.id
+            WHERE d.delivery_boy_id=$1 AND d.delivery_date=$2
+              AND d.is_sunday_skip=0
+            ORDER BY d.delivery_sequence ASC, c.name ASC
+        `, [db_row.id, date]);
+
+        const stats = {
+            total: deliveries.length,
+            delivered: deliveries.filter(d=>d.status==='delivered').length,
+            pending: deliveries.filter(d=>d.status==='pending').length,
+            skipped: deliveries.filter(d=>d.status==='skipped').length,
+        };
+        res.json({ deliveries, stats, date });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/delivery/mark/:id', verifyToken, reqDelivery, async (req, res) => {
+    try {
+        const db_row = await db.one(`SELECT id FROM delivery_boys WHERE user_id=$1`, [req.user.id]);
+        if (!db_row) return res.status(403).json({ error: 'Not authorized' });
+        const { status, notes } = req.body;
+        if (!['delivered','skipped'].includes(status)) return res.status(400).json({ error: 'Invalid status' });
+        const delivery = await db.one(`SELECT * FROM deliveries WHERE id=$1 AND delivery_boy_id=$2`, [req.params.id, db_row.id]);
+        if (!delivery) return res.status(404).json({ error: 'Delivery not found or not assigned to you' });
+        const da = status==='delivered' ? new Date().toISOString() : null;
+        await db.query(`UPDATE deliveries SET status=$1,delivered_at=COALESCE($2,delivered_at),notes=COALESCE($3,notes),delivery_agent=$4 WHERE id=$5`,
+            [status, da, notes||null, req.user.name, req.params.id]);
+        res.json({ message: status==='delivered' ? 'Marked as delivered' : 'Marked as skipped' });
+    } catch(e) { res.status(400).json({ error: e.message }); }
+});
+
+// KM: get delivery boys in their kitchen
+app.get('/api/kitchen/delivery-boys', verifyToken, reqKitchen, async (req, res) => {
+    try {
+        const { kitchen_id } = req.query;
+        res.json(await db.all(`SELECT db.*,t.name as territory_name,
+            (SELECT COUNT(*)::int FROM customers WHERE delivery_boy_id=db.id AND status='active') as customer_count
+            FROM delivery_boys db LEFT JOIN territories t ON db.territory_id=t.id
+            WHERE db.kitchen_id=$1 AND db.status='active' ORDER BY db.name`, [kitchen_id]));
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 app.get('/api/health', (req, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));
 
 // ==================== STATIC FILES ====================
@@ -1004,6 +1260,11 @@ app.get('/kitchen', (req, res) => {
     const f = path.join(__dirname, 'public', 'kitchen.html');
     if (fs.existsSync(f)) return res.sendFile(f);
     res.status(404).send('Kitchen portal not found');
+});
+app.get('/delivery', (req, res) => {
+    const f = path.join(__dirname, 'public', 'delivery.html');
+    if (fs.existsSync(f)) return res.sendFile(f);
+    res.status(404).send('Delivery portal not found');
 });
 app.get('/', (req, res) => {
     const f = path.join(__dirname, 'public', 'index.html');
@@ -1857,6 +2118,229 @@ app.put('/api/admin/deliveries/:id/status', verifyToken, async (req, res) => {
 });
 
 // ==================== HEALTH ====================
+
+// ==================== ADMIN: DELIVERY BOYS ====================
+
+app.get('/api/admin/delivery-boys', verifyToken, async (req, res) => {
+    try {
+        const { kitchen_id } = req.query;
+        let q = `SELECT db.*,
+            k.name as kitchen_name, t.name as territory_name,
+            u.email as login_email,
+            (SELECT COUNT(*)::int FROM customers WHERE delivery_boy_id=db.id AND status='active') as customer_count
+            FROM delivery_boys db
+            LEFT JOIN kitchens k ON db.kitchen_id=k.id
+            LEFT JOIN territories t ON db.territory_id=t.id
+            LEFT JOIN users u ON db.user_id=u.id
+            WHERE db.status='active'`;
+        const params = [];
+        if (kitchen_id) { params.push(kitchen_id); q += ` AND db.kitchen_id=$${params.length}`; }
+        q += ' ORDER BY db.name';
+        res.json(await db.all(q, params));
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/admin/delivery-boys', verifyToken, async (req, res) => {
+    try {
+        const { name, phone, email, kitchen_id, territory_id, vehicle_type, photo_base64, create_login, password } = req.body;
+        if (!name || !kitchen_id) return res.status(400).json({ error: 'Name and kitchen required' });
+        let user_id = null;
+        if (create_login && email && password) {
+            const existing = await db.one(`SELECT id FROM users WHERE email=$1`, [email]);
+            if (existing) return res.status(400).json({ error: 'Email already registered' });
+            const h = bcrypt.hashSync(password, 10);
+            const u = await db.one(`INSERT INTO users (name,email,password,phone,authority,kitchen_id) VALUES ($1,$2,$3,$4,'delivery_boy',$5) RETURNING id`,
+                [name, email, h, phone||'', kitchen_id]);
+            user_id = u.id;
+        }
+        const r = await db.one(`INSERT INTO delivery_boys (name,phone,email,kitchen_id,territory_id,vehicle_type,photo_base64,user_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
+            [name, phone||'', email||'', kitchen_id, territory_id||null, vehicle_type||'bike', photo_base64||null, user_id]);
+        res.status(201).json({ message: 'Delivery boy created', id: r.id });
+    } catch(e) { res.status(400).json({ error: e.message }); }
+});
+
+app.put('/api/admin/delivery-boys/:id', verifyToken, async (req, res) => {
+    try {
+        const { name, phone, email, kitchen_id, territory_id, vehicle_type, photo_base64, status } = req.body;
+        await db.query(`UPDATE delivery_boys SET name=COALESCE($1,name),phone=COALESCE($2,phone),email=COALESCE($3,email),kitchen_id=COALESCE($4,kitchen_id),territory_id=COALESCE($5,territory_id),vehicle_type=COALESCE($6,vehicle_type),photo_base64=COALESCE($7,photo_base64),status=COALESCE($8,status) WHERE id=$9`,
+            [name||null,phone||null,email||null,kitchen_id||null,territory_id||null,vehicle_type||null,photo_base64||null,status||null,req.params.id]);
+        res.json({ message: 'Updated' });
+    } catch(e) { res.status(400).json({ error: e.message }); }
+});
+
+app.delete('/api/admin/delivery-boys/:id', verifyToken, async (req, res) => {
+    try {
+        await db.query(`UPDATE delivery_boys SET status='inactive' WHERE id=$1`, [req.params.id]);
+        res.json({ message: 'Deleted' });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Assign default delivery boy to customer
+app.put('/api/admin/customers/:id/assign-db', verifyToken, async (req, res) => {
+    try {
+        const { delivery_boy_id, delivery_sequence } = req.body;
+        await db.query(`UPDATE customers SET delivery_boy_id=$1,delivery_sequence=COALESCE($2,delivery_sequence) WHERE id=$3`,
+            [delivery_boy_id||null, delivery_sequence||null, req.params.id]);
+        res.json({ message: 'Assigned' });
+    } catch(e) { res.status(400).json({ error: e.message }); }
+});
+
+// ==================== KITCHEN: ASSIGN VIEW ====================
+
+// Get assignment board for a date — per DB with their customers
+app.get('/api/kitchen/assign-board', verifyToken, reqKitchen, async (req, res) => {
+    try {
+        const { date, kitchen_id } = req.query;
+        const targetDate = date || new Date().toISOString().split('T')[0];
+        const kid = parseInt(kitchen_id) || null;
+
+        // Get all delivery boys for this kitchen
+        const boys = await db.all(`SELECT db.*,
+            (SELECT COUNT(*)::int FROM deliveries d WHERE d.delivery_boy_id=db.id AND d.delivery_date=$1 AND d.is_sunday_skip=0 AND d.status!='skipped') as delivery_count
+            FROM delivery_boys db WHERE db.kitchen_id=$2 AND db.status='active' ORDER BY db.name`,
+            [targetDate, kid]);
+
+        // Get all deliveries for this date+kitchen with customer info
+        const deliveries = await db.all(`
+            SELECT d.id, d.customer_id, d.delivery_boy_id, d.delivery_sequence, d.status,
+                d.meal_type, d.is_veg_customer,
+                c.name as customer_name, c.phone as customer_phone,
+                c.address as customer_address, c.delivery_sequence as default_sequence,
+                mi.name as meal_item_name, mi.veg_tag, mi.non_veg_tag
+            FROM deliveries d
+            LEFT JOIN customers c ON d.customer_id=c.id
+            LEFT JOIN meal_items mi ON d.meal_item_id=mi.id
+            WHERE d.delivery_date=$1 AND d.kitchen_id=$2 AND d.is_sunday_skip=0
+            ORDER BY d.delivery_boy_id NULLS LAST, d.delivery_sequence ASC, c.name ASC
+        `, [targetDate, kid]);
+
+        // Group deliveries by delivery_boy_id
+        const board = {
+            date: targetDate,
+            delivery_boys: boys.map(b => ({
+                ...b,
+                deliveries: deliveries.filter(d => d.delivery_boy_id === b.id)
+            })),
+            unassigned: deliveries.filter(d => !d.delivery_boy_id)
+        };
+
+        res.json(board);
+    } catch(e) { console.error(e); res.status(500).json({ error: e.message }); }
+});
+
+// Reassign a delivery to a different delivery boy
+app.put('/api/kitchen/assign/:deliveryId', verifyToken, reqKitchen, async (req, res) => {
+    try {
+        const { delivery_boy_id, delivery_sequence } = req.body;
+        await db.query(`UPDATE deliveries SET delivery_boy_id=$1, delivery_sequence=COALESCE($2,delivery_sequence) WHERE id=$3`,
+            [delivery_boy_id||null, delivery_sequence||null, req.params.deliveryId]);
+        res.json({ message: 'Reassigned' });
+    } catch(e) { res.status(400).json({ error: e.message }); }
+});
+
+// Bulk reorder — save sequence after drag-drop
+app.post('/api/kitchen/assign/reorder', verifyToken, reqKitchen, async (req, res) => {
+    try {
+        const { assignments } = req.body;
+        // assignments: [{delivery_id, delivery_boy_id, delivery_sequence}]
+        for (const a of assignments) {
+            await db.query(`UPDATE deliveries SET delivery_boy_id=$1, delivery_sequence=$2 WHERE id=$3`,
+                [a.delivery_boy_id||null, a.delivery_sequence||0, a.delivery_id]);
+        }
+        res.json({ message: 'Reordered', count: assignments.length });
+    } catch(e) { res.status(400).json({ error: e.message }); }
+});
+
+// Auto-assign all unassigned deliveries based on customer default DB
+app.post('/api/kitchen/assign/auto', verifyToken, reqKitchen, async (req, res) => {
+    try {
+        const { date, kitchen_id } = req.body;
+        const result = await db.query(`
+            UPDATE deliveries d SET delivery_boy_id = c.delivery_boy_id,
+                delivery_sequence = c.delivery_sequence
+            FROM customers c
+            WHERE d.customer_id = c.id
+              AND d.delivery_date = $1
+              AND d.kitchen_id = $2
+              AND d.delivery_boy_id IS NULL
+              AND d.is_sunday_skip = 0
+              AND c.delivery_boy_id IS NOT NULL
+        `, [date, kitchen_id]);
+        res.json({ message: 'Auto-assigned', count: result.rowCount });
+    } catch(e) { res.status(400).json({ error: e.message }); }
+});
+
+// ==================== DELIVERY BOY PORTAL ====================
+
+app.get('/api/delivery/profile', verifyToken, reqDelivery, async (req, res) => {
+    try {
+        const db_row = await db.one(`SELECT db.*, k.name as kitchen_name, t.name as territory_name
+            FROM delivery_boys db
+            LEFT JOIN kitchens k ON db.kitchen_id=k.id
+            LEFT JOIN territories t ON db.territory_id=t.id
+            WHERE db.user_id=$1`, [req.user.id]);
+        if (!db_row) return res.status(404).json({ error: 'Delivery boy profile not found' });
+        res.json(db_row);
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/delivery/today', verifyToken, reqDelivery, async (req, res) => {
+    try {
+        const db_row = await db.one(`SELECT id FROM delivery_boys WHERE user_id=$1`, [req.user.id]);
+        if (!db_row) return res.status(404).json({ error: 'Profile not found' });
+        const date = req.query.date || new Date().toISOString().split('T')[0];
+        const deliveries = await db.all(`
+            SELECT d.*, c.name as customer_name, c.phone as customer_phone,
+                c.address as customer_address,
+                mi.name as meal_item_name, mi.calories,
+                mi.veg_tag, mi.non_veg_tag, mi.image_base64 as item_image,
+                p.name as plan_name
+            FROM deliveries d
+            LEFT JOIN customers c ON d.customer_id=c.id
+            LEFT JOIN meal_items mi ON d.meal_item_id=mi.id
+            LEFT JOIN orders o ON d.order_id=o.id
+            LEFT JOIN subscription_plans p ON o.plan_id=p.id
+            WHERE d.delivery_boy_id=$1 AND d.delivery_date=$2
+              AND d.is_sunday_skip=0
+            ORDER BY d.delivery_sequence ASC, c.name ASC
+        `, [db_row.id, date]);
+
+        const stats = {
+            total: deliveries.length,
+            delivered: deliveries.filter(d=>d.status==='delivered').length,
+            pending: deliveries.filter(d=>d.status==='pending').length,
+            skipped: deliveries.filter(d=>d.status==='skipped').length,
+        };
+        res.json({ deliveries, stats, date });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/delivery/mark/:id', verifyToken, reqDelivery, async (req, res) => {
+    try {
+        const db_row = await db.one(`SELECT id FROM delivery_boys WHERE user_id=$1`, [req.user.id]);
+        if (!db_row) return res.status(403).json({ error: 'Not authorized' });
+        const { status, notes } = req.body;
+        if (!['delivered','skipped'].includes(status)) return res.status(400).json({ error: 'Invalid status' });
+        const delivery = await db.one(`SELECT * FROM deliveries WHERE id=$1 AND delivery_boy_id=$2`, [req.params.id, db_row.id]);
+        if (!delivery) return res.status(404).json({ error: 'Delivery not found or not assigned to you' });
+        const da = status==='delivered' ? new Date().toISOString() : null;
+        await db.query(`UPDATE deliveries SET status=$1,delivered_at=COALESCE($2,delivered_at),notes=COALESCE($3,notes),delivery_agent=$4 WHERE id=$5`,
+            [status, da, notes||null, req.user.name, req.params.id]);
+        res.json({ message: status==='delivered' ? 'Marked as delivered' : 'Marked as skipped' });
+    } catch(e) { res.status(400).json({ error: e.message }); }
+});
+
+// KM: get delivery boys in their kitchen
+app.get('/api/kitchen/delivery-boys', verifyToken, reqKitchen, async (req, res) => {
+    try {
+        const { kitchen_id } = req.query;
+        res.json(await db.all(`SELECT db.*,t.name as territory_name,
+            (SELECT COUNT(*)::int FROM customers WHERE delivery_boy_id=db.id AND status='active') as customer_count
+            FROM delivery_boys db LEFT JOIN territories t ON db.territory_id=t.id
+            WHERE db.kitchen_id=$1 AND db.status='active' ORDER BY db.name`, [kitchen_id]));
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 app.get('/api/health', (req, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));
 
 // ==================== STATIC FILES ====================
@@ -1871,6 +2355,11 @@ app.get('/kitchen', (req, res) => {
     const f = path.join(__dirname, 'public', 'kitchen.html');
     if (fs.existsSync(f)) return res.sendFile(f);
     res.status(404).send('Kitchen portal not found');
+});
+app.get('/delivery', (req, res) => {
+    const f = path.join(__dirname, 'public', 'delivery.html');
+    if (fs.existsSync(f)) return res.sendFile(f);
+    res.status(404).send('Delivery portal not found');
 });
 app.get('/', (req, res) => {
     const f = path.join(__dirname, 'public', 'index.html');

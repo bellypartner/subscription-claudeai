@@ -5,368 +5,610 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Salad Caffe — Kitchen</title>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--g:#2ecc71;--gd:#27ae60;--gl:#eafaf1;--gm:#a9dfbf;--dk:#111827;--mid:#374151;--muted:#6b7280;--border:#e5e7eb;--bg:#f9fafb;--red:#ef4444;--rl:#fef2f2;--amber:#f59e0b;--al:#fffbeb;--blue:#3b82f6;--bl:#eff6ff;--sh:0 1px 3px rgba(0,0,0,.08);}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--dk);font-size:14px;}
+
+/* LOGIN */
 #loginPage{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);}
 .lcard{background:white;padding:44px 40px;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.4);width:100%;max-width:400px;}
 .lbrand{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
-.lbrand-ico{width:44px;height:44px;background:#f59e0b;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;}
-.lbrand h1{font-family:"Playfair Display",serif;font-size:22px;}
+.lbrand-ico{width:44px;height:44px;background:var(--amber);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;}
+.lbrand h1{font-size:22px;font-weight:700;}
 .lsub{color:var(--muted);font-size:13px;margin-bottom:28px;}
 .li{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:"DM Sans",sans-serif;margin-bottom:12px;}
-.li:focus{outline:none;border-color:#f59e0b;}
-.lbtn{width:100%;padding:12px;background:#f59e0b;color:white;border:none;border-radius:8px;font-size:15px;font-weight:700;font-family:"DM Sans",sans-serif;cursor:pointer;}
+.li:focus{outline:none;border-color:var(--amber);}
+.lbtn{width:100%;padding:12px;background:var(--amber);color:white;border:none;border-radius:8px;font-size:15px;font-weight:700;font-family:"DM Sans",sans-serif;cursor:pointer;}
 .lbtn:hover{background:#d97706;}
 .lerr{background:var(--rl);color:var(--red);padding:10px 13px;border-radius:7px;margin-bottom:14px;font-size:13px;display:none;}
+
+/* APP */
 #app{display:none;min-height:100vh;flex-direction:column;}
 #app.show{display:flex;}
-.topbar{background:#1f2937;padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
-.tb-brand{display:flex;align-items:center;gap:10px;color:white;}
-.tb-ico{width:36px;height:36px;background:#f59e0b;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;}
-.tb-txt{font-family:"Playfair Display",serif;font-size:17px;}
-.tb-txt span{display:block;font-size:10px;color:rgba(255,255,255,.4);font-family:"DM Sans",sans-serif;text-transform:uppercase;letter-spacing:.1em;}
-.tb-right{display:flex;align-items:center;gap:12px;color:white;}
-.tb-date{font-size:12px;color:rgba(255,255,255,.6);}
-.tb-logout{padding:6px 14px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:7px;color:white;cursor:pointer;font-size:12px;font-family:"DM Sans",sans-serif;}
-.content{padding:24px;max-width:1100px;margin:0 auto;width:100%;}
-.controls{display:flex;gap:12px;align-items:center;margin-bottom:24px;flex-wrap:wrap;}
-.fc{padding:10px 13px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:"DM Sans",sans-serif;color:var(--dk);background:white;}
-.fc:focus{outline:none;border-color:#f59e0b;}
-.btn{display:inline-flex;align-items:center;gap:5px;padding:9px 18px;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;font-family:"DM Sans",sans-serif;}
-.btn-amber{background:#f59e0b;color:white;}.btn-amber:hover{background:#d97706;}
+.topbar{background:#1f2937;padding:0 24px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.tb-left{display:flex;align-items:center;gap:12px;}
+.tb-ico{width:34px;height:34px;background:var(--amber);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;}
+.tb-title{color:white;font-weight:700;font-size:16px;}
+.tb-kitchen{color:rgba(255,255,255,.5);font-size:12px;margin-left:4px;}
+.tb-right{display:flex;align-items:center;gap:10px;}
+.tb-date{font-size:12px;color:rgba(255,255,255,.5);}
+.tb-logout{padding:6px 13px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:7px;color:white;cursor:pointer;font-size:12px;font-family:"DM Sans",sans-serif;}
+
+/* TABS */
+.tab-bar{background:#111827;display:flex;padding:0 24px;gap:4px;}
+.tab-btn{padding:12px 18px;border:none;background:none;color:rgba(255,255,255,.5);font-size:13px;font-weight:600;cursor:pointer;font-family:"DM Sans",sans-serif;border-bottom:2px solid transparent;transition:all .2s;}
+.tab-btn.active{color:var(--amber);border-bottom-color:var(--amber);}
+.tab-btn i{margin-right:6px;}
+
+.content{padding:22px;flex:1;}
+.tab-panel{display:none;}.tab-panel.active{display:block;}
+
+/* CONTROLS */
+.controls{display:flex;gap:10px;align-items:center;margin-bottom:20px;flex-wrap:wrap;}
+.fc{padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:"DM Sans",sans-serif;color:var(--dk);background:white;}
+.fc:focus{outline:none;border-color:var(--amber);}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 15px;border:none;border-radius:8px;cursor:pointer;font-size:12.5px;font-weight:600;font-family:"DM Sans",sans-serif;}
+.btn-amber{background:var(--amber);color:white;}.btn-amber:hover{background:#d97706;}
 .btn-g{background:var(--g);color:white;}.btn-g:hover{background:var(--gd);}
 .btn-o{background:white;border:1.5px solid var(--border);color:var(--mid);}
+.btn-r{background:var(--rl);color:var(--red);border:1px solid #fecaca;}
+.btn-b{background:var(--bl);color:var(--blue);border:1px solid #bfdbfe;}
 .btn-sm{padding:5px 10px;font-size:11.5px;border-radius:6px;}
 
-/* SUMMARY CARD */
-.summary-card{background:white;border-radius:14px;box-shadow:var(--sh);border:1px solid var(--border);margin-bottom:20px;overflow:hidden;}
-.sc-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
-.sc-mealtype{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;}
-.sc-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;}
-.sc-body{padding:20px;}
-
-/* PREPARE SECTION */
-.prepare-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-bottom:20px;}
-.item-card{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;align-items:center;gap:14px;}
-.item-img{width:56px;height:56px;border-radius:10px;object-fit:cover;background:#e5e7eb;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:24px;}
-.item-name{font-size:14px;font-weight:700;margin-bottom:4px;}
-.item-count{font-size:22px;font-weight:800;color:var(--gd);line-height:1;}
-.item-split{font-size:11.5px;color:var(--muted);margin-top:3px;}
-
-/* STATS ROW */
-.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
-.stat-box{background:white;border:1px solid var(--border);border-radius:10px;padding:14px 16px;text-align:center;}
-.stat-val{font-size:26px;font-weight:800;line-height:1;}
-.stat-lbl{font-size:11px;color:var(--muted);margin-top:3px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
-.stat-split{font-size:10.5px;color:var(--muted);margin-top:4px;}
-
-/* SKIPPED BREAKDOWN */
-.skip-bar{background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
-.skip-title{font-size:13px;font-weight:700;color:var(--red);display:flex;align-items:center;gap:6px;}
-.skip-detail{display:flex;gap:20px;}
-.skip-item{text-align:center;}
-.skip-num{font-size:18px;font-weight:800;color:var(--red);}
-.skip-lbl{font-size:10.5px;color:var(--muted);}
-
-/* NET PREPARE BAR */
-.net-bar{background:var(--gl);border:1px solid var(--gm);border-radius:10px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
-.net-title{font-size:13px;font-weight:700;color:var(--gd);display:flex;align-items:center;gap:6px;}
-.net-detail{display:flex;gap:20px;}
-.net-item{text-align:center;}
-.net-num{font-size:20px;font-weight:800;color:var(--gd);}
-.net-lbl{font-size:10.5px;color:var(--muted);}
-
-/* CUSTOMER LIST */
-.cust-list-toggle{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--mid);padding:10px 0;border-top:1px solid var(--border);user-select:none;}
-.cust-table{display:none;margin-top:10px;}
-.cust-table.open{display:block;}
+/* PREPARE TAB */
+.summary-card{background:white;border-radius:12px;box-shadow:var(--sh);border:1px solid var(--border);margin-bottom:18px;overflow:hidden;}
+.sc-hd{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.sc-mt{font-size:15px;font-weight:700;}
+.sc-body{padding:18px;}
+.prepare-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-bottom:18px;}
+.item-card{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;display:flex;align-items:center;gap:12px;}
+.item-img{width:52px;height:52px;border-radius:9px;object-fit:cover;background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.item-count{font-size:24px;font-weight:800;color:var(--gd);line-height:1;}
+.item-name{font-size:13px;font-weight:700;margin-bottom:3px;}
+.item-split{font-size:11px;color:var(--muted);}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+.stat-box{background:white;border:1px solid var(--border);border-radius:9px;padding:13px;text-align:center;}
+.stat-val{font-size:24px;font-weight:800;line-height:1;}
+.stat-lbl{font-size:10.5px;color:var(--muted);margin-top:3px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
+.stat-sub{font-size:10px;color:var(--muted);margin-top:3px;}
+.skip-bar{background:var(--rl);border:1px solid #fecaca;border-radius:9px;padding:13px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.net-bar{background:var(--gl);border:1px solid var(--gm);border-radius:9px;padding:13px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.bar-title{font-size:13px;font-weight:700;}
+.bar-nums{display:flex;gap:18px;}
+.bar-num{text-align:center;}
+.bar-n{font-size:18px;font-weight:800;}
+.bar-l{font-size:10px;color:var(--muted);}
+.cust-toggle{cursor:pointer;font-size:12.5px;font-weight:600;color:var(--mid);padding:10px 0;border-top:1px solid var(--border);display:flex;align-items:center;gap:7px;user-select:none;}
+.cust-list{display:none;margin-top:10px;overflow-x:auto;}
+.cust-list.open{display:block;}
 table{width:100%;border-collapse:collapse;}
-thead th{background:var(--bg);padding:9px 13px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);}
-tbody td{padding:10px 13px;border-bottom:1px solid var(--border);font-size:13px;}
+thead th{background:var(--bg);padding:9px 12px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);}
+tbody td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:13px;}
 tbody tr:last-child td{border-bottom:none;}
 tbody tr:hover{background:var(--bg);}
-.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;}
 .bg{background:var(--gl);color:var(--gd);}
 .br{background:var(--rl);color:var(--red);}
 .ba{background:var(--al);color:#92400e;}
 .bgr{background:#f3f4f6;color:var(--muted);}
+.bb{background:var(--bl);color:var(--blue);}
 
-.empty{text-align:center;padding:48px 20px;color:var(--muted);}
-.empty i{font-size:40px;margin-bottom:14px;display:block;opacity:.3;}
-.spinner{display:inline-block;width:22px;height:22px;border:3px solid var(--border);border-top-color:#f59e0b;border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle;}
+/* ASSIGN TAB - TRELLO BOARD */
+.board-controls{display:flex;gap:10px;margin-bottom:16px;align-items:center;flex-wrap:wrap;}
+.board{display:flex;gap:14px;overflow-x:auto;padding-bottom:14px;min-height:500px;align-items:flex-start;}
+.db-column{background:white;border:1px solid var(--border);border-radius:12px;min-width:240px;max-width:260px;flex-shrink:0;box-shadow:var(--sh);}
+.db-col-hd{padding:13px 14px;border-bottom:1px solid var(--border);border-radius:12px 12px 0 0;}
+.db-col-unassigned{background:var(--rl);}
+.db-col-hd-top{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+.db-avatar{width:32px;height:32px;border-radius:50%;background:var(--amber);color:white;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;}
+.db-avatar img{width:100%;height:100%;object-fit:cover;}
+.db-name{font-size:13px;font-weight:700;}
+.db-meta{font-size:11px;color:var(--muted);}
+.db-count{font-size:11px;font-weight:700;background:var(--bg);padding:2px 8px;border-radius:10px;color:var(--mid);margin-left:auto;}
+.db-col-body{padding:8px;min-height:200px;}
+.db-col-body.drag-over{background:var(--gl);border-radius:0 0 12px 12px;}
+.delivery-card{background:white;border:1px solid var(--border);border-radius:8px;padding:10px 11px;margin-bottom:7px;cursor:grab;transition:box-shadow .15s;user-select:none;}
+.delivery-card:active{cursor:grabbing;box-shadow:0 4px 16px rgba(0,0,0,.15);}
+.delivery-card.dragging{opacity:.5;}
+.dc-name{font-size:13px;font-weight:700;margin-bottom:3px;}
+.dc-item{font-size:11.5px;color:var(--muted);}
+.dc-addr{font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dc-seq{display:inline-block;width:20px;height:20px;background:var(--blue);color:white;border-radius:50%;font-size:10px;font-weight:700;text-align:center;line-height:20px;margin-right:5px;flex-shrink:0;}
+.dc-badges{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap;}
+.on-leave-btn{padding:4px 8px;background:var(--rl);color:var(--red);border:1px solid #fecaca;border-radius:6px;cursor:pointer;font-size:10.5px;font-weight:600;font-family:"DM Sans",sans-serif;}
+
+/* TRACK TAB */
+.track-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;}
+.track-card{background:white;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--sh);}
+.track-hd{padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.track-progress{height:4px;background:var(--border);border-radius:2px;margin-top:8px;}
+.track-progress-bar{height:4px;background:var(--g);border-radius:2px;transition:width .3s;}
+.track-body{padding:8px;}
+.track-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:4px;}
+.track-row:hover{background:var(--bg);}
+.track-seq{width:22px;height:22px;background:var(--bg);border:1px solid var(--border);border-radius:50%;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.track-cust{flex:1;min-width:0;}
+.track-name{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.track-item{font-size:11px;color:var(--muted);}
+
+.empty{text-align:center;padding:40px 20px;color:var(--muted);}
+.empty i{font-size:32px;margin-bottom:12px;display:block;opacity:.3;}
+.spinner{display:inline-block;width:18px;height:18px;border:2.5px solid var(--border);border-top-color:var(--amber);border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle;margin-right:5px;}
 @keyframes sp{to{transform:rotate(360deg);}}
-.loading{text-align:center;padding:40px;color:var(--muted);}
-.last-updated{font-size:11px;color:rgba(255,255,255,.4);margin-left:8px;}
-
-/* PRINT */
-@media print{.topbar,.controls,button{display:none!important;}.content{padding:10px;}}
+.loading{text-align:center;padding:32px;color:var(--muted);}
+.last-upd{font-size:11px;color:rgba(255,255,255,.35);}
+@media print{.topbar,.tab-bar,.controls,button{display:none!important;}}
 </style>
 </head>
 <body>
 
 <div id="loginPage">
   <div class="lcard">
-    <div class="lbrand"><div class="lbrand-ico">&#127859;</div><h1>Kitchen Dashboard</h1></div>
+    <div class="lbrand"><div class="lbrand-ico">🍳</div><h1>Kitchen Dashboard</h1></div>
     <p class="lsub">Salad Caffe — Kitchen Operations</p>
     <div class="lerr" id="loginErr"></div>
     <input type="email" class="li" id="lEmail" placeholder="Email" value="kitchen@test.com">
     <input type="password" class="li" id="lPass" placeholder="Password" value="kitchen123">
     <button class="lbtn" onclick="doLogin()">Sign In</button>
-    <p style="text-align:center;margin-top:12px;font-size:11.5px;color:var(--muted)">Demo: kitchen@test.com / kitchen123</p>
+    <p style="text-align:center;margin-top:12px;font-size:11px;color:var(--muted)">kitchen@test.com / kitchen123</p>
   </div>
 </div>
 
 <div id="app">
   <div class="topbar">
-    <div class="tb-brand">
-      <div class="tb-ico">&#127859;</div>
-      <div class="tb-txt">Kitchen Dashboard<span>Salad Caffe</span></div>
+    <div class="tb-left">
+      <div class="tb-ico">🍳</div>
+      <div>
+        <span class="tb-title">Kitchen Dashboard</span>
+        <span class="tb-kitchen" id="tbKitchen"></span>
+      </div>
     </div>
     <div class="tb-right">
       <span class="tb-date" id="tbDate"></span>
-      <span class="last-updated" id="lastUpdated"></span>
+      <span class="last-upd" id="lastUpd"></span>
       <button class="tb-logout" onclick="doLogout()">Sign Out</button>
     </div>
   </div>
 
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('prepare',this)"><i class="fas fa-fire"></i> Prepare</button>
+    <button class="tab-btn" onclick="switchTab('assign',this)"><i class="fas fa-tasks"></i> Assign</button>
+    <button class="tab-btn" onclick="switchTab('track',this)"><i class="fas fa-route"></i> Track</button>
+  </div>
+
   <div class="content">
+    <!-- CONTROLS (shared) -->
     <div class="controls">
-      <div>
-        <input type="date" class="fc" id="dateFilter" onchange="loadSummary()">
-      </div>
-      <div>
-        <select class="fc" id="kitchenFilter" onchange="loadSummary()">
-          <option value="">All Kitchens</option>
-        </select>
-      </div>
-      <button class="btn btn-amber" onclick="loadSummary()"><i class="fas fa-sync"></i> Refresh</button>
+      <input type="date" class="fc" id="dateFilter">
+      <select class="fc" id="kitchenFilter" onchange="onKitchenChange()">
+        <option value="">Select Kitchen</option>
+      </select>
+      <button class="btn btn-amber" onclick="refreshAll()"><i class="fas fa-sync"></i> Refresh</button>
       <button class="btn btn-o" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
     </div>
 
-    <div id="summaryArea">
-      <div class="loading"><span class="spinner"></span> Loading kitchen summary...</div>
+    <!-- PREPARE TAB -->
+    <div id="tab-prepare" class="tab-panel active">
+      <div id="prepareArea"><div class="loading"><span class="spinner"></span> Loading...</div></div>
+    </div>
+
+    <!-- ASSIGN TAB -->
+    <div id="tab-assign" class="tab-panel">
+      <div class="board-controls">
+        <button class="btn btn-g" onclick="autoAssign()"><i class="fas fa-magic"></i> Auto-Assign Defaults</button>
+        <button class="btn btn-amber" onclick="saveAssignments()"><i class="fas fa-save"></i> Save Order</button>
+        <span id="assignSaving" style="display:none;font-size:12px;color:var(--muted);"><span class="spinner"></span> Saving...</span>
+      </div>
+      <div class="board" id="assignBoard">
+        <div class="loading"><span class="spinner"></span> Loading board...</div>
+      </div>
+    </div>
+
+    <!-- TRACK TAB -->
+    <div id="tab-track" class="tab-panel">
+      <div class="track-grid" id="trackGrid">
+        <div class="loading"><span class="spinner"></span> Loading...</div>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
 const API = "/api";
-let token = null;
-let autoRefreshInterval = null;
+let token = null, user = null, kitchenId = null;
+let boardData = null; // current assign board state
+let autoRefreshTimer = null;
 
-// Set today as default date
 document.getElementById("dateFilter").value = new Date().toISOString().split("T")[0];
-document.getElementById("tbDate").textContent = new Date().toLocaleDateString("en-IN", {weekday:"long",day:"numeric",month:"long",year:"numeric"});
+document.getElementById("tbDate").textContent = new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"});
 
 window.addEventListener("load", () => {
-    const t = sessionStorage.getItem("kToken");
-    if (t) { token = t; showApp(); }
+  const t = sessionStorage.getItem("kToken");
+  if (t) { token = t; user = JSON.parse(sessionStorage.getItem("kUser")||"{}"); showApp(); }
 });
 
 async function doLogin() {
-    const email = document.getElementById("lEmail").value;
-    const pwd = document.getElementById("lPass").value;
-    const err = document.getElementById("loginErr");
-    err.style.display = "none";
-    if (!email || !pwd) { err.textContent = "Fill all fields"; err.style.display = "block"; return; }
-    try {
-        const r = await fetch(`${API}/auth/login`, {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,password:pwd})});
-        const d = await r.json();
-        if (d.error) { err.textContent = d.error; err.style.display = "block"; return; }
-        // Allow kitchen and admin roles
-        if (!["kitchen_manager","kitchen_staff","super_admin","admin"].includes(d.user.authority)) {
-            err.textContent = "Kitchen staff access only"; err.style.display = "block"; return;
-        }
-        token = d.token;
-        sessionStorage.setItem("kToken", token);
-        showApp();
-    } catch(e) { err.textContent = "Connection error"; err.style.display = "block"; }
+  const email = document.getElementById("lEmail").value;
+  const pwd = document.getElementById("lPass").value;
+  const err = document.getElementById("loginErr");
+  err.style.display = "none";
+  try {
+    const r = await fetch(`${API}/auth/login`, {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,password:pwd})});
+    const d = await r.json();
+    if (d.error) { err.textContent = d.error; err.style.display = "block"; return; }
+    if (!["kitchen_manager","kitchen_staff","super_admin","admin"].includes(d.user.authority)) {
+      err.textContent = "Kitchen staff access only"; err.style.display = "block"; return;
+    }
+    token = d.token; user = d.user;
+    sessionStorage.setItem("kToken", token);
+    sessionStorage.setItem("kUser", JSON.stringify(user));
+    showApp();
+  } catch(e) { err.textContent = "Connection error"; err.style.display = "block"; }
 }
 
-function doLogout() { sessionStorage.removeItem("kToken"); clearInterval(autoRefreshInterval); location.reload(); }
+function doLogout() { sessionStorage.clear(); clearInterval(autoRefreshTimer); location.reload(); }
 
-function showApp() {
-    document.getElementById("loginPage").style.display = "none";
-    document.getElementById("app").classList.add("show");
-    loadKitchens();
-    loadSummary();
-    // Auto-refresh every 60 seconds
-    autoRefreshInterval = setInterval(loadSummary, 60000);
+async function showApp() {
+  document.getElementById("loginPage").style.display = "none";
+  document.getElementById("app").classList.add("show");
+  await loadKitchens();
+  refreshAll();
+  autoRefreshTimer = setInterval(() => {
+    document.getElementById("lastUpd").textContent = "Auto-refresh in 60s";
+    refreshAll();
+  }, 60000);
 }
 
 async function loadKitchens() {
-    try {
-        const r = await fetch(`${API}/kitchen/list`, {headers: {"Authorization": "Bearer " + token}});
-        const kitchens = await r.json();
-        const sel = document.getElementById("kitchenFilter");
-        (kitchens || []).forEach(k => {
-            const o = document.createElement("option");
-            o.value = k.id; o.text = k.name;
-            sel.appendChild(o);
-        });
-    } catch(e) {}
+  const r = await fetch(`${API}/kitchen/list`, {headers:{"Authorization":"Bearer "+token}});
+  const ks = await r.json();
+  const sel = document.getElementById("kitchenFilter");
+  (ks||[]).forEach(k => { const o = document.createElement("option"); o.value=k.id; o.text=k.name; sel.appendChild(o); });
+  if (ks?.length) {
+    sel.value = ks[0].id;
+    kitchenId = ks[0].id;
+    document.getElementById("tbKitchen").textContent = "— " + ks[0].name;
+  }
 }
 
-async function loadSummary() {
-    const date = document.getElementById("dateFilter").value;
-    const kitchenId = document.getElementById("kitchenFilter").value;
-    const area = document.getElementById("summaryArea");
-    area.innerHTML = "<div class='loading'><span class='spinner'></span> Loading...</div>";
-
-    let url = `${API}/kitchen/daily-summary?date=${date}`;
-    if (kitchenId) url += `&kitchen_id=${kitchenId}`;
-
-    try {
-        const r = await fetch(url, {headers: {"Authorization": "Bearer " + token}});
-        const d = await r.json();
-        if (d.error) { area.innerHTML = `<div class="empty"><i class="fas fa-exclamation-circle"></i><p>${d.error}</p></div>`; return; }
-        document.getElementById("lastUpdated").textContent = "Updated " + new Date().toLocaleTimeString("en-IN");
-        renderSummary(d);
-    } catch(e) {
-        area.innerHTML = "<div class='empty'><i class='fas fa-wifi'></i><p>Connection error. Is the server running?</p></div>";
-    }
+function onKitchenChange() {
+  kitchenId = document.getElementById("kitchenFilter").value;
+  const sel = document.getElementById("kitchenFilter");
+  document.getElementById("tbKitchen").textContent = sel.options[sel.selectedIndex]?.text ? "— "+sel.options[sel.selectedIndex].text : "";
+  refreshAll();
 }
 
-function renderSummary(data) {
-    const area = document.getElementById("summaryArea");
-    const { summary, date } = data;
-    const mealTypes = Object.keys(summary);
+function getDate() { return document.getElementById("dateFilter").value; }
 
-    if (!mealTypes.length) {
-        area.innerHTML = "<div class='empty'><i class='fas fa-check-circle'></i><p style='font-size:16px;font-weight:700;color:var(--gd)'>No deliveries scheduled for this date</p><p>It may be a Sunday or no orders are active.</p></div>";
-        return;
-    }
+function switchTab(name, btn) {
+  document.querySelectorAll(".tab-panel").forEach(p=>p.classList.remove("active"));
+  document.getElementById("tab-"+name).classList.add("active");
+  document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  if (name==="assign") loadBoard();
+  if (name==="track") loadTrack();
+}
 
-    const mealIcons = {breakfast:"&#127749;", lunch:"&#9728;", dinner:"&#127769;"};
-    const mealColors = {breakfast:"background:#fef9c3;color:#92400e;", lunch:"background:var(--gl);color:var(--gd);", dinner:"background:#ede9fe;color:#5b21b6;"};
+function refreshAll() {
+  document.getElementById("lastUpd").textContent = "Updated "+new Date().toLocaleTimeString("en-IN");
+  loadPrepare();
+  const active = document.querySelector(".tab-panel.active").id;
+  if (active==="tab-assign") loadBoard();
+  if (active==="tab-track") loadTrack();
+}
 
-    let html = "";
-    for (const mt of mealTypes) {
-        const s = summary[mt];
-        const icon = mealIcons[mt] || "&#127869;";
-        const color = mealColors[mt] || "background:var(--bg);color:var(--mid);";
+// ===== PREPARE TAB =====
+async function loadPrepare() {
+  const date = getDate();
+  const area = document.getElementById("prepareArea");
+  if (!kitchenId) { area.innerHTML = '<div class="empty"><i class="fas fa-store"></i><p>Select a kitchen</p></div>'; return; }
+  try {
+    const r = await fetch(`${API}/kitchen/daily-summary?date=${date}&kitchen_id=${kitchenId}`, {headers:{"Authorization":"Bearer "+token}});
+    const d = await r.json();
+    if (d.error) { area.innerHTML = `<div class="empty"><i class="fas fa-exclamation-circle"></i><p>${d.error}</p></div>`; return; }
+    renderPrepare(d);
+  } catch(e) { area.innerHTML = '<div class="empty"><i class="fas fa-wifi"></i><p>Connection error</p></div>'; }
+}
 
-        html += `<div class="summary-card">
-            <div class="sc-header">
-                <div class="sc-mealtype">${icon} ${mt.charAt(0).toUpperCase()+mt.slice(1)}
-                    <span class="sc-badge" style="${color}">${s.total_customers} customers</span>
-                </div>
-                <div style="font-size:12px;color:var(--muted);">${date}</div>
+function renderPrepare(data) {
+  const area = document.getElementById("prepareArea");
+  const { summary } = data;
+  const mts = Object.keys(summary);
+  if (!mts.length) { area.innerHTML = '<div class="empty"><i class="fas fa-check-circle" style="color:var(--g)"></i><p style="font-size:15px;font-weight:700;color:var(--gd)">No deliveries for this date</p></div>'; return; }
+  const icons = {breakfast:"🌅",lunch:"☀️",dinner:"🌙"};
+  area.innerHTML = mts.map(mt => {
+    const s = summary[mt];
+    return `<div class="summary-card">
+      <div class="sc-hd">
+        <div class="sc-mt">${icons[mt]||"🍽️"} ${mt.charAt(0).toUpperCase()+mt.slice(1)}</div>
+        <span class="badge bb">${s.total_customers} customers</span>
+      </div>
+      <div class="sc-body">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:10px;">Items to Prepare</div>
+        <div class="prepare-grid">${s.items_to_prepare.length ? s.items_to_prepare.map(item => `
+          <div class="item-card">
+            ${item.image_base64 ? `<img src="${item.image_base64}" class="item-img">` : `<div class="item-img">🍽️</div>`}
+            <div>
+              <div class="item-name">${item.meal_item_name}</div>
+              <div class="item-count">× ${item.total}</div>
+              <div class="item-split">🟢 ${item.veg_count} veg &nbsp;|&nbsp; 🔴 ${item.non_veg_count} non-veg</div>
+              ${item.calories?`<div style="font-size:10px;color:var(--muted)">${item.calories} kcal</div>`:""}
             </div>
-            <div class="sc-body">`;
-
-        // ITEMS TO PREPARE
-        html += `<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:10px;">Prepare Today</div>`;
-        html += `<div class="prepare-grid">`;
-        if (!s.items_to_prepare.length) {
-            html += `<div style="color:var(--muted);font-size:13px;padding:10px 0;">All meals skipped or delivered</div>`;
-        } else {
-            for (const item of s.items_to_prepare) {
-                const imgHtml = item.image_base64
-                    ? `<img src="${item.image_base64}" class="item-img" alt="">`
-                    : `<div class="item-img">&#127869;</div>`;
-                const dietTag = item.veg_tag
-                    ? `<span style="font-size:10px;font-weight:700;color:var(--gd);">&#128994; Veg</span>`
-                    : `<span style="font-size:10px;font-weight:700;color:var(--red);">&#128308; Non-Veg</span>`;
-                html += `<div class="item-card">
-                    ${imgHtml}
-                    <div>
-                        <div class="item-name">${item.meal_item_name}</div>
-                        <div class="item-count">&times; ${item.total}</div>
-                        <div class="item-split">
-                            &#128994; ${item.veg_count} veg &nbsp;|&nbsp; &#128308; ${item.non_veg_count} non-veg
-                        </div>
-                        ${item.calories ? `<div style="font-size:10.5px;color:var(--muted);margin-top:2px;">${item.calories} kcal</div>` : ""}
-                    </div>
-                </div>`;
-            }
-        }
-        html += `</div>`;
-
-        // STATS ROW
-        html += `<div class="stats-row">
-            <div class="stat-box">
-                <div class="stat-val" style="color:var(--blue)">${s.total_customers}</div>
-                <div class="stat-lbl">Total</div>
-                <div class="stat-split">&#128994; ${s.items_to_prepare.reduce((a,i)=>a+i.veg_count,0)+s.skipped_veg+s.delivered_veg} veg &nbsp; &#128308; ${s.items_to_prepare.reduce((a,i)=>a+i.non_veg_count,0)+s.skipped_non_veg+s.delivered_non_veg} non-veg</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-val" style="color:var(--g)">${s.delivered_total}</div>
-                <div class="stat-lbl">Delivered</div>
-                <div class="stat-split">&#128994; ${s.delivered_veg} &nbsp; &#128308; ${s.delivered_non_veg}</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-val" style="color:var(--amber)">${s.pending_total}</div>
-                <div class="stat-lbl">Pending</div>
-                <div class="stat-split">&#128994; ${s.pending_veg} &nbsp; &#128308; ${s.pending_non_veg}</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-val" style="color:var(--red)">${s.skipped_total}</div>
-                <div class="stat-lbl">Skipped</div>
-                <div class="stat-split">&#128994; ${s.skipped_veg} &nbsp; &#128308; ${s.skipped_non_veg}</div>
-            </div>
-        </div>`;
-
-        // SKIPPED BREAKDOWN
-        if (s.skipped_total > 0) {
-            html += `<div class="skip-bar">
-                <div class="skip-title"><i class="fas fa-times-circle"></i> Skipped Today &mdash; Do NOT prepare these</div>
-                <div class="skip-detail">
-                    <div class="skip-item"><div class="skip-num">${s.skipped_total}</div><div class="skip-lbl">Total Skipped</div></div>
-                    <div class="skip-item"><div class="skip-num" style="color:#92400e">${s.skipped_veg}</div><div class="skip-lbl">&#128994; Veg Skips</div></div>
-                    <div class="skip-item"><div class="skip-num">${s.skipped_non_veg}</div><div class="skip-lbl">&#128308; Non-Veg Skips</div></div>
-                </div>
-            </div>`;
-        }
-
-        // NET TO PREPARE
-        html += `<div class="net-bar">
-            <div class="net-title"><i class="fas fa-check-circle"></i> Net to Prepare (after skips)</div>
-            <div class="net-detail">
-                <div class="net-item"><div class="net-num">${s.net_to_prepare}</div><div class="net-lbl">Total</div></div>
-                <div class="net-item"><div class="net-num" style="color:#166534">${s.net_veg}</div><div class="net-lbl">&#128994; Veg</div></div>
-                <div class="net-item"><div class="net-num" style="color:#991b1b">${s.net_non_veg}</div><div class="net-lbl">&#128308; Non-Veg</div></div>
-            </div>
-        </div>`;
-
-        // CUSTOMER LIST (collapsible)
-        html += `<div class="cust-list-toggle" onclick="toggleCustList(this, 'cust-${mt}')">
-            <i class="fas fa-chevron-right" style="font-size:11px;transition:transform .2s;"></i>
-            View Customer List (${s.customer_list.length})
+          </div>`).join("") : '<div style="color:var(--muted);font-size:13px;">All skipped or delivered</div>'}</div>
+        <div class="stats-row">
+          <div class="stat-box"><div class="stat-val" style="color:var(--blue)">${s.total_customers}</div><div class="stat-lbl">Total</div><div class="stat-sub">🟢${s.items_to_prepare.reduce((a,i)=>a+i.veg_count,0)+s.skipped_veg+s.delivered_veg} 🔴${s.items_to_prepare.reduce((a,i)=>a+i.non_veg_count,0)+s.skipped_non_veg+s.delivered_non_veg}</div></div>
+          <div class="stat-box"><div class="stat-val" style="color:var(--g)">${s.delivered_total}</div><div class="stat-lbl">Delivered</div><div class="stat-sub">🟢${s.delivered_veg} 🔴${s.delivered_non_veg}</div></div>
+          <div class="stat-box"><div class="stat-val" style="color:var(--amber)">${s.pending_total}</div><div class="stat-lbl">Pending</div><div class="stat-sub">🟢${s.pending_veg} 🔴${s.pending_non_veg}</div></div>
+          <div class="stat-box"><div class="stat-val" style="color:var(--red)">${s.skipped_total}</div><div class="stat-lbl">Skipped</div><div class="stat-sub">🟢${s.skipped_veg} 🔴${s.skipped_non_veg}</div></div>
         </div>
-        <div class="cust-table" id="cust-${mt}">
-            <table>
-                <thead><tr><th>#</th><th>Customer</th><th>Phone</th><th>Diet</th><th>Item</th><th>Address</th><th>Status</th></tr></thead>
-                <tbody>`;
-        s.customer_list.forEach((c, i) => {
-            const statusBadge = c.status === "delivered" ? "<span class='badge bg'>&#10003; Done</span>" :
-                c.status === "skipped" ? "<span class='badge bgr'>Skipped</span>" :
-                "<span class='badge ba'>Pending</span>";
-            const dietBadge = c.is_veg ? "&#128994;" : "&#128308;";
-            html += `<tr>
-                <td style="color:var(--muted);font-size:12px;">${i+1}</td>
-                <td><strong>${c.name}</strong></td>
-                <td>${c.phone || "?"}</td>
-                <td>${dietBadge} ${c.diet || "?"}</td>
-                <td style="font-size:12.5px;">${c.item}</td>
-                <td style="font-size:12px;color:var(--muted);max-width:180px;">${c.address || "?"}</td>
-                <td>${statusBadge}</td>
-            </tr>`;
-        });
-        html += `</tbody></table></div></div></div>`;
-    }
-
-    area.innerHTML = html;
+        ${s.skipped_total>0?`<div class="skip-bar">
+          <div class="bar-title" style="color:var(--red)"><i class="fas fa-ban"></i> Skipped — Do NOT prepare</div>
+          <div class="bar-nums">
+            <div class="bar-num"><div class="bar-n" style="color:var(--red)">${s.skipped_total}</div><div class="bar-l">Total</div></div>
+            <div class="bar-num"><div class="bar-n" style="color:#166534">${s.skipped_veg}</div><div class="bar-l">🟢 Veg</div></div>
+            <div class="bar-num"><div class="bar-n" style="color:#991b1b">${s.skipped_non_veg}</div><div class="bar-l">🔴 Non-Veg</div></div>
+          </div>
+        </div>`:""}
+        <div class="net-bar">
+          <div class="bar-title" style="color:var(--gd)"><i class="fas fa-check-circle"></i> Net to Prepare</div>
+          <div class="bar-nums">
+            <div class="bar-num"><div class="bar-n" style="color:var(--gd)">${s.net_to_prepare}</div><div class="bar-l">Total</div></div>
+            <div class="bar-num"><div class="bar-n" style="color:#166534">${s.net_veg}</div><div class="bar-l">🟢 Veg</div></div>
+            <div class="bar-num"><div class="bar-n" style="color:#991b1b">${s.net_non_veg}</div><div class="bar-l">🔴 Non-Veg</div></div>
+          </div>
+        </div>
+        <div class="cust-toggle" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('i').style.transform=this.nextElementSibling.classList.contains('open')?'rotate(90deg)':''">
+          <i class="fas fa-chevron-right" style="font-size:11px;transition:.2s"></i> Customer List (${s.customer_list.length})
+        </div>
+        <div class="cust-list">
+          <table><thead><tr><th>#</th><th>Customer</th><th>Phone</th><th>Item</th><th>Address</th><th>Status</th></tr></thead>
+          <tbody>${s.customer_list.map((c,i)=>`<tr>
+            <td style="color:var(--muted)">${i+1}</td>
+            <td><strong>${c.name}</strong></td><td>${c.phone||"—"}</td>
+            <td>${c.item}</td>
+            <td style="font-size:11.5px;color:var(--muted);max-width:160px">${c.address||"—"}</td>
+            <td>${c.status==="delivered"?'<span class="badge bg">Done</span>':c.status==="skipped"?'<span class="badge bgr">Skip</span>':'<span class="badge ba">Pending</span>'}</td>
+          </tr>`).join("")}</tbody></table>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
 }
 
-function toggleCustList(header, tableId) {
-    const table = document.getElementById(tableId);
-    const icon = header.querySelector("i");
-    table.classList.toggle("open");
-    icon.style.transform = table.classList.contains("open") ? "rotate(90deg)" : "rotate(0)";
+// ===== ASSIGN TAB =====
+async function loadBoard() {
+  const date = getDate();
+  const board = document.getElementById("assignBoard");
+  if (!kitchenId) { board.innerHTML = '<div class="empty"><i class="fas fa-store"></i><p>Select a kitchen</p></div>'; return; }
+  board.innerHTML = '<div class="loading"><span class="spinner"></span> Loading board...</div>';
+  try {
+    const r = await fetch(`${API}/kitchen/assign-board?date=${date}&kitchen_id=${kitchenId}`, {headers:{"Authorization":"Bearer "+token}});
+    boardData = await r.json();
+    if (boardData.error) { board.innerHTML = `<div class="empty"><i class="fas fa-exclamation-circle"></i><p>${boardData.error}</p></div>`; return; }
+    renderBoard(boardData);
+  } catch(e) { board.innerHTML = '<div class="empty"><i class="fas fa-wifi"></i><p>Connection error</p></div>'; }
+}
+
+function renderBoard(data) {
+  const board = document.getElementById("assignBoard");
+  let html = "";
+
+  // Unassigned column
+  const unCount = data.unassigned?.length || 0;
+  html += `<div class="db-column">
+    <div class="db-col-hd" style="background:var(--rl);">
+      <div class="db-col-hd-top">
+        <div class="db-avatar" style="background:var(--red)">!</div>
+        <div>
+          <div class="db-name" style="color:var(--red)">Unassigned</div>
+          <div class="db-meta">Drag to a delivery boy</div>
+        </div>
+        <span class="db-count">${unCount}</span>
+      </div>
+    </div>
+    <div class="db-col-body" id="col-unassigned" data-dbid=""
+      ondragover="onDragOver(event,this)" ondrop="onDrop(event,this)" ondragleave="onDragLeave(this)">
+      ${renderCards(data.unassigned||[])}
+    </div>
+  </div>`;
+
+  // One column per delivery boy
+  (data.delivery_boys||[]).forEach(db => {
+    const photo = db.photo_base64 ? `<img src="${db.photo_base64}">` : db.name.charAt(0).toUpperCase();
+    html += `<div class="db-column">
+      <div class="db-col-hd">
+        <div class="db-col-hd-top">
+          <div class="db-avatar">${photo}</div>
+          <div>
+            <div class="db-name">${db.name}</div>
+            <div class="db-meta">${db.vehicle_type||"bike"} &nbsp;·&nbsp; ${db.territory_name||"—"}</div>
+          </div>
+          <span class="db-count">${db.deliveries?.length||0}</span>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:6px;">
+          <span style="font-size:11px;color:var(--muted)">${db.phone||""}</span>
+          <button class="on-leave-btn" onclick="markOnLeave(${db.id},'${db.name}')">On Leave</button>
+        </div>
+      </div>
+      <div class="db-col-body" id="col-${db.id}" data-dbid="${db.id}"
+        ondragover="onDragOver(event,this)" ondrop="onDrop(event,this)" ondragleave="onDragLeave(this)">
+        ${renderCards(db.deliveries||[], db.id)}
+      </div>
+    </div>`;
+  });
+
+  board.innerHTML = html;
+}
+
+function renderCards(deliveries, dbId) {
+  if (!deliveries.length) return '<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px;">Drop customers here</div>';
+  return deliveries.map((d, i) => {
+    const diet = d.is_veg_customer ? "🟢" : "🔴";
+    const statusBadge = d.status==="delivered" ? '<span class="badge bg" style="font-size:10px">Done</span>' :
+      d.status==="skipped" ? '<span class="badge bgr" style="font-size:10px">Skip</span>' : "";
+    return `<div class="delivery-card" draggable="true" data-id="${d.id}" data-cust="${d.customer_name}"
+      ondragstart="onDragStart(event,this)" ondragend="onDragEnd(this)">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span class="dc-seq">${i+1}</span>
+        <span class="dc-name">${d.customer_name}</span>
+        ${statusBadge}
+      </div>
+      <div class="dc-item">${diet} ${d.meal_item_name||"—"}</div>
+      <div class="dc-addr"><i class="fas fa-map-marker-alt" style="font-size:10px;color:var(--muted)"></i> ${d.customer_address||"No address"}</div>
+      <div class="dc-badges">
+        ${d.customer_phone?`<span style="font-size:10px;color:var(--muted)">📞 ${d.customer_phone}</span>`:""}
+      </div>
+    </div>`;
+  }).join("");
+}
+
+// Drag and Drop
+let dragData = null;
+
+function onDragStart(e, el) {
+  dragData = { id: parseInt(el.dataset.id), fromCol: el.closest(".db-col-body").dataset.dbid };
+  el.classList.add("dragging");
+  e.dataTransfer.effectAllowed = "move";
+}
+function onDragEnd(el) { el.classList.remove("dragging"); }
+function onDragOver(e, col) { e.preventDefault(); col.classList.add("drag-over"); }
+function onDragLeave(col) { col.classList.remove("drag-over"); }
+
+function onDrop(e, col) {
+  e.preventDefault();
+  col.classList.remove("drag-over");
+  if (!dragData) return;
+  const newDbId = col.dataset.dbid || null;
+  const deliveryId = dragData.id;
+
+  // Update boardData in memory
+  const allDeliveries = [...(boardData.unassigned||[]), ...(boardData.delivery_boys||[]).flatMap(db=>db.deliveries||[])];
+  const delivery = allDeliveries.find(d=>d.id===deliveryId);
+  if (!delivery) return;
+
+  // Remove from old location
+  if (!dragData.fromCol) {
+    boardData.unassigned = (boardData.unassigned||[]).filter(d=>d.id!==deliveryId);
+  } else {
+    const oldDb = boardData.delivery_boys.find(db=>String(db.id)===String(dragData.fromCol));
+    if (oldDb) oldDb.deliveries = (oldDb.deliveries||[]).filter(d=>d.id!==deliveryId);
+  }
+
+  // Add to new location
+  delivery.delivery_boy_id = newDbId ? parseInt(newDbId) : null;
+  if (!newDbId) {
+    boardData.unassigned = [...(boardData.unassigned||[]), delivery];
+  } else {
+    const newDb = boardData.delivery_boys.find(db=>String(db.id)===String(newDbId));
+    if (newDb) { newDb.deliveries = [...(newDb.deliveries||[]), delivery]; }
+  }
+
+  renderBoard(boardData);
+  dragData = null;
+}
+
+async function saveAssignments() {
+  if (!boardData) return;
+  document.getElementById("assignSaving").style.display = "inline";
+  const assignments = [];
+  let seq = 1;
+  (boardData.unassigned||[]).forEach(d => assignments.push({delivery_id:d.id,delivery_boy_id:null,delivery_sequence:0}));
+  (boardData.delivery_boys||[]).forEach(db => {
+    seq = 1;
+    (db.deliveries||[]).forEach(d => { assignments.push({delivery_id:d.id,delivery_boy_id:db.id,delivery_sequence:seq++}); });
+  });
+  try {
+    await fetch(`${API}/kitchen/assign/reorder`, {method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},body:JSON.stringify({assignments})});
+    document.getElementById("assignSaving").style.display = "none";
+    alert("✅ Assignments saved!");
+  } catch(e) { document.getElementById("assignSaving").style.display = "none"; alert("Error saving"); }
+}
+
+async function autoAssign() {
+  const date = getDate();
+  if (!kitchenId) return;
+  try {
+    const r = await fetch(`${API}/kitchen/assign/auto`, {method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},body:JSON.stringify({date,kitchen_id:kitchenId})});
+    const d = await r.json();
+    alert(`✅ Auto-assigned ${d.count} deliveries from customer defaults`);
+    loadBoard();
+  } catch(e) { alert("Error auto-assigning"); }
+}
+
+async function markOnLeave(dbId, name) {
+  if (!confirm(`Mark ${name} as on leave today? Their deliveries will move to Unassigned.`)) return;
+  if (!boardData) return;
+  const db = boardData.delivery_boys.find(d=>d.id===dbId);
+  if (!db) return;
+  const toUnassign = [...(db.deliveries||[])];
+  db.deliveries = [];
+  boardData.unassigned = [...(boardData.unassigned||[]), ...toUnassign.map(d=>({...d,delivery_boy_id:null}))];
+  renderBoard(boardData);
+}
+
+// ===== TRACK TAB =====
+async function loadTrack() {
+  const date = getDate();
+  const grid = document.getElementById("trackGrid");
+  if (!kitchenId) { grid.innerHTML = '<div class="empty"><i class="fas fa-store"></i><p>Select a kitchen</p></div>'; return; }
+  try {
+    const r = await fetch(`${API}/kitchen/assign-board?date=${date}&kitchen_id=${kitchenId}`, {headers:{"Authorization":"Bearer "+token}});
+    const data = await r.json();
+    if (data.error) { grid.innerHTML = `<div class="empty"><p>${data.error}</p></div>`; return; }
+    renderTrack(data);
+  } catch(e) { grid.innerHTML = '<div class="empty"><p>Connection error</p></div>'; }
+}
+
+function renderTrack(data) {
+  const grid = document.getElementById("trackGrid");
+  if (!data.delivery_boys?.length) { grid.innerHTML = '<div class="empty"><i class="fas fa-route"></i><p>No delivery boys assigned</p></div>'; return; }
+
+  grid.innerHTML = data.delivery_boys.map(db => {
+    const deliveries = db.deliveries || [];
+    const done = deliveries.filter(d=>d.status==="delivered").length;
+    const total = deliveries.length;
+    const pct = total ? Math.round(done/total*100) : 0;
+    const photo = db.photo_base64 ? `<img src="${db.photo_base64}" style="width:34px;height:34px;border-radius:50%;object-fit:cover;">` : `<div class="db-avatar">${db.name.charAt(0)}</div>`;
+
+    return `<div class="track-card">
+      <div class="track-hd">
+        ${photo}
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:13.5px;">${db.name}</div>
+          <div style="font-size:11px;color:var(--muted)">${done}/${total} delivered &nbsp;·&nbsp; ${db.phone||""}</div>
+          <div class="track-progress"><div class="track-progress-bar" style="width:${pct}%"></div></div>
+        </div>
+        <span class="badge ${pct===100?"bg":"ba"}">${pct}%</span>
+      </div>
+      <div class="track-body">
+        ${deliveries.map((d,i) => {
+          const icon = d.status==="delivered"?"✅":d.status==="skipped"?"⏭️":"🔵";
+          const diet = d.is_veg_customer?"🟢":"🔴";
+          return `<div class="track-row">
+            <div class="track-seq">${i+1}</div>
+            <div class="track-cust">
+              <div class="track-name">${d.customer_name}</div>
+              <div class="track-item">${diet} ${d.meal_item_name||"—"} · ${d.customer_phone||""}</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+              <span>${icon}</span>
+              ${d.status==="pending"?`<button class="btn btn-g btn-sm" onclick="markDelivered(${d.id})">Done</button>`:""}
+            </div>
+          </div>`;
+        }).join("")}
+        ${!deliveries.length?'<div style="color:var(--muted);font-size:12px;padding:10px;text-align:center;">No deliveries assigned</div>':""}
+      </div>
+    </div>`;
+  }).join("");
+}
+
+async function markDelivered(id) {
+  try {
+    await fetch(`${API}/kitchen/delivery/${id}/deliver`, {method:"PUT",headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},body:JSON.stringify({})});
+    loadTrack();
+  } catch(e) { alert("Error"); }
 }
 </script>
 </body>

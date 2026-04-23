@@ -185,6 +185,7 @@ select[multiple].fc{height:120px;}
       <div class="sb-sec">Infrastructure</div>
       <button class="sb-item" onclick="showPage('territories',this)"><i class="fas fa-map-marker-alt"></i> Territories</button>
       <button class="sb-item" onclick="showPage('kitchens',this)"><i class="fas fa-store"></i> Kitchens</button>
+      <button class="sb-item" onclick="showPage('deliveryboys',this)"><i class="fas fa-motorcycle"></i> Delivery Boys</button>
     </nav>
     <div class="sb-footer">
       <div class="sb-user"><div class="sb-av" id="sbAv">S</div><div><div class="sb-uname" id="sbName">Admin</div><div class="sb-urole" id="sbRole">super_admin</div></div></div>
@@ -337,6 +338,16 @@ select[multiple].fc{height:120px;}
         </div>
         <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Customer</th><th>Meal</th><th>Item</th><th>Kitchen</th><th>Status</th><th></th></tr></thead>
         <tbody id="delBody"><tr><td colspan="7" class="loading"><span class="spinner"></span></td></tr></tbody></table></div></div>
+      <!-- DELIVERY BOYS -->
+      <div id="page-deliveryboys" class="page">
+        <div class="sec-hd"><span class="sec-title">Delivery Boys</span><button class="btn btn-g" onclick="openModal('dbModal')"><i class="fas fa-plus"></i> Add Delivery Boy</button></div>
+        <div class="alert as" id="dbOk"></div><div class="alert ae" id="dbErr"></div>
+        <div class="card"><div class="tbl-wrap"><table>
+          <thead><tr><th>Photo</th><th>Name</th><th>Phone</th><th>Kitchen</th><th>Territory</th><th>Vehicle</th><th>Customers</th><th></th></tr></thead>
+          <tbody id="dbBody"><tr><td colspan="8" class="loading"><span class="spinner"></span></td></tr></tbody>
+        </table></div></div>
+      </div>
+
       </div>
     </div>
   </div>
@@ -571,7 +582,7 @@ function showPage(name,btn){
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));document.getElementById("page-"+name)?.classList.add("active");
   document.querySelectorAll(".sb-item").forEach(b=>b.classList.remove("active"));btn?.classList.add("active");
   const m=pageMeta[name]||[name,""];document.getElementById("pgTitle").textContent=m[0];document.getElementById("pgSub").textContent=m[1];
-  if(name==="orders")loadOrders();if(name==="deliveries")loadDeliveries();if(name==="planmenu"){initCatPicker();loadSavedMenus();}
+  if(name==="orders")loadOrders();if(name==="deliveries")loadDeliveries();if(name==="planmenu"){initCatPicker();loadSavedMenus();}if(name==="deliveryboys")loadDeliveryBoys();
   if(name==="plans")loadSavedMenusForPlan();
 }
 function openModal(id){document.getElementById(id).classList.add("show");}
@@ -607,7 +618,7 @@ function statusBadge(s){const m={active:"<span class='badge bg'>Active</span>",c
 function delBadge(s){const m={delivered:"<span class='badge bg'>Delivered</span>",pending:"<span class='badge ba'>Pending</span>",skipped:"<span class='badge bgr'>Skipped</span>"};return m[s]||`<span class="badge bgr">${s}</span>`;}
 function fmtDate(v){if(!v)return"";return String(v).split("T")[0];}
 function dietLabel(s){const m={pure_veg:"Pure Veg",eggetarian:"Eggetarian",vegan:"Vegan",non_veg:"Non-Veg",mixed:"Mixed"};return m[s]||s||"?";}
-async function loadAll(){await Promise.all([loadStats(),loadCategories(),loadMeals(),loadTerritories(),loadKitchens(),loadPlans(),loadCustomers()]);}
+async function loadAll(){await Promise.all([loadStats(),loadCategories(),loadMeals(),loadTerritories(),loadKitchens(),loadPlans(),loadCustomers(),loadDeliveryBoys()]);}
 async function loadStats(){
   try{
     const d=await api(`${API}/admin/stats`);
@@ -701,7 +712,7 @@ async function loadSavedMenusForPlan(){
 async function loadTerritories(){
   try{
     const data=await api(`${API}/admin/territories`);territories=data||[];
-    ["kTerritory","cTerritory"].forEach(id=>{const el=document.getElementById(id);if(!el)return;el.innerHTML="<option value=''>Select Territory</option>";territories.forEach(t=>{const o=document.createElement("option");o.value=t.id;o.text=t.name;el.appendChild(o);});});
+    ["kTerritory","cTerritory","dbTerritory"].forEach(id=>{const el=document.getElementById(id);if(!el)return;el.innerHTML="<option value=''>Select Territory</option>";territories.forEach(t=>{const o=document.createElement("option");o.value=t.id;o.text=t.name;el.appendChild(o);});});
     const body=document.getElementById("terrBody");
     if(!territories.length){body.innerHTML="<tr><td colspan='2'><div class='empty'><i class='fas fa-map-marker-alt'></i><p>No territories</p></div></td></tr>";return;}
     body.innerHTML=territories.map(t=>`<tr><td><strong>${t.name}</strong></td><td>${t.description||"?"}</td></tr>`).join("");
@@ -1001,5 +1012,52 @@ function updateDeliveryCalc() {
 // ===== END NEW PLAN MENU FUNCTIONS =====
 
 </script>
+<!-- DELIVERY BOY MODAL -->
+<div class="modal-bg" id="dbModal"><div class="modal-box wide">
+  <div class="modal-hd"><span class="modal-title">Add Delivery Boy</span><button class="modal-close" onclick="closeModal('dbModal')">&times;</button></div>
+  <div class="modal-body">
+    <div class="frow">
+      <div class="fg"><label class="fl">Name *</label><input type="text" class="fc" id="dbName" placeholder="Full name"></div>
+      <div class="fg"><label class="fl">Phone</label><input type="text" class="fc" id="dbPhone" placeholder="Mobile number"></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label class="fl">Kitchen *</label><select class="fc" id="dbKitchen"><option value="">Select Kitchen</option></select></div>
+      <div class="fg"><label class="fl">Territory</label><select class="fc" id="dbTerritory"><option value="">Select Territory</option></select></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label class="fl">Vehicle Type</label>
+        <select class="fc" id="dbVehicle">
+          <option value="bike">🏍️ Bike / Motorcycle</option>
+          <option value="cycle">🚴 Cycle</option>
+          <option value="auto">🛺 Auto</option>
+          <option value="walk">🚶 Walking</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Email (for login)</label><input type="email" class="fc" id="dbEmail" placeholder="delivery@example.com"></div>
+    </div>
+    <div class="sdiv">Login Credentials</div>
+    <div style="background:var(--gl);border-radius:8px;padding:12px 14px;margin-bottom:14px;">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;">
+        <input type="checkbox" id="dbCreateLogin" style="accent-color:var(--g);width:16px;height:16px;" onchange="document.getElementById('dbPwdRow').style.display=this.checked?'block':'none'">
+        Create login account for this delivery boy
+      </label>
+    </div>
+    <div id="dbPwdRow" style="display:none;">
+      <div class="fg"><label class="fl">Password *</label><input type="password" class="fc" id="dbPassword" placeholder="Set a password"></div>
+    </div>
+    <div class="sdiv">Profile Photo</div>
+    <div class="fg">
+      <div class="img-zone" onclick="document.getElementById('dbPhotoFile').click()">
+        <input type="file" id="dbPhotoFile" accept="image/*" style="display:none;" onchange="handleDbPhoto(this)">
+        <i class="fas fa-user-circle" style="font-size:26px;color:var(--muted);"></i>
+        <div style="font-size:13px;color:var(--muted);margin-top:6px;">Click to upload photo</div>
+        <img id="dbPhotoPreview" class="img-preview" alt="Preview">
+      </div>
+    </div>
+    <input type="hidden" id="dbPhotoB64">
+    <button class="btn btn-g" style="width:100%;justify-content:center;" onclick="addDeliveryBoy()">Create Delivery Boy</button>
+  </div>
+</div></div>
+
 </body>
 </html>

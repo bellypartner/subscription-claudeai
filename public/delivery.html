@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Salad Caffe — Delivery</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--g:#2ecc71;--gd:#27ae60;--gl:#eafaf1;--dk:#111827;--mid:#374151;--muted:#6b7280;--border:#e5e7eb;--bg:#f9fafb;--red:#ef4444;--rl:#fef2f2;--amber:#f59e0b;--al:#fffbeb;--blue:#3b82f6;--bl:#eff6ff;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--dk);font-size:14px;max-width:480px;margin:0 auto;}
+
+#loginPage{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#064e3b,#065f46,#047857);padding:20px;}
+.lcard{background:white;padding:40px 32px;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.3);width:100%;}
+.lbrand{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.lbrand-ico{width:44px;height:44px;background:var(--g);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;}
+.lbrand h1{font-size:20px;font-weight:700;}
+.lsub{color:var(--muted);font-size:13px;margin-bottom:24px;}
+.li{width:100%;padding:12px 13px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;font-family:"DM Sans",sans-serif;margin-bottom:12px;}
+.li:focus{outline:none;border-color:var(--g);}
+.lbtn{width:100%;padding:14px;background:var(--g);color:white;border:none;border-radius:10px;font-size:16px;font-weight:700;font-family:"DM Sans",sans-serif;cursor:pointer;}
+.lbtn:hover{background:var(--gd);}
+.lerr{background:var(--rl);color:var(--red);padding:10px 13px;border-radius:8px;margin-bottom:14px;font-size:13px;display:none;}
+
+#app{display:none;min-height:100vh;flex-direction:column;background:var(--bg);}
+#app.show{display:flex;}
+
+/* TOP BAR */
+.topbar{background:var(--gd);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.tb-left{display:flex;align-items:center;gap:10px;}
+.tb-avatar{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.2);color:white;font-weight:700;font-size:16px;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.tb-avatar img{width:100%;height:100%;object-fit:cover;}
+.tb-name{color:white;font-weight:700;font-size:15px;}
+.tb-role{color:rgba(255,255,255,.7);font-size:11px;}
+.tb-logout{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);border-radius:8px;color:white;padding:6px 12px;cursor:pointer;font-size:12px;font-family:"DM Sans",sans-serif;}
+
+/* PROGRESS BANNER */
+.progress-banner{background:var(--g);padding:16px 18px;display:flex;align-items:center;justify-content:space-between;}
+.pb-stats{color:white;}
+.pb-num{font-size:28px;font-weight:800;line-height:1;}
+.pb-lbl{font-size:12px;opacity:.85;}
+.pb-bar-wrap{flex:1;margin:0 16px;}
+.pb-bar{height:8px;background:rgba(255,255,255,.3);border-radius:4px;}
+.pb-bar-fill{height:8px;background:white;border-radius:4px;transition:width .4s;}
+.pb-pct{color:white;font-size:20px;font-weight:800;}
+
+/* CONTENT */
+.content{padding:16px;flex:1;}
+.date-label{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
+
+/* DELIVERY CARD */
+.del-card{background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.07);}
+.del-card.done{opacity:.6;}
+.del-card.skipped{opacity:.5;background:var(--bg);}
+.del-hd{padding:14px 15px;display:flex;align-items:flex-start;gap:12px;}
+.del-seq{width:28px;height:28px;border-radius:50%;background:var(--bl);color:var(--blue);font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.del-seq.done{background:var(--gl);color:var(--gd);}
+.del-seq.skipped{background:#f3f4f6;color:var(--muted);}
+.del-info{flex:1;min-width:0;}
+.del-name{font-size:15px;font-weight:700;margin-bottom:3px;}
+.del-item{font-size:13px;color:var(--mid);margin-bottom:4px;display:flex;align-items:center;gap:6px;}
+.del-item-img{width:32px;height:32px;border-radius:7px;object-fit:cover;}
+.del-addr{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:4px;}
+.del-phone{font-size:12px;color:var(--blue);display:flex;align-items:center;gap:4px;margin-top:4px;}
+.del-actions{padding:10px 15px 14px 55px;display:flex;gap:8px;}
+.btn-deliver{flex:1;padding:11px;background:var(--g);color:white;border:none;border-radius:10px;font-size:14px;font-weight:700;font-family:"DM Sans",sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}
+.btn-deliver:hover{background:var(--gd);}
+.btn-skip{padding:11px 14px;background:var(--bg);color:var(--muted);border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-weight:600;font-family:"DM Sans",sans-serif;cursor:pointer;}
+.btn-skip:hover{border-color:var(--red);color:var(--red);}
+.status-tag{padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700;text-align:center;}
+.status-done{background:var(--gl);color:var(--gd);}
+.status-skip{background:#f3f4f6;color:var(--muted);}
+.diet-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.diet-veg{background:var(--g);}
+.diet-nonveg{background:var(--red);}
+
+.empty{text-align:center;padding:48px 20px;color:var(--muted);}
+.empty i{font-size:40px;margin-bottom:14px;display:block;opacity:.25;}
+.spinner{display:inline-block;width:20px;height:20px;border:2.5px solid var(--border);border-top-color:var(--g);border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle;}
+@keyframes sp{to{transform:rotate(360deg);}}
+.loading{text-align:center;padding:40px;color:var(--muted);}
+
+/* ALL DONE SCREEN */
+.all-done{text-align:center;padding:48px 20px;background:white;border-radius:16px;margin-top:20px;border:1px solid var(--border);}
+.all-done-icon{font-size:56px;margin-bottom:16px;}
+.all-done h2{font-size:22px;font-weight:800;color:var(--gd);margin-bottom:8px;}
+.all-done p{color:var(--muted);font-size:14px;}
+</style>
+</head>
+<body>
+
+<div id="loginPage">
+  <div class="lcard">
+    <div class="lbrand"><div class="lbrand-ico">🚴</div><h1>Delivery Portal</h1></div>
+    <p class="lsub">Salad Caffe — Your deliveries for today</p>
+    <div class="lerr" id="loginErr"></div>
+    <input type="email" class="li" id="lEmail" placeholder="Email" autocomplete="email">
+    <input type="password" class="li" id="lPass" placeholder="Password" autocomplete="current-password">
+    <button class="lbtn" onclick="doLogin()">Sign In</button>
+  </div>
+</div>
+
+<div id="app">
+  <div class="topbar">
+    <div class="tb-left">
+      <div class="tb-avatar" id="tbAvatar">D</div>
+      <div>
+        <div class="tb-name" id="tbName">Delivery Boy</div>
+        <div class="tb-role" id="tbRole">🏍️ — Kitchen</div>
+      </div>
+    </div>
+    <button class="tb-logout" onclick="doLogout()">Sign Out</button>
+  </div>
+
+  <div class="progress-banner" id="progressBanner">
+    <div class="pb-stats">
+      <div class="pb-num" id="pbDone">0</div>
+      <div class="pb-lbl">Delivered</div>
+    </div>
+    <div class="pb-bar-wrap">
+      <div class="pb-bar"><div class="pb-bar-fill" id="pbFill" style="width:0%"></div></div>
+      <div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:4px;text-align:center;" id="pbLabel">Loading...</div>
+    </div>
+    <div class="pb-pct" id="pbPct">0%</div>
+  </div>
+
+  <div class="content">
+    <div class="date-label">
+      <span id="dateLabel">Today's Deliveries</span>
+      <button style="background:none;border:none;color:var(--g);font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;" onclick="loadDeliveries()"><i class="fas fa-sync"></i> Refresh</button>
+    </div>
+    <div id="deliveryList"><div class="loading"><span class="spinner"></span> Loading your deliveries...</div></div>
+  </div>
+</div>
+
+<script>
+const API = "/api";
+let token = null, deliveries = [];
+
+window.addEventListener("load", () => {
+  const t = sessionStorage.getItem("dbToken");
+  if (t) { token = t; showApp(); }
+});
+
+async function doLogin() {
+  const email = document.getElementById("lEmail").value;
+  const pwd = document.getElementById("lPass").value;
+  const err = document.getElementById("loginErr");
+  err.style.display = "none";
+  if (!email||!pwd) { err.textContent="Fill all fields"; err.style.display="block"; return; }
+  try {
+    const r = await fetch(`${API}/auth/login`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,password:pwd})});
+    const d = await r.json();
+    if (d.error) { err.textContent=d.error; err.style.display="block"; return; }
+    if (!["delivery_boy","kitchen_manager","super_admin"].includes(d.user.authority)) {
+      err.textContent="Delivery staff access only"; err.style.display="block"; return;
+    }
+    token = d.token;
+    sessionStorage.setItem("dbToken", token);
+    showApp();
+  } catch(e) { err.textContent="Connection error"; err.style.display="block"; }
+}
+
+function doLogout() { sessionStorage.removeItem("dbToken"); location.reload(); }
+
+async function showApp() {
+  document.getElementById("loginPage").style.display = "none";
+  document.getElementById("app").classList.add("show");
+  // Load profile
+  try {
+    const r = await fetch(`${API}/delivery/profile`, {headers:{"Authorization":"Bearer "+token}});
+    const p = await r.json();
+    if (p && !p.error) {
+      const av = document.getElementById("tbAvatar");
+      if (p.photo_base64) { av.innerHTML=`<img src="${p.photo_base64}">`; }
+      else { av.textContent = p.name.charAt(0).toUpperCase(); }
+      document.getElementById("tbName").textContent = p.name;
+      document.getElementById("tbRole").textContent = `${vehicleIcon(p.vehicle_type)} — ${p.kitchen_name||"Kitchen"}`;
+    }
+  } catch(e) {}
+  loadDeliveries();
+  setInterval(loadDeliveries, 120000); // refresh every 2 mins
+}
+
+function vehicleIcon(v) {
+  if (v==="bike"||v==="motorcycle") return "🏍️";
+  if (v==="cycle") return "🚴";
+  if (v==="auto") return "🛺";
+  return "🚶";
+}
+
+async function loadDeliveries() {
+  const today = new Date().toISOString().split("T")[0];
+  document.getElementById("dateLabel").textContent = "Today — " + new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"});
+  try {
+    const r = await fetch(`${API}/delivery/today`, {headers:{"Authorization":"Bearer "+token}});
+    const d = await r.json();
+    if (d.error) { document.getElementById("deliveryList").innerHTML=`<div class="empty"><i class="fas fa-exclamation-circle"></i><p>${d.error}</p></div>`; return; }
+    deliveries = d.deliveries || [];
+    updateProgress(d.stats);
+    renderList(deliveries);
+  } catch(e) {
+    document.getElementById("deliveryList").innerHTML='<div class="empty"><i class="fas fa-wifi"></i><p>Connection error</p></div>';
+  }
+}
+
+function updateProgress(stats) {
+  const total = stats?.total || 0;
+  const done = stats?.delivered || 0;
+  const pct = total ? Math.round(done/total*100) : 0;
+  document.getElementById("pbDone").textContent = done;
+  document.getElementById("pbFill").style.width = pct+"%";
+  document.getElementById("pbPct").textContent = pct+"%";
+  document.getElementById("pbLabel").textContent = `${done} of ${total} delivered · ${stats?.pending||0} pending · ${stats?.skipped||0} skipped`;
+}
+
+function renderList(deliveries) {
+  const list = document.getElementById("deliveryList");
+  if (!deliveries.length) {
+    list.innerHTML = '<div class="empty"><i class="fas fa-box-open"></i><p style="font-size:16px;font-weight:700;">No deliveries assigned today</p><p>Check with your kitchen manager</p></div>';
+    return;
+  }
+  const allDone = deliveries.every(d=>d.status!=="pending");
+  let html = deliveries.map((d, i) => {
+    const isDone = d.status==="delivered";
+    const isSkip = d.status==="skipped";
+    const diet = d.is_veg_customer;
+    const dietColor = diet?"var(--g)":"var(--red)";
+    const dietLabel = diet?"Veg":"Non-Veg";
+    const seqClass = isDone?"done":isSkip?"skipped":"";
+    const img = d.item_image ? `<img src="${d.item_image}" class="del-item-img">` : "";
+
+    return `<div class="del-card${isDone?" done":isSkip?" skipped":""}" id="card-${d.id}">
+      <div class="del-hd">
+        <div class="del-seq ${seqClass}">${isDone?"✓":isSkip?"—":i+1}</div>
+        <div class="del-info">
+          <div class="del-name">${d.customer_name}</div>
+          <div class="del-item">
+            ${img}
+            <span class="diet-dot ${diet?"diet-veg":"diet-nonveg"}"></span>
+            ${d.meal_item_name||"Not assigned"}
+            ${d.calories?`<span style="color:var(--muted);font-size:11px">${d.calories}kcal</span>`:""}
+          </div>
+          ${d.customer_address?`<div class="del-addr"><i class="fas fa-map-marker-alt" style="font-size:10px"></i>${d.customer_address}</div>`:""}
+          ${d.customer_phone?`<a class="del-phone" href="tel:${d.customer_phone}"><i class="fas fa-phone" style="font-size:10px"></i>${d.customer_phone}</a>`:""}
+        </div>
+        ${isDone?`<div class="status-tag status-done">✓ Done</div>`:""}
+        ${isSkip?`<div class="status-tag status-skip">Skipped</div>`:""}
+      </div>
+      ${!isDone&&!isSkip?`<div class="del-actions">
+        <button class="btn-deliver" onclick="markStatus(${d.id},'delivered')"><i class="fas fa-check"></i> Mark Delivered</button>
+        <button class="btn-skip" onclick="markStatus(${d.id},'skipped')"><i class="fas fa-times"></i></button>
+      </div>`:""}
+    </div>`;
+  }).join("");
+
+  if (allDone && deliveries.length > 0) {
+    html += `<div class="all-done">
+      <div class="all-done-icon">🎉</div>
+      <h2>All deliveries complete!</h2>
+      <p>Great work today. All ${deliveries.length} deliveries are done.</p>
+    </div>`;
+  }
+  list.innerHTML = html;
+}
+
+async function markStatus(id, status) {
+  const btn = document.querySelector(`#card-${id} .btn-deliver`);
+  if (btn) { btn.disabled=true; btn.innerHTML='<span class="spinner"></span>'; }
+  try {
+    const r = await fetch(`${API}/delivery/mark/${id}`, {
+      method:"PUT",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},
+      body: JSON.stringify({status})
+    });
+    const d = await r.json();
+    if (d.error) { alert(d.error); if(btn){btn.disabled=false;btn.innerHTML='<i class="fas fa-check"></i> Mark Delivered';} return; }
+    // Update local state
+    const del = deliveries.find(d=>d.id===id);
+    if (del) del.status = status;
+    const done = deliveries.filter(d=>d.status==="delivered").length;
+    const total = deliveries.length;
+    const skip = deliveries.filter(d=>d.status==="skipped").length;
+    const pending = deliveries.filter(d=>d.status==="pending").length;
+    updateProgress({total,delivered:done,pending,skipped:skip});
+    renderList(deliveries);
+  } catch(e) { alert("Connection error"); if(btn){btn.disabled=false;btn.innerHTML='<i class="fas fa-check"></i> Mark Delivered';} }
+}
+</script>
+</body>
+</html>
