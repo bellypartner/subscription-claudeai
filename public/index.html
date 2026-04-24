@@ -338,6 +338,8 @@ select[multiple].fc{height:120px;}
         </div>
         <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Customer</th><th>Meal</th><th>Item</th><th>Kitchen</th><th>Status</th><th></th></tr></thead>
         <tbody id="delBody"><tr><td colspan="7" class="loading"><span class="spinner"></span></td></tr></tbody></table></div></div>
+      </div>
+
       <!-- DELIVERY BOYS -->
       <div id="page-deliveryboys" class="page">
         <div class="sec-hd"><span class="sec-title">Delivery Boys</span><button class="btn btn-g" onclick="openModal('dbModal')"><i class="fas fa-plus"></i> Add Delivery Boy</button></div>
@@ -348,7 +350,6 @@ select[multiple].fc{height:120px;}
         </table></div></div>
       </div>
 
-      </div>
     </div>
   </div>
 </div>
@@ -595,7 +596,7 @@ function openMealModal(){
   document.getElementById("mImgPreview").style.display="none";document.getElementById("mImgB64").value="";
   openModal("mealModal");
 }
-document.querySelectorAll(".modal-bg").forEach(el=>el.addEventListener("click",e=>{if(e.target===el)el.classList.remove("show");}));
+document.addEventListener("click", e => { if(e.target.classList.contains("modal-bg")) e.target.classList.remove("show"); });
 document.querySelectorAll(".achip").forEach(c=>c.addEventListener("click",()=>c.classList.toggle("on")));
 // Single delegated click handler for ALL dchip elements (works for hidden modal chips too)
 document.addEventListener("click", function(e){
@@ -1011,8 +1012,80 @@ function updateDeliveryCalc() {
 }
 // ===== END NEW PLAN MENU FUNCTIONS =====
 
+// ===== DELIVERY BOYS =====
+async function loadDeliveryBoys() {
+  try {
+    const data = await api(`${API}/admin/delivery-boys`);
+    const body = document.getElementById("dbBody");
+    if (!data?.length) {
+      body.innerHTML = "<tr><td colspan='8'><div class='empty'><i class='fas fa-motorcycle'></i><p>No delivery boys yet. Click Add Delivery Boy to get started.</p></div></td></tr>";
+      return;
+    }
+    body.innerHTML = data.map(d => {
+      const photo = d.photo_base64
+        ? `<img src="${d.photo_base64}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;">`
+        : `<div style="width:38px;height:38px;border-radius:50%;background:var(--amber);color:white;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;">${d.name.charAt(0).toUpperCase()}</div>`;
+      const vIcon = {bike:"🏍️",cycle:"🚴",auto:"🛺",walk:"🚶"}[d.vehicle_type]||"🏍️";
+      return `<tr>
+        <td>${photo}</td>
+        <td><strong>${d.name}</strong>${d.login_email?`<div style="font-size:11px;color:var(--muted)">${d.login_email}</div>`:""}</td>
+        <td>${d.phone||"—"}</td>
+        <td>${d.kitchen_name||"—"}</td>
+        <td>${d.territory_name||"—"}</td>
+        <td>${vIcon} ${d.vehicle_type||"bike"}</td>
+        <td><span class="badge bb">${d.customer_count||0}</span></td>
+        <td><button class="btn btn-r btn-sm" onclick="deleteDeliveryBoy(${d.id})"><i class="fas fa-trash"></i></button></td>
+      </tr>`;
+    }).join("");
+  } catch(e) { showErr2("dbErr","Error loading — check server"); }
+}
+
+function handleDbPhoto(input) {
+  const file = input.files[0]; if (!file) return;
+  if (file.size > 2*1024*1024) { alert("Max 2MB"); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById("dbPhotoB64").value = e.target.result;
+    const p = document.getElementById("dbPhotoPreview");
+    p.src = e.target.result; p.style.display = "block";
+  };
+  reader.readAsDataURL(file);
+}
+
+async function addDeliveryBoy() {
+  const name = document.getElementById("dbName").value.trim();
+  const kitchen_id = document.getElementById("dbKitchen").value;
+  if (!name || !kitchen_id) { showErr2("dbErr","Name and kitchen required"); return; }
+  const create_login = document.getElementById("dbCreateLogin").checked;
+  const email = document.getElementById("dbEmail").value.trim();
+  const password = document.getElementById("dbPassword").value;
+  if (create_login && (!email || !password)) { showErr2("dbErr","Email and password required for login"); return; }
+  const body = {
+    name, phone: document.getElementById("dbPhone").value,
+    kitchen_id, territory_id: document.getElementById("dbTerritory").value||null,
+    vehicle_type: document.getElementById("dbVehicle").value,
+    email: email||null, photo_base64: document.getElementById("dbPhotoB64").value||null,
+    create_login, password: password||null
+  };
+  const d = await api(`${API}/admin/delivery-boys`,{method:"POST",body:JSON.stringify(body)});
+  if (d.error) { showErr2("dbErr",d.error); return; }
+  showOk("dbOk","✅ Delivery boy created!");
+  closeModal("dbModal");
+  ["dbName","dbPhone","dbEmail","dbPassword","dbPhotoB64"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
+  document.getElementById("dbCreateLogin").checked=false;
+  document.getElementById("dbPwdRow").style.display="none";
+  document.getElementById("dbPhotoPreview").style.display="none";
+  await loadDeliveryBoys();
+}
+
+async function deleteDeliveryBoy(id) {
+  if (!confirm("Remove this delivery boy?")) return;
+  await api(`${API}/admin/delivery-boys/${id}`,{method:"DELETE"});
+  await loadDeliveryBoys();
+}
+// ===== END DELIVERY BOYS =====
+
 </script>
-<!-- DELIVERY BOY MODAL -->
 <div class="modal-bg" id="dbModal"><div class="modal-box wide">
   <div class="modal-hd"><span class="modal-title">Add Delivery Boy</span><button class="modal-close" onclick="closeModal('dbModal')">&times;</button></div>
   <div class="modal-body">
@@ -1058,6 +1131,7 @@ function updateDeliveryCalc() {
     <button class="btn btn-g" style="width:100%;justify-content:center;" onclick="addDeliveryBoy()">Create Delivery Boy</button>
   </div>
 </div></div>
+
 
 </body>
 </html>
