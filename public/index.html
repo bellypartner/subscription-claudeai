@@ -503,18 +503,42 @@ select[multiple].fc{height:120px;}
   </div>
 </div></div>
 
-<div class="modal-bg" id="custModal"><div class="modal-box">
+<div class="modal-bg" id="custModal"><div class="modal-box wide">
   <div class="modal-hd"><span class="modal-title">Add Customer</span><button class="modal-close" onclick="closeModal('custModal')">&times;</button></div>
   <div class="modal-body">
+    <div class="sdiv">Required</div>
     <div class="frow">
-      <div class="fg"><label class="fl">Name *</label><input type="text" class="fc" id="cName"></div>
-      <div class="fg"><label class="fl">Email *</label><input type="email" class="fc" id="cEmail"></div>
+      <div class="fg"><label class="fl">Name *</label><input type="text" class="fc" id="cName" placeholder="Full name"></div>
+      <div class="fg"><label class="fl">Phone Number *</label><input type="text" class="fc" id="cPhone" placeholder="10-digit mobile"></div>
     </div>
+    <div style="background:var(--gl);border-radius:8px;padding:10px 13px;font-size:12.5px;color:var(--gd);margin-bottom:14px;"><i class="fas fa-info-circle"></i> Customer login password = their phone number (they can change it later)</div>
+    <div class="sdiv">Optional</div>
     <div class="frow">
-      <div class="fg"><label class="fl">Phone</label><input type="text" class="fc" id="cPhone"></div>
+      <div class="fg"><label class="fl">Alternate Phone</label><input type="text" class="fc" id="cAltPhone" placeholder=""></div>
+      <div class="fg"><label class="fl">Email</label><input type="email" class="fc" id="cEmail" placeholder=""></div>
+    </div>
+    <div class="fg"><label class="fl">Address</label><input type="text" class="fc" id="cAddr" placeholder="Flat / Building / Street"></div>
+    <div class="frow">
+      <div class="fg"><label class="fl">City</label>
+        <select class="fc" id="cCity">
+          <option value="">Select City</option>
+          <option>Kozhikode</option><option>Malappuram</option><option>Thrissur</option>
+          <option>Kochi</option><option>Thiruvananthapuram</option><option>Kannur</option>
+          <option>Palakkad</option><option>Kollam</option>
+        </select>
+      </div>
       <div class="fg"><label class="fl">Territory</label><select class="fc" id="cTerritory"><option value="">Select</option></select></div>
     </div>
-    <div class="fg"><label class="fl">Address</label><input type="text" class="fc" id="cAddr"></div>
+    <div class="fg"><label class="fl">Diet Preference</label>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:5px;" id="cDietChips">
+        <div class="dchip sel" data-diet="non_veg">🔴 Non-Veg</div>
+        <div class="dchip" data-diet="pure_veg">🟢 Pure Veg</div>
+        <div class="dchip" data-diet="eggetarian">🥚 Eggetarian</div>
+        <div class="dchip" data-diet="vegan">🌿 Vegan</div>
+      </div>
+      <input type="hidden" id="cDiet" value="non_veg">
+    </div>
+    <div class="fg"><label class="fl">Delivery Instructions</label><input type="text" class="fc" id="cInstructions" placeholder="e.g. Leave at door, call on arrival"></div>
     <button class="btn btn-g" style="width:100%;justify-content:center;" onclick="addCustomer()">Create Customer</button>
   </div>
 </div></div>
@@ -586,7 +610,22 @@ function showPage(name,btn){
   if(name==="orders")loadOrders();if(name==="deliveries")loadDeliveries();if(name==="planmenu"){initCatPicker();loadSavedMenus();}if(name==="deliveryboys")loadDeliveryBoys();
   if(name==="plans")loadSavedMenusForPlan();
 }
-function openModal(id){document.getElementById(id).classList.add("show");}
+function openModal(id){
+  document.getElementById(id).classList.add("show");
+  // Refresh DB kitchen dropdown when opening delivery boy modal
+  if(id==="dbModal") {
+    const sel=document.getElementById("dbKitchen");
+    if(sel&&kitchens.length) {
+      sel.innerHTML="<option value=''>Select Kitchen</option>";
+      kitchens.forEach(k=>{const o=document.createElement("option");o.value=k.id;o.text=k.name;sel.appendChild(o);});
+    }
+    const tsel=document.getElementById("dbTerritory");
+    if(tsel&&territories.length) {
+      tsel.innerHTML="<option value=''>Select Territory</option>";
+      territories.forEach(t=>{const o=document.createElement("option");o.value=t.id;o.text=t.name;tsel.appendChild(o);});
+    }
+  }
+}
 function closeModal(id){document.getElementById(id).classList.remove("show");}
 function openMealModal(){
   ["mName","mPrice","mCalories","mProteins","mCarbs","mFiber","mSugar","mVitamins","mIngredients"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
@@ -602,8 +641,15 @@ document.querySelectorAll(".achip").forEach(c=>c.addEventListener("click",()=>c.
 document.addEventListener("click", function(e){
   const chip = e.target.closest(".dchip");
   if(!chip || chip.classList.contains("no")) return;
+  if(chip.closest("#pDayChips")) { chip.classList.toggle("sel"); updateDeliveryCalc(); return; }
+  // Customer diet chips — single select
+  if(chip.closest("#cDietChips")) {
+    chip.closest("#cDietChips").querySelectorAll(".dchip").forEach(c=>c.classList.remove("sel"));
+    chip.classList.add("sel");
+    document.getElementById("cDiet").value = chip.dataset.diet||"non_veg";
+    return;
+  }
   chip.classList.toggle("sel");
-  if(chip.closest("#pDayChips")) updateDeliveryCalc();
 });
 
 function toggleDiet(el){
@@ -777,11 +823,27 @@ async function loadCustomers(){
   }catch(e){showErr2("custErr","Error loading");}
 }
 async function addCustomer(){
-  const name=document.getElementById("cName").value.trim(),email=document.getElementById("cEmail").value.trim();
-  if(!name||!email){showErr2("custErr","Name and email required");return;}
-  const d=await api(`${API}/admin/customers`,{method:"POST",body:JSON.stringify({name,email,phone:document.getElementById("cPhone").value,address:document.getElementById("cAddr").value,territory_id:document.getElementById("cTerritory").value||null})});
+  const name=document.getElementById("cName").value.trim();
+  const phone=document.getElementById("cPhone").value.trim();
+  if(!name||!phone){showErr2("custErr","Name and phone are required");return;}
+  const d=await api(`${API}/admin/customers`,{method:"POST",body:JSON.stringify({
+    name,phone,
+    alternate_phone:document.getElementById("cAltPhone").value||null,
+    email:document.getElementById("cEmail").value||null,
+    address:document.getElementById("cAddr").value||null,
+    city:document.getElementById("cCity").value||null,
+    territory_id:document.getElementById("cTerritory").value||null,
+    diet_preference:document.getElementById("cDiet").value||"non_veg",
+    delivery_instructions:document.getElementById("cInstructions").value||null,
+  })});
   if(d.error){showErr2("custErr",d.error);return;}
-  showOk("custOk","Customer created!");closeModal("custModal");await loadCustomers();await loadStats();
+  showOk("custOk",`✅ Customer created! Login: ${phone} / ${phone}`);
+  closeModal("custModal");
+  ["cName","cPhone","cAltPhone","cEmail","cAddr","cInstructions"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
+  document.getElementById("cCity").value="";document.getElementById("cTerritory").value="";
+  document.getElementById("cDiet").value="non_veg";
+  document.querySelectorAll("#cDietChips .dchip").forEach((c,i)=>c.classList.toggle("sel",i===0));
+  await loadCustomers();await loadStats();
 }
 async function deleteCust(id){if(!confirm("Delete?"))return;await api(`${API}/admin/customers/${id}`,{method:"DELETE"});await loadCustomers();}
 async function loadOrders(){

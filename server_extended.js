@@ -864,11 +864,21 @@ app.get('/api/admin/customers', verifyToken, async (req, res) => {
 });
 app.post('/api/admin/customers', verifyToken, async (req, res) => {
     try {
-        const { name, email, phone, address, territory_id, diet_preference } = req.body;
-        if (!name || !email) return res.status(400).json({ error: 'Name and email required' });
-        const r = await db.one(`INSERT INTO customers (name,email,phone,address,territory_id,diet_preference) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
-            [name, email, phone || '', address || '', territory_id || null, diet_preference || 'non_veg']);
-        res.status(201).json({ message: 'Created', customerId: r.id });
+        const { name, phone, alternate_phone, email, address, address_2, city, territory_id, diet_preference, delivery_instructions } = req.body;
+        if (!name || !phone) return res.status(400).json({ error: 'Name and phone required' });
+        const existC = await db.one(`SELECT id FROM customers WHERE phone=$1`, [phone]);
+        if (existC) return res.status(400).json({ error: 'Customer with this phone already exists' });
+        let userId = null;
+        const existU = await db.one(`SELECT id FROM users WHERE phone=$1`, [phone]);
+        if (!existU) {
+            const h = bcrypt.hashSync(phone, 10);
+            const u = await db.one(`INSERT INTO users (name,phone,email,password,authority) VALUES ($1,$2,$3,$4,'customer') RETURNING id`,
+                [name, phone, email||null, h]);
+            userId = u.id;
+        } else { userId = existU.id; }
+        const r = await db.one(`INSERT INTO customers (user_id,name,phone,alternate_phone,email,address,address_2,city,territory_id,diet_preference,delivery_instructions) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id`,
+            [userId,name,phone,alternate_phone||null,email||null,address||null,address_2||null,city||null,territory_id||null,diet_preference||'non_veg',delivery_instructions||null]);
+        res.status(201).json({ message: 'Created', customerId: r.id, defaultPassword: phone });
     } catch(e) { res.status(400).json({ error: e.message }); }
 });
 app.delete('/api/admin/customers/:id', verifyToken, async (req, res) => {
@@ -1106,7 +1116,7 @@ app.post('/api/admin/delivery-boys', verifyToken, async (req, res) => {
             if (existing) return res.status(400).json({ error: 'Email already registered' });
             const h = bcrypt.hashSync(password, 10);
             const u = await db.one(`INSERT INTO users (name,email,password,phone,authority,kitchen_id) VALUES ($1,$2,$3,$4,'delivery_boy',$5) RETURNING id`,
-                [name, email, h, phone||'', kitchen_id]);
+                [name, email||phone, h, phone||'', kitchen_id]);
             user_id = u.id;
         }
         const r = await db.one(`INSERT INTO delivery_boys (name,phone,email,kitchen_id,territory_id,vehicle_type,photo_base64,user_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
@@ -1330,12 +1340,18 @@ app.post('/api/sales/customers', verifyToken, reqSales, async (req, res) => {
         const { name, phone, alternate_phone, email, address, address_2, city, territory_id, diet_preference, delivery_instructions } = req.body;
         if (!name || !phone) return res.status(400).json({ error: 'Name and phone are required' });
         // Check phone not already used
-        const existing = await db.one(`SELECT id FROM customers WHERE phone=$1`, [phone]);
-        if (existing) return res.status(400).json({ error: 'A customer with this phone number already exists' });
-        const r = await db.one(`INSERT INTO customers (name,phone,alternate_phone,email,address,address_2,city,territory_id,diet_preference,delivery_instructions)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
-            [name,phone,alternate_phone||null,email||null,address||null,address_2||null,city||null,territory_id||null,diet_preference||'non_veg',delivery_instructions||null]);
-        res.status(201).json({ message: 'Customer created', customerId: r.id });
+        const existingC = await db.one(`SELECT id FROM customers WHERE phone=$1`, [phone]);
+        if (existingC) return res.status(400).json({ error: 'A customer with this phone number already exists' });
+        const existingU = await db.one(`SELECT id FROM users WHERE phone=$1`, [phone]);
+        if (existingU) return res.status(400).json({ error: 'Phone already registered' });
+        // Create user account — phone as username, phone as default password (customer changes later)
+        const defaultPwd = bcrypt.hashSync(phone, 10);
+        const u = await db.one(`INSERT INTO users (name,phone,email,password,authority) VALUES ($1,$2,$3,$4,'customer') RETURNING id`,
+            [name, phone, email||null, defaultPwd]);
+        const r = await db.one(`INSERT INTO customers (user_id,name,phone,alternate_phone,email,address,address_2,city,territory_id,diet_preference,delivery_instructions)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id`,
+            [u.id,name,phone,alternate_phone||null,email||null,address||null,address_2||null,city||null,territory_id||null,diet_preference||'non_veg',delivery_instructions||null]);
+        res.status(201).json({ message: 'Customer created', customerId: r.id, userId: u.id, defaultPassword: phone });
     } catch(e) { res.status(400).json({ error: e.message }); }
 });
 
@@ -2199,15 +2215,6 @@ app.get('/api/admin/customers', verifyToken, async (req, res) => {
         res.json(await db.all(`SELECT c.*,t.name as territory_name,COUNT(o.id)::int as total_orders FROM customers c LEFT JOIN territories t ON c.territory_id=t.id LEFT JOIN orders o ON o.customer_id=c.id WHERE c.status='active' GROUP BY c.id,t.name ORDER BY c.created_at DESC`));
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
-app.post('/api/admin/customers', verifyToken, async (req, res) => {
-    try {
-        const { name, email, phone, address, territory_id, diet_preference } = req.body;
-        if (!name || !email) return res.status(400).json({ error: 'Name and email required' });
-        const r = await db.one(`INSERT INTO customers (name,email,phone,address,territory_id,diet_preference) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
-            [name, email, phone || '', address || '', territory_id || null, diet_preference || 'non_veg']);
-        res.status(201).json({ message: 'Created', customerId: r.id });
-    } catch(e) { res.status(400).json({ error: e.message }); }
-});
 app.delete('/api/admin/customers/:id', verifyToken, async (req, res) => {
     try { await db.query(`UPDATE customers SET status='inactive' WHERE id=$1`, [req.params.id]); res.json({ message: 'Deleted' }); }
     catch(e) { res.status(500).json({ error: e.message }); }
@@ -2443,7 +2450,7 @@ app.post('/api/admin/delivery-boys', verifyToken, async (req, res) => {
             if (existing) return res.status(400).json({ error: 'Email already registered' });
             const h = bcrypt.hashSync(password, 10);
             const u = await db.one(`INSERT INTO users (name,email,password,phone,authority,kitchen_id) VALUES ($1,$2,$3,$4,'delivery_boy',$5) RETURNING id`,
-                [name, email, h, phone||'', kitchen_id]);
+                [name, email||phone, h, phone||'', kitchen_id]);
             user_id = u.id;
         }
         const r = await db.one(`INSERT INTO delivery_boys (name,phone,email,kitchen_id,territory_id,vehicle_type,photo_base64,user_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
@@ -2667,12 +2674,18 @@ app.post('/api/sales/customers', verifyToken, reqSales, async (req, res) => {
         const { name, phone, alternate_phone, email, address, address_2, city, territory_id, diet_preference, delivery_instructions } = req.body;
         if (!name || !phone) return res.status(400).json({ error: 'Name and phone are required' });
         // Check phone not already used
-        const existing = await db.one(`SELECT id FROM customers WHERE phone=$1`, [phone]);
-        if (existing) return res.status(400).json({ error: 'A customer with this phone number already exists' });
-        const r = await db.one(`INSERT INTO customers (name,phone,alternate_phone,email,address,address_2,city,territory_id,diet_preference,delivery_instructions)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
-            [name,phone,alternate_phone||null,email||null,address||null,address_2||null,city||null,territory_id||null,diet_preference||'non_veg',delivery_instructions||null]);
-        res.status(201).json({ message: 'Customer created', customerId: r.id });
+        const existingC = await db.one(`SELECT id FROM customers WHERE phone=$1`, [phone]);
+        if (existingC) return res.status(400).json({ error: 'A customer with this phone number already exists' });
+        const existingU = await db.one(`SELECT id FROM users WHERE phone=$1`, [phone]);
+        if (existingU) return res.status(400).json({ error: 'Phone already registered' });
+        // Create user account — phone as username, phone as default password (customer changes later)
+        const defaultPwd = bcrypt.hashSync(phone, 10);
+        const u = await db.one(`INSERT INTO users (name,phone,email,password,authority) VALUES ($1,$2,$3,$4,'customer') RETURNING id`,
+            [name, phone, email||null, defaultPwd]);
+        const r = await db.one(`INSERT INTO customers (user_id,name,phone,alternate_phone,email,address,address_2,city,territory_id,diet_preference,delivery_instructions)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id`,
+            [u.id,name,phone,alternate_phone||null,email||null,address||null,address_2||null,city||null,territory_id||null,diet_preference||'non_veg',delivery_instructions||null]);
+        res.status(201).json({ message: 'Customer created', customerId: r.id, userId: u.id, defaultPassword: phone });
     } catch(e) { res.status(400).json({ error: e.message }); }
 });
 
