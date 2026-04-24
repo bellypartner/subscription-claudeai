@@ -2,859 +2,598 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Salad Caffe — My Account</title>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
 <style>
-:root{
-  --g:#22c55e;--gd:#16a34a;--gl:#dcfce7;--gm:#86efac;
-  --dk:#0f172a;--mid:#475569;--muted:#94a3b8;
-  --border:#e2e8f0;--bg:#f8fafc;--white:#fff;
-  --red:#ef4444;--rl:#fef2f2;--amber:#f59e0b;--al:#fffbeb;--blue:#3b82f6;--bl:#eff6ff;
-  --sh:0 1px 4px rgba(0,0,0,.07);--shm:0 4px 20px rgba(0,0,0,.09);
-  --r:14px;
-}
+:root{--g:#2ecc71;--gd:#27ae60;--gl:#eafaf1;--gm:#a9dfbf;--dk:#111827;--mid:#374151;--muted:#6b7280;--border:#e5e7eb;--bg:#f9fafb;--red:#ef4444;--rl:#fef2f2;--amber:#f59e0b;--al:#fffbeb;--blue:#3b82f6;--bl:#eff6ff;--purple:#8b5cf6;--pl:#ede9fe;}
 *{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--dk);font-size:14px;min-height:100vh;}
+body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--dk);font-size:14px;max-width:500px;margin:0 auto;min-height:100vh;}
 
-/* AUTH */
-#authScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#0f2027,#203a43,#2c5364);padding:20px;}
-.auth-card{background:white;border-radius:20px;width:100%;max-width:440px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3);}
-.auth-hd{background:linear-gradient(135deg,var(--gd),#15803d);padding:28px 32px;color:white;}
-.auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
-.auth-logo-ico{width:42px;height:42px;background:rgba(255,255,255,.2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;}
-.auth-logo h1{font-family:'Playfair Display',serif;font-size:22px;}
-.auth-tag{font-size:12.5px;opacity:.8;}
-.auth-tabs{display:flex;border-bottom:1px solid var(--border);}
-.auth-tab{flex:1;padding:13px;text-align:center;cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);border:none;background:none;font-family:'DM Sans',sans-serif;border-bottom:2.5px solid transparent;transition:all .2s;}
-.auth-tab.active{color:var(--gd);border-bottom-color:var(--g);}
-.auth-body{padding:24px 32px 28px;}
-.auth-form{display:none;}.auth-form.active{display:block;}
-.fl{display:block;font-size:11px;font-weight:700;color:var(--mid);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;}
-.fc{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--dk);transition:border-color .2s;}
-.fc:focus{outline:none;border-color:var(--g);box-shadow:0 0 0 3px rgba(34,197,94,.1);}
-.fg{margin-bottom:14px;}
-.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.btn-full{width:100%;padding:12px;background:var(--g);color:white;border:none;border-radius:8px;font-size:14.5px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;margin-top:6px;transition:background .2s;}
-.btn-full:hover{background:var(--gd);}
-.aerr{background:var(--rl);color:var(--red);border:1px solid #fecaca;padding:10px 13px;border-radius:7px;font-size:13px;margin-bottom:12px;display:none;}
-.asuc{background:var(--gl);color:var(--gd);border:1px solid var(--gm);padding:10px 13px;border-radius:7px;font-size:13px;margin-bottom:12px;display:none;}
+/* LOGIN */
+#loginPage{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(160deg,#064e3b 0%,#065f46 50%,#0d9488 100%);padding:20px;}
+.lcard{background:white;padding:36px 32px;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.3);width:100%;}
+.lbrand{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
+.lbrand-ico{width:44px;height:44px;background:var(--g);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;}
+.lbrand h1{font-family:"Playfair Display",serif;font-size:22px;}
+.lsub{color:var(--muted);font-size:13px;margin-bottom:24px;}
+.li{width:100%;padding:12px 13px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;font-family:"DM Sans",sans-serif;margin-bottom:12px;}
+.li:focus{outline:none;border-color:var(--g);}
+.lbtn{width:100%;padding:14px;background:var(--g);color:white;border:none;border-radius:10px;font-size:16px;font-weight:700;font-family:"DM Sans",sans-serif;cursor:pointer;}
+.lbtn:hover{background:var(--gd);}
+.lerr{background:var(--rl);color:var(--red);padding:10px 13px;border-radius:8px;margin-bottom:14px;font-size:13px;display:none;}
 
 /* APP */
-#mainApp{display:none;flex-direction:column;min-height:100vh;}
-#mainApp.show{display:flex;}
-.topnav{background:white;border-bottom:1px solid var(--border);padding:0 20px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--sh);}
-.nbrand{display:flex;align-items:center;gap:9px;}
-.nbrand-ico{width:34px;height:34px;background:var(--g);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;}
-.nbrand-txt{font-family:'Playfair Display',serif;font-size:17px;}
-.nright{display:flex;align-items:center;gap:10px;}
-.nuser{display:flex;align-items:center;gap:7px;padding:5px 11px;background:var(--bg);border-radius:20px;font-size:13px;font-weight:500;}
-.navat{width:26px;height:26px;background:var(--g);border-radius:50%;color:white;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;}
-.bso{padding:6px 12px;background:none;border:1.5px solid var(--border);border-radius:7px;font-size:12px;font-weight:600;color:var(--mid);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;}
-.bso:hover{border-color:var(--red);color:var(--red);}
-.content{flex:1;padding:20px 16px 90px;max-width:680px;margin:0 auto;width:100%;}
-.page{display:none;}.page.active{display:block;}
-.bnav{background:white;border-top:1px solid var(--border);display:flex;position:fixed;bottom:0;left:0;right:0;z-index:100;box-shadow:0 -4px 16px rgba(0,0,0,.07);}
-.bni{flex:1;display:flex;flex-direction:column;align-items:center;padding:9px 4px 7px;border:none;background:none;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--muted);font-size:10px;font-weight:600;gap:3px;transition:color .15s;}
-.bni i{font-size:17px;}
-.bni.active{color:var(--g);}
+#app{display:none;flex-direction:column;min-height:100vh;}
+#app.show{display:flex;}
 
-/* CARDS */
-.card{background:white;border-radius:var(--r);box-shadow:var(--sh);border:1px solid var(--border);overflow:hidden;margin-bottom:14px;}
-.card-hd{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
-.card-title{font-size:14.5px;font-weight:700;}
-.card-sub{font-size:11.5px;color:var(--muted);margin-top:2px;}
-.card-body{padding:18px;}
-.pg-heading{font-size:21px;font-weight:800;font-family:'Playfair Display',serif;margin-bottom:3px;}
-.pg-sub{font-size:12.5px;color:var(--muted);margin-bottom:18px;}
+/* HEADER */
+.header{background:linear-gradient(135deg,var(--gd),#059669);padding:20px 18px 24px;position:relative;}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.hdr-brand{color:white;font-family:"Playfair Display",serif;font-size:18px;}
+.hdr-logout{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);border-radius:8px;color:white;padding:6px 12px;cursor:pointer;font-size:12px;font-family:"DM Sans",sans-serif;}
+.hdr-greeting{color:white;font-size:22px;font-weight:700;margin-bottom:4px;}
+.hdr-sub{color:rgba(255,255,255,.8);font-size:13px;}
 
-/* STATS */
-.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
-.stat-box{background:white;border:1px solid var(--border);border-radius:11px;padding:13px 10px;text-align:center;box-shadow:var(--sh);}
-.stat-n{font-size:22px;font-weight:800;color:var(--gd);}
-.stat-l{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-top:2px;}
+/* PROFILE COMPLETION */
+.profile-bar{background:rgba(255,255,255,.15);border-radius:12px;padding:13px 16px;margin-top:14px;}
+.pb-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.pb-label{color:white;font-size:13px;font-weight:600;}
+.pb-pct{color:white;font-size:13px;font-weight:800;}
+.pb-track{height:6px;background:rgba(255,255,255,.3);border-radius:3px;}
+.pb-fill{height:6px;background:white;border-radius:3px;transition:width .5s;}
+.pb-action{color:rgba(255,255,255,.8);font-size:11.5px;margin-top:6px;cursor:pointer;text-decoration:underline;}
 
-/* CALENDAR */
-.cal-nav{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);}
-.cal-month{font-size:15px;font-weight:700;}
-.cal-btn{width:30px;height:30px;border:1.5px solid var(--border);border-radius:7px;background:white;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
-.cal-btn:hover{border-color:var(--g);color:var(--g);}
-.cal-grid{padding:12px 14px;}
-.cal-dow{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px;}
-.cal-dow-lbl{text-align:center;font-size:10px;font-weight:700;color:var(--muted);padding:4px 0;text-transform:uppercase;}
-.cal-dow-lbl.sun{color:#e2e8f0;}
-.cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
-.cal-day{min-height:52px;border-radius:9px;padding:4px 3px;cursor:default;position:relative;border:1.5px solid transparent;}
-.cal-day.other-month{opacity:.3;}
-.cal-day.sunday{background:#f8fafc;}
-.cal-day.today{border-color:var(--g);}
-.cal-day.has-delivery{cursor:pointer;background:white;border-color:var(--border);box-shadow:var(--sh);}
-.cal-day.has-delivery:hover{border-color:var(--g);}
-.cal-day-num{font-size:11px;font-weight:600;color:var(--mid);text-align:right;padding-right:2px;}
-.cal-day.today .cal-day-num{color:var(--gd);}
-.cal-day.sunday .cal-day-num{color:#cbd5e1;}
-.cal-slots{display:flex;flex-direction:column;gap:2px;margin-top:2px;}
-.cal-slot{border-radius:4px;padding:1px 3px;font-size:8.5px;font-weight:700;text-align:center;white-space:nowrap;overflow:hidden;}
-.slot-pending{background:#fef9c3;color:#92400e;}
-.slot-delivered{background:var(--gl);color:var(--gd);}
-.slot-skipped{background:#f1f5f9;color:#94a3b8;text-decoration:line-through;}
-.sun-label{font-size:8px;color:#cbd5e1;text-align:center;margin-top:4px;}
+/* NAV TABS */
+.nav-tabs{background:white;display:flex;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
+.nav-tab{flex:1;padding:12px 4px;text-align:center;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;text-transform:uppercase;letter-spacing:.04em;}
+.nav-tab.active{color:var(--gd);border-bottom-color:var(--g);}
+.nav-tab i{display:block;font-size:16px;margin-bottom:3px;}
 
-/* DAY DETAIL PANEL */
-.day-panel{background:white;border:1px solid var(--border);border-radius:var(--r);margin-bottom:14px;overflow:hidden;box-shadow:var(--shm);}
-.day-panel-hd{padding:14px 18px;background:linear-gradient(135deg,var(--gd),#15803d);color:white;display:flex;align-items:center;justify-content:space-between;}
-.day-panel-date{font-size:14px;font-weight:700;}
-.day-panel-close{background:rgba(255,255,255,.2);border:none;color:white;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;}
-.meal-slot-row{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
-.meal-slot-row:last-child{border-bottom:none;}
-.meal-slot-left{display:flex;align-items:center;gap:12px;}
-.meal-ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
-.ico-b{background:#fef9c3;}.ico-l{background:var(--gl);}.ico-d{background:#ede9fe;}
-.meal-name{font-size:14px;font-weight:600;}
-.meal-item-name{font-size:11.5px;color:var(--muted);margin-top:2px;}
-.meal-kcal{font-size:11px;color:var(--muted);}
+.content{padding:16px;flex:1;}
+.tab-panel{display:none;}.tab-panel.active{display:block;}
+
+/* TODAY SECTION */
+.today-section{margin-bottom:20px;}
+.section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:10px;}
+.today-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.meal-tile{background:white;border-radius:14px;border:1px solid var(--border);overflow:hidden;cursor:pointer;transition:transform .15s,box-shadow .15s;box-shadow:0 1px 4px rgba(0,0,0,.07);}
+.meal-tile:active{transform:scale(.97);}
+.meal-tile-img{width:100%;height:110px;object-fit:cover;background:linear-gradient(135deg,var(--gl),#d1fae5);}
+.meal-tile-img-placeholder{width:100%;height:110px;background:linear-gradient(135deg,var(--gl),#d1fae5);display:flex;align-items:center;justify-content:center;font-size:40px;}
+.meal-tile-body{padding:11px 12px;}
+.meal-tile-day{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:4px;}
+.meal-tile-name{font-size:13px;font-weight:700;margin-bottom:3px;line-height:1.3;}
+.meal-tile-cal{font-size:11px;color:var(--muted);}
+.meal-tile-status{margin-top:6px;}
+.skipped-overlay{position:relative;}
+.skipped-overlay::after{content:"SKIPPED";position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:14px;border-radius:14px;}
+
+/* DELIVERY BOY CARD */
+.db-card{background:white;border-radius:14px;border:1px solid var(--border);padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:14px;}
+.db-photo{width:46px;height:46px;border-radius:50%;background:var(--amber);color:white;font-weight:700;font-size:18px;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;}
+.db-photo img{width:100%;height:100%;object-fit:cover;}
+.db-name{font-size:15px;font-weight:700;}
+.db-meta{font-size:12px;color:var(--muted);margin-top:2px;}
+.db-call{margin-left:auto;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.db-call a{background:var(--gl);border:1px solid var(--gm);border-radius:10px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:var(--gd);font-size:18px;text-decoration:none;}
 
 /* SUBSCRIPTION CARD */
-.sub-card{background:white;border:1px solid var(--border);border-radius:var(--r);margin-bottom:12px;overflow:hidden;box-shadow:var(--sh);}
-.sub-top{padding:16px 18px 12px;display:flex;justify-content:space-between;align-items:flex-start;}
-.sub-name{font-size:15px;font-weight:700;margin-bottom:4px;}
-.sub-meta{font-size:11.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px;}
-.sub-meta span{display:flex;align-items:center;gap:4px;}
-.sub-prog{padding:0 18px 14px;}
-.prog-lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:5px;}
-.prog-bar{height:5px;background:var(--border);border-radius:99px;overflow:hidden;}
-.prog-fill{height:100%;background:linear-gradient(90deg,var(--g),var(--gd));border-radius:99px;}
-.sub-acts{padding:10px 18px 14px;border-top:1px solid var(--border);display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
-.no-refund-note{font-size:10.5px;color:var(--muted);margin-left:auto;font-style:italic;}
+.sub-card{background:white;border-radius:14px;border:1px solid var(--border);padding:16px;margin-bottom:12px;}
+.sub-name{font-size:15px;font-weight:700;margin-bottom:10px;}
+.sub-progress{margin-bottom:12px;}
+.sub-prog-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+.sub-prog-label{font-size:11.5px;color:var(--muted);}
+.sub-prog-val{font-size:12px;font-weight:700;}
+.prog-track{height:7px;background:var(--border);border-radius:4px;}
+.prog-fill{height:7px;background:var(--g);border-radius:4px;transition:width .4s;}
+.sub-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.sub-stat{background:var(--bg);border-radius:8px;padding:8px;text-align:center;}
+.sub-stat-val{font-size:18px;font-weight:800;line-height:1;}
+.sub-stat-lbl{font-size:10px;color:var(--muted);margin-top:2px;font-weight:600;text-transform:uppercase;}
+.action-row{display:flex;gap:8px;}
+.action-btn{flex:1;padding:10px 6px;border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:"DM Sans",sans-serif;text-align:center;}
+.act-skip{background:var(--al);color:#92400e;}
+.act-pause{background:var(--bl);color:var(--blue);}
+.act-cancel{background:var(--rl);color:var(--red);}
 
-/* HISTORY */
-.hist-row{display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);}
-.hist-row:last-child{border-bottom:none;}
-.hist-date{font-size:12.5px;font-weight:700;min-width:70px;color:var(--mid);}
-.hist-info{flex:1;margin:0 10px;}
-.hist-meal{font-size:13px;font-weight:600;}
-.hist-item{font-size:11px;color:var(--muted);}
+/* PROFILE TAB */
+.profile-section{background:white;border-radius:14px;border:1px solid var(--border);padding:16px;margin-bottom:14px;}
+.profile-section h3{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:14px;}
+.pf{margin-bottom:12px;}
+.pl{display:block;font-size:11px;font-weight:700;color:var(--mid);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+.pc{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:"DM Sans",sans-serif;color:var(--dk);background:white;}
+.pc:focus{outline:none;border-color:var(--g);}
+.prow{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.chip-row{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px;}
+.chip{padding:5px 12px;border:1.5px solid var(--border);border-radius:20px;cursor:pointer;font-size:12px;font-weight:600;background:white;user-select:none;}
+.chip.on{background:var(--gl);border-color:var(--g);color:var(--gd);}
+.save-btn{width:100%;padding:13px;background:var(--g);color:white;border:none;border-radius:10px;font-size:15px;font-weight:700;font-family:"DM Sans",sans-serif;cursor:pointer;margin-top:6px;}
 
-/* PROFILE */
-.prof-section{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid var(--border);}
+/* ITEM DETAIL MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:flex-end;justify-content:center;}
+.modal-bg.show{display:flex;}
+.item-modal{background:white;border-radius:20px 20px 0 0;width:100%;max-width:500px;max-height:85vh;overflow-y:auto;animation:slideup .25s ease;}
+@keyframes slideup{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.item-modal-img{width:100%;height:200px;object-fit:cover;background:linear-gradient(135deg,var(--gl),#d1fae5);}
+.item-modal-img-placeholder{width:100%;height:200px;background:linear-gradient(135deg,var(--gl),#d1fae5);display:flex;align-items:center;justify-content:center;font-size:64px;}
+.item-modal-body{padding:20px;}
+.item-modal-name{font-size:20px;font-weight:800;margin-bottom:6px;}
+.item-modal-desc{font-size:13.5px;color:var(--mid);line-height:1.6;margin-bottom:16px;}
+.nutrition-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;background:var(--bg);border-radius:12px;padding:14px;margin-bottom:16px;}
+.nutr-box{text-align:center;}
+.nutr-val{font-size:16px;font-weight:800;color:var(--gd);}
+.nutr-lbl{font-size:10px;color:var(--muted);margin-top:2px;}
+.allergy-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;}
+.allergy-tag{padding:3px 10px;background:var(--al);color:#92400e;border-radius:20px;font-size:11px;font-weight:700;}
+.modal-close-btn{width:100%;padding:13px;background:var(--bg);border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:"DM Sans",sans-serif;color:var(--mid);}
 
-/* BADGES */
+.empty{text-align:center;padding:36px 20px;color:var(--muted);}
+.empty i{font-size:32px;margin-bottom:10px;display:block;opacity:.25;}
+.spinner{display:inline-block;width:20px;height:20px;border:2.5px solid var(--border);border-top-color:var(--g);border-radius:50%;animation:sp .7s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg);}}
+.loading{text-align:center;padding:32px;color:var(--muted);}
 .badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;}
 .bg{background:var(--gl);color:var(--gd);}
-.ba{background:var(--al);color:#92400e;}
 .br{background:var(--rl);color:var(--red);}
-.bb{background:var(--bl);color:#1d4ed8;}
-.bgr{background:#f1f5f9;color:var(--muted);}
-
-/* BUTTONS */
-.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border:none;border-radius:7px;font-size:12.5px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .15s;}
-.btn-g{background:var(--g);color:white;}.btn-g:hover{background:var(--gd);}
-.btn-o{background:white;border:1.5px solid var(--border);color:var(--mid);}.btn-o:hover{border-color:var(--g);color:var(--g);}
-.btn-r{background:var(--rl);color:var(--red);border:1px solid #fecaca;}.btn-r:hover{background:#fecaca;}
-.btn-a{background:var(--al);color:#92400e;border:1px solid #fde68a;}.btn-a:hover{background:#fde68a;}
-.btn-sm{padding:5px 10px;font-size:11.5px;border-radius:6px;}
-
-/* MODALS */
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:flex-end;justify-content:center;}
-.modal-bg.show{display:flex;}
-.modal-sheet{background:white;border-radius:20px 20px 0 0;width:100%;max-width:640px;max-height:88vh;overflow-y:auto;padding:20px 22px 28px;animation:su .22s ease;}
-@keyframes su{from{transform:translateY(40px);opacity:0;}to{transform:translateY(0);opacity:1;}}
-.mhandle{width:38px;height:4px;background:var(--border);border-radius:99px;margin:0 auto 18px;}
-.mtitle{font-size:16px;font-weight:700;margin-bottom:5px;}
-.msub{font-size:12.5px;color:var(--muted);margin-bottom:16px;}
-.mbtns{display:flex;gap:8px;margin-top:14px;}
-.mbtns .btn{flex:1;justify-content:center;}
-
-.alert{padding:10px 14px;border-radius:8px;font-size:12.5px;margin-bottom:12px;display:none;}
-.alert-s{background:var(--gl);color:var(--gd);border:1px solid var(--gm);}
-.alert-e{background:var(--rl);color:var(--red);border:1px solid #fecaca;}
-.alert-w{background:var(--al);color:#92400e;border:1px solid #fde68a;}
-
-.empty{text-align:center;padding:40px 20px;color:var(--muted);}
-.empty i{font-size:38px;margin-bottom:12px;display:block;opacity:.35;}
-.empty-t{font-size:15px;font-weight:700;color:var(--mid);margin-bottom:5px;}
-.empty-s{font-size:12.5px;line-height:1.6;}
-.spinner{width:17px;height:17px;border:2.5px solid var(--border);border-top-color:var(--g);border-radius:50%;animation:sp .7s linear infinite;display:inline-block;vertical-align:middle;margin-right:5px;}
-@keyframes sp{to{transform:rotate(360deg);}}
-.loading{text-align:center;padding:28px;color:var(--muted);}
-
-/* No-refund banner */
-.noref{background:#fff7ed;border:1px solid #fed7aa;border-radius:9px;padding:10px 14px;font-size:12px;color:#9a3412;margin-bottom:14px;}
-.noref i{margin-right:5px;}
+.ba{background:var(--al);color:#92400e;}
+.bgr{background:#f3f4f6;color:var(--muted);}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--dk);color:white;padding:10px 20px;border-radius:30px;font-size:13px;font-weight:600;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;}
+.toast.show{opacity:1;}
 </style>
 </head>
 <body>
 
-<!-- AUTH -->
-<div id="authScreen">
- <div class="auth-card">
-  <div class="auth-hd">
-   <div class="auth-logo"><div class="auth-logo-ico">🥗</div><h1>Salad Caffe</h1></div>
-   <p class="auth-tag">Your daily healthy meal subscription</p>
+<div id="loginPage">
+  <div class="lcard">
+    <div class="lbrand"><div class="lbrand-ico">🥗</div><h1>Salad Caffe</h1></div>
+    <p class="lsub">Login to your meal subscription</p>
+    <div class="lerr" id="loginErr"></div>
+    <input type="text" class="li" id="lPhone" placeholder="Phone number or email" autocomplete="username">
+    <input type="password" class="li" id="lPass" placeholder="Password" autocomplete="current-password">
+    <button class="lbtn" onclick="doLogin()">Sign In</button>
   </div>
-  <div class="auth-tabs">
-   <button class="auth-tab active" onclick="switchTab('login')">Sign In</button>
-   <button class="auth-tab" onclick="switchTab('register')">Register</button>
-  </div>
-  <div class="auth-body">
-   <div id="loginForm" class="auth-form active">
-    <div class="aerr" id="loginErr"></div>
-    <div class="fg"><label class="fl">Email</label><input type="email" class="fc" id="lEmail" value="customer@test.com"></div>
-    <div class="fg"><label class="fl">Password</label><input type="password" class="fc" id="lPass" value="customer123"></div>
-    <button class="btn-full" onclick="doLogin()">Sign In</button>
-    <p style="text-align:center;margin-top:12px;font-size:11.5px;color:var(--muted)">Demo: customer@test.com / customer123</p>
-   </div>
-   <div id="regForm" class="auth-form">
-    <div class="aerr" id="regErr"></div>
-    <div class="asuc" id="regOk"></div>
-    <div class="frow">
-     <div class="fg"><label class="fl">Full Name *</label><input type="text" class="fc" id="rName"></div>
-     <div class="fg"><label class="fl">Phone</label><input type="text" class="fc" id="rPhone"></div>
-    </div>
-    <div class="fg"><label class="fl">Email *</label><input type="email" class="fc" id="rEmail"></div>
-    <div class="fg"><label class="fl">Password *</label><input type="password" class="fc" id="rPass" placeholder="Min 6 characters"></div>
-    <div class="fg"><label class="fl">Delivery Address</label><input type="text" class="fc" id="rAddr"></div>
-    <button class="btn-full" onclick="doRegister()">Create Account</button>
-   </div>
-  </div>
- </div>
 </div>
 
-<!-- MAIN APP -->
-<div id="mainApp">
- <nav class="topnav">
-  <div class="nbrand"><div class="nbrand-ico">🥗</div><span class="nbrand-txt">Salad Caffe</span></div>
-  <div class="nright">
-   <div class="nuser"><div class="navat" id="navAv">C</div><span id="navNm">Customer</span></div>
-   <button class="bso" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i></button>
-  </div>
- </nav>
-
- <div class="content">
-
-  <!-- HOME -->
-  <div id="page-home" class="page active">
-   <div class="stat-row">
-    <div class="stat-box"><div class="stat-n" id="hs1">—</div><div class="stat-l">Active Plans</div></div>
-    <div class="stat-box"><div class="stat-n" id="hs2">—</div><div class="stat-l">Today's Meals</div></div>
-    <div class="stat-box"><div class="stat-n" id="hs3">—</div><div class="stat-l">This Month</div></div>
-   </div>
-
-   <!-- Today's meals -->
-   <div class="card">
-    <div class="card-hd">
-     <div><div class="card-title">Today's Meals</div><div class="card-sub" id="todayLbl"></div></div>
+<div id="app">
+  <div class="header">
+    <div class="hdr-top">
+      <div class="hdr-brand">🥗 Salad Caffe</div>
+      <button class="hdr-logout" onclick="doLogout()">Sign Out</button>
     </div>
-    <div id="todaySlots"><div class="loading"><span class="spinner"></span>Loading...</div></div>
-   </div>
-
-   <!-- Upcoming -->
-   <div class="card">
-    <div class="card-hd"><div class="card-title">Upcoming — Next 7 Days</div></div>
-    <div class="card-body" id="upcomingList"><div class="loading"><span class="spinner"></span>Loading...</div></div>
-   </div>
+    <div class="hdr-greeting" id="hdrGreeting">Hello!</div>
+    <div class="hdr-sub" id="hdrSub">Your healthy meal subscription</div>
+    <div class="profile-bar">
+      <div class="pb-top">
+        <span class="pb-label">Profile Completion</span>
+        <span class="pb-pct" id="pbPct">0%</span>
+      </div>
+      <div class="pb-track"><div class="pb-fill" id="pbFill" style="width:0%"></div></div>
+      <div class="pb-action" onclick="switchTab('profile',3)">Complete your profile for personalised meals →</div>
+    </div>
   </div>
 
-  <!-- CALENDAR -->
-  <div id="page-calendar" class="page">
-   <div class="pg-heading">Meal Calendar</div>
-   <p class="pg-sub">Tap a day to see meals and skip options</p>
-
-   <div class="alert alert-s" id="calAlert"></div>
-
-   <!-- Day detail panel (hidden by default) -->
-   <div id="dayPanel" class="day-panel" style="display:none;">
-    <div class="day-panel-hd">
-     <div class="day-panel-date" id="panelDateLabel"></div>
-     <button class="day-panel-close" onclick="closePanel()"><i class="fas fa-times"></i></button>
-    </div>
-    <div id="panelSlots"></div>
-   </div>
-
-   <div class="card" style="overflow:visible;">
-    <div class="cal-nav">
-     <button class="cal-btn" onclick="prevMonth()"><i class="fas fa-chevron-left"></i></button>
-     <div class="cal-month" id="calMonthLabel"></div>
-     <button class="cal-btn" onclick="nextMonth()"><i class="fas fa-chevron-right"></i></button>
-    </div>
-    <div class="cal-grid">
-     <div class="cal-dow">
-      <div class="cal-dow-lbl sun">SUN</div>
-      <div class="cal-dow-lbl">MON</div>
-      <div class="cal-dow-lbl">TUE</div>
-      <div class="cal-dow-lbl">WED</div>
-      <div class="cal-dow-lbl">THU</div>
-      <div class="cal-dow-lbl">FRI</div>
-      <div class="cal-dow-lbl">SAT</div>
-     </div>
-     <div class="cal-days" id="calDays"><div class="loading"><span class="spinner"></span>Loading...</div></div>
-    </div>
-   </div>
-
-   <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--muted);padding:4px 0;">
-    <span><span style="display:inline-block;width:10px;height:10px;background:#fef9c3;border-radius:2px;"></span> Pending</span>
-    <span><span style="display:inline-block;width:10px;height:10px;background:var(--gl);border-radius:2px;"></span> Delivered</span>
-    <span><span style="display:inline-block;width:10px;height:10px;background:#f1f5f9;border-radius:2px;"></span> Skipped</span>
-    <span>No delivery on Sundays</span>
-   </div>
+  <div class="nav-tabs">
+    <div class="nav-tab active" onclick="switchTab('home',0)"><i class="fas fa-home"></i>Home</div>
+    <div class="nav-tab" onclick="switchTab('deliveries',1)"><i class="fas fa-truck"></i>Deliveries</div>
+    <div class="nav-tab" onclick="switchTab('subscription',2)"><i class="fas fa-box"></i>My Plan</div>
+    <div class="nav-tab" onclick="switchTab('profile',3)"><i class="fas fa-user"></i>Profile</div>
   </div>
 
-  <!-- SUBSCRIPTIONS -->
-  <div id="page-subs" class="page">
-   <div class="pg-heading">My Subscriptions</div>
-   <p class="pg-sub">Manage your active meal plans</p>
-   <div class="noref"><i class="fas fa-info-circle"></i> <strong>No Refund Policy:</strong> Skipped, paused, or cancelled meals are non-refundable. Skipping extends your subscription by 1 working day (max 45 days).</div>
-   <div class="alert alert-s" id="subOk"></div>
-   <div class="alert alert-e" id="subErr"></div>
-   <div id="subList"><div class="loading"><span class="spinner"></span>Loading...</div></div>
-  </div>
+  <div class="content">
+    <!-- HOME TAB -->
+    <div id="tab-home" class="tab-panel active">
+      <div class="today-section">
+        <div class="section-title">Today &amp; Tomorrow</div>
+        <div class="today-cards" id="todayCards">
+          <div class="loading"><span class="spinner"></span></div>
+        </div>
+      </div>
 
-  <!-- HISTORY -->
-  <div id="page-history" class="page">
-   <div class="pg-heading">Delivery History</div>
-   <p class="pg-sub">Your past deliveries</p>
-   <div class="card">
-    <div class="card-body" id="histList"><div class="loading"><span class="spinner"></span>Loading...</div></div>
-   </div>
-  </div>
-
-  <!-- PROFILE -->
-  <div id="page-profile" class="page">
-   <div class="pg-heading">My Profile</div>
-   <p class="pg-sub">Update your preferences and details</p>
-   <div class="alert alert-s" id="profOk"></div>
-   <div class="alert alert-e" id="profErr"></div>
-   <div class="card">
-    <div class="card-body">
-     <div class="prof-section">Personal Info</div>
-     <div class="frow">
-      <div class="fg"><label class="fl">Full Name</label><input type="text" class="fc" id="pName"></div>
-      <div class="fg"><label class="fl">Phone</label><input type="text" class="fc" id="pPhone"></div>
-     </div>
-     <div class="fg"><label class="fl">Primary Address</label><input type="text" class="fc" id="pAddr"></div>
-     <div class="fg"><label class="fl">Alternate Address</label><input type="text" class="fc" id="pAlt" placeholder="Office or second address"></div>
-     <div class="prof-section" style="margin-top:20px;">Health & Diet</div>
-     <div class="fg"><label class="fl">Diet Preference</label>
-      <select class="fc" id="pDiet">
-       <option value="both">Both Veg & Non-Veg</option>
-       <option value="veg">Vegetarian Only</option>
-       <option value="non_veg">Non-Veg Only</option>
-      </select>
-     </div>
-     <div class="fg"><label class="fl">Allergies / Avoid</label><input type="text" class="fc" id="pAllergies" placeholder="e.g. nuts, dairy, shellfish"></div>
-     <div class="fg"><label class="fl">Health Notes</label><textarea class="fc" id="pHealth" rows="3" placeholder="Diabetes, low sodium diet..."></textarea></div>
-     <button class="btn btn-g" style="width:100%;justify-content:center;margin-top:6px;" onclick="saveProfile()"><i class="fas fa-save"></i> Save Profile</button>
+      <div class="section-title">Your Delivery Boy Today</div>
+      <div id="dbSection">
+        <div class="db-card" style="justify-content:center;color:var(--muted);">
+          <span class="spinner"></span>
+        </div>
+      </div>
     </div>
-   </div>
-   <div class="card">
-    <div class="card-body">
-     <div class="prof-section">Account</div>
-     <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;">
-      <div><div style="font-weight:600;" id="pEmail">—</div><div style="font-size:11.5px;color:var(--muted);">Email (cannot be changed)</div></div>
-      <span class="badge bg">Active</span>
-     </div>
-     <button class="btn btn-r" style="width:100%;justify-content:center;margin-top:12px;" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+
+    <!-- DELIVERIES TAB -->
+    <div id="tab-deliveries" class="tab-panel">
+      <div class="section-title" style="margin-top:4px;">Scheduled Deliveries</div>
+      <div id="deliveryList"><div class="loading"><span class="spinner"></span></div></div>
     </div>
-   </div>
+
+    <!-- SUBSCRIPTION TAB -->
+    <div id="tab-subscription" class="tab-panel">
+      <div class="section-title" style="margin-top:4px;">My Subscription</div>
+      <div id="subArea"><div class="loading"><span class="spinner"></span></div></div>
+    </div>
+
+    <!-- PROFILE TAB -->
+    <div id="tab-profile" class="tab-panel">
+      <div class="profile-section">
+        <h3>Basic Info</h3>
+        <div class="pf"><label class="pl">Name *</label><input type="text" class="pc" id="pfName"></div>
+        <div class="prow">
+          <div class="pf"><label class="pl">Phone *</label><input type="text" class="pc" id="pfPhone"></div>
+          <div class="pf"><label class="pl">Alternate Phone</label><input type="text" class="pc" id="pfAltPhone"></div>
+        </div>
+        <div class="pf"><label class="pl">Email</label><input type="email" class="pc" id="pfEmail"></div>
+      </div>
+      <div class="profile-section">
+        <h3>Address</h3>
+        <div class="pf"><label class="pl">Primary Address</label><input type="text" class="pc" id="pfAddr" placeholder="Flat / Building / Street"></div>
+        <div class="pf"><label class="pl">Secondary Address</label><input type="text" class="pc" id="pfAddr2" placeholder="Alternative delivery address"></div>
+        <div class="prow">
+          <div class="pf"><label class="pl">City</label>
+            <select class="pc" id="pfCity">
+              <option value="">Select City</option>
+              <option>Kozhikode</option><option>Malappuram</option><option>Thrissur</option>
+              <option>Kochi</option><option>Thiruvananthapuram</option><option>Kannur</option>
+              <option>Palakkad</option><option>Kollam</option>
+            </select>
+          </div>
+        </div>
+        <div class="pf"><label class="pl">Delivery Instructions</label>
+          <input type="text" class="pc" id="pfInstructions" placeholder="e.g. Leave at door, ring bell twice">
+        </div>
+      </div>
+      <div class="profile-section">
+        <h3>Health &amp; Body</h3>
+        <div class="prow">
+          <div class="pf"><label class="pl">Height (cm)</label><input type="number" class="pc" id="pfHeight" placeholder="170"></div>
+          <div class="pf"><label class="pl">Weight (kg)</label><input type="number" class="pc" id="pfWeight" placeholder="70"></div>
+        </div>
+        <div class="pf"><label class="pl">Health Conditions</label>
+          <div class="chip-row" id="healthChips">
+            <div class="chip" data-h="BP" onclick="toggleChip(this)">🩺 BP</div>
+            <div class="chip" data-h="Cholesterol" onclick="toggleChip(this)">🫀 Cholesterol</div>
+            <div class="chip" data-h="Diabetes" onclick="toggleChip(this)">🩸 Diabetes</div>
+            <div class="chip" data-h="Thyroid" onclick="toggleChip(this)">Thyroid</div>
+            <div class="chip" data-h="None" onclick="toggleChip(this)">✅ None</div>
+          </div>
+        </div>
+        <div class="pf"><label class="pl">Allergy Info</label>
+          <div class="chip-row" id="allergyChips">
+            <div class="chip" data-a="Gluten" onclick="toggleChip(this)">🌾 Gluten</div>
+            <div class="chip" data-a="Dairy" onclick="toggleChip(this)">🥛 Dairy</div>
+            <div class="chip" data-a="Nuts" onclick="toggleChip(this)">🥜 Nuts</div>
+            <div class="chip" data-a="Shellfish" onclick="toggleChip(this)">🦐 Shellfish</div>
+            <div class="chip" data-a="Eggs" onclick="toggleChip(this)">🥚 Eggs</div>
+            <div class="chip" data-a="Soy" onclick="toggleChip(this)">🫘 Soy</div>
+            <div class="chip" data-a="Sesame" onclick="toggleChip(this)">🫙 Sesame</div>
+          </div>
+        </div>
+      </div>
+      <div class="profile-section">
+        <h3>Diet &amp; Goals</h3>
+        <div class="pf"><label class="pl">Diet Preference</label>
+          <div class="chip-row" id="dietChips">
+            <div class="chip" data-d="pure_veg" onclick="selectDietChip(this)">🟢 Pure Veg</div>
+            <div class="chip" data-d="non_veg" onclick="selectDietChip(this)">🔴 Non-Veg</div>
+            <div class="chip" data-d="eggetarian" onclick="selectDietChip(this)">🥚 Eggetarian</div>
+            <div class="chip" data-d="vegan" onclick="selectDietChip(this)">🌿 Vegan</div>
+          </div>
+          <input type="hidden" id="pfDiet" value="non_veg">
+        </div>
+        <div class="pf"><label class="pl">Diet Goal</label>
+          <select class="pc" id="pfDietGoal">
+            <option value="">Select your goal</option>
+            <option value="weight_loss">⚖️ Weight Loss</option>
+            <option value="muscle_gain">💪 Muscle Gain</option>
+            <option value="healthy_eating">🥗 Healthy Eating</option>
+            <option value="medical">🏥 Medical / Therapeutic</option>
+            <option value="maintenance">🔄 Maintenance</option>
+          </select>
+        </div>
+      </div>
+      <button class="save-btn" onclick="saveProfile()">Save Profile</button>
+    </div>
   </div>
-
- </div><!-- /content -->
-
- <nav class="bnav">
-  <button class="bni active" onclick="showPage('home',this)"><i class="fas fa-home"></i>Home</button>
-  <button class="bni" onclick="showPage('calendar',this)"><i class="fas fa-calendar-alt"></i>Calendar</button>
-  <button class="bni" onclick="showPage('subs',this)"><i class="fas fa-box"></i>My Plans</button>
-  <button class="bni" onclick="showPage('history',this)"><i class="fas fa-history"></i>History</button>
-  <button class="bni" onclick="showPage('profile',this)"><i class="fas fa-user"></i>Profile</button>
- </nav>
 </div>
 
-<!-- MODALS -->
-<div class="modal-bg" id="skipModal">
- <div class="modal-sheet">
-  <div class="mhandle"></div>
-  <div class="mtitle">Skip this meal?</div>
-  <div class="msub" id="skipModalSub">—</div>
-  <input type="hidden" id="skipId">
-  <div class="noref"><i class="fas fa-info-circle"></i> No refund. Your subscription will be extended by 1 working day (max 45 days).</div>
-  <div class="fg"><label class="fl">Reason (optional)</label><input type="text" class="fc" id="skipReason" placeholder="Travelling, not hungry…"></div>
-  <div class="alert alert-w" id="skipWarn" style="display:block;"><i class="fas fa-clock"></i> Deadline: 10:00 PM the night before delivery</div>
-  <div class="mbtns">
-   <button class="btn btn-o" onclick="closeModal('skipModal')">Cancel</button>
-   <button class="btn btn-a" onclick="doSkip()"><i class="fas fa-forward"></i> Skip Meal</button>
-  </div>
- </div>
+<!-- ITEM DETAIL MODAL -->
+<div class="modal-bg" id="itemModal" onclick="if(event.target===this)closeItemModal()">
+  <div class="item-modal" id="itemModalContent"></div>
 </div>
 
-<div class="modal-bg" id="pauseModal">
- <div class="modal-sheet">
-  <div class="mhandle"></div>
-  <div class="mtitle">⏸ Pause Subscription</div>
-  <div class="msub">Deliveries in this range will be skipped. Your end date will be extended by the same number of working days.</div>
-  <input type="hidden" id="pauseOrdId">
-  <div class="noref"><i class="fas fa-ban"></i> No refund for paused days as per our cancellation policy.</div>
-  <div class="alert alert-e" id="pauseErr"></div>
-  <div class="frow">
-   <div class="fg"><label class="fl">Pause From</label><input type="date" class="fc" id="pauseFrom"></div>
-   <div class="fg"><label class="fl">Resume On</label><input type="date" class="fc" id="pauseTo"></div>
-  </div>
-  <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px;">Max pause: 30 days</div>
-  <div class="mbtns">
-   <button class="btn btn-o" onclick="closeModal('pauseModal')">Cancel</button>
-   <button class="btn btn-a" onclick="doPause()"><i class="fas fa-pause"></i> Confirm Pause</button>
-  </div>
- </div>
-</div>
-
-<div class="modal-bg" id="cancelModal">
- <div class="modal-sheet">
-  <div class="mhandle"></div>
-  <div class="mtitle">❌ Cancel Subscription</div>
-  <div class="msub">All remaining scheduled meals will be cancelled immediately.</div>
-  <input type="hidden" id="cancelOrdId">
-  <div class="noref" style="background:var(--rl);border-color:#fecaca;color:#9f1239;">
-   <i class="fas fa-exclamation-triangle"></i> <strong>No refund will be issued.</strong> Cancellations are final as per our policy. Your account balance remains unchanged.
-  </div>
-  <div class="mbtns">
-   <button class="btn btn-o" onclick="closeModal('cancelModal')" style="flex:2;">Keep My Subscription</button>
-   <button class="btn btn-r" onclick="doCancel()" style="flex:1;"><i class="fas fa-times"></i> Cancel</button>
-  </div>
- </div>
-</div>
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
 
 <script>
-const API='/api';
-let token=null,user=null,profile=null;
-let calYear=new Date().getFullYear(),calMonth=new Date().getMonth();
-let calData={}; // {dateStr: [delivery, ...]}
+const API = "/api";
+let token = null, profile = null, customerId = null;
 
-// ===== AUTH =====
-function switchTab(t){
-    document.querySelectorAll('.auth-tab').forEach((b,i)=>b.classList.toggle('active',(i===0)===(t==='login')));
-    document.getElementById('loginForm').classList.toggle('active',t==='login');
-    document.getElementById('regForm').classList.toggle('active',t==='register');
-}
-async function doLogin(){
-    const email=v('lEmail'),password=v('lPass');
-    hide('loginErr');
-    if(!email||!password){showErr('loginErr','Fill all fields');return;}
-    try{
-        const r=await post('/api/auth/login',{email,password});
-        if(r.error){showErr('loginErr',r.error);return;}
-        if(r.user.authority!=='customer'&&r.user.authority!=='super_admin'){
-            showErr('loginErr','Use the admin dashboard for staff logins.');return;
-        }
-        token=r.token;user=r.user;profile=r.customer;
-        sessionStorage.setItem('cTok',token);
-        sessionStorage.setItem('cUser',JSON.stringify(user));
-        sessionStorage.setItem('cProf',JSON.stringify(profile));
-        showApp();
-    }catch(e){showErr('loginErr','Connection error');}
-}
-async function doRegister(){
-    const name=v('rName'),email=v('rEmail'),password=v('rPass'),phone=v('rPhone'),address=v('rAddr');
-    hide('regErr');hide('regOk');
-    if(!name||!email||!password){showErr('regErr','Name, email and password required');return;}
-    if(password.length<6){showErr('regErr','Password min 6 characters');return;}
-    try{
-        const r=await post('/api/auth/register',{name,email,password,phone,address});
-        if(r.error){showErr('regErr',r.error);return;}
-        showSuc('regOk','✅ Account created! Signing you in…');
-        token=r.token;
-        setTimeout(async()=>{
-            const pr=await apiFetch('/api/customer/profile');
-            profile=pr;user={name,email,authority:'customer'};
-            sessionStorage.setItem('cTok',token);
-            sessionStorage.setItem('cUser',JSON.stringify(user));
-            sessionStorage.setItem('cProf',JSON.stringify(profile));
-            showApp();
-        },1000);
-    }catch(e){showErr('regErr','Connection error');}
-}
-function doLogout(){sessionStorage.clear();location.reload();}
-
-// ===== APP =====
-function showApp(){
-    document.getElementById('authScreen').style.display='none';
-    document.getElementById('mainApp').classList.add('show');
-    const nm=user?.name||'Customer';
-    document.getElementById('navAv').textContent=nm.charAt(0).toUpperCase();
-    document.getElementById('navNm').textContent=nm.split(' ')[0];
-    const now=new Date();
-    document.getElementById('todayLbl').textContent=now.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
-    if(profile){
-        document.getElementById('pName').value=profile.name||'';
-        document.getElementById('pPhone').value=profile.phone||'';
-        document.getElementById('pAddr').value=profile.address||'';
-        document.getElementById('pAlt').value=profile.alternate_address||'';
-        document.getElementById('pDiet').value=profile.diet_preference||'both';
-        document.getElementById('pAllergies').value=profile.allergies||'';
-        document.getElementById('pHealth').value=profile.health_notes||'';
-        document.getElementById('pEmail').textContent=profile.email||user.email;
-    }
-    loadHomeData();
-}
-
-// ===== NAVIGATION =====
-function showPage(name,btn){
-    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-    document.getElementById('page-'+name).classList.add('active');
-    document.querySelectorAll('.bni').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    if(name==='calendar') loadCalendar();
-    if(name==='subs') loadSubs();
-    if(name==='history') loadHistory();
-}
-
-// ===== HOME =====
-async function loadHomeData(){
-    try{
-        const [subs,meals]=await Promise.all([
-            apiFetch('/api/customer/subscriptions'),
-            apiFetch('/api/customer/upcoming-meals')
-        ]);
-        const active=(subs||[]).filter(s=>s.order_status==='active').length;
-        const today=new Date().toISOString().split('T')[0];
-        const todayMeals=(meals||[]).filter(m=>m.delivery_date===today);
-        const month=today.substring(0,7);
-        // count this month from upcoming + we don't have history here so just count upcoming in month
-        const thisMonth=(meals||[]).filter(m=>m.delivery_date.startsWith(month)&&m.status!=='skipped').length;
-        document.getElementById('hs1').textContent=active;
-        document.getElementById('hs2').textContent=todayMeals.length;
-        document.getElementById('hs3').textContent=thisMonth;
-        renderTodaySlots(todayMeals);
-        renderUpcoming((meals||[]).filter(m=>m.delivery_date>today));
-    }catch(e){
-        document.getElementById('todaySlots').innerHTML='<div class="empty"><i class="fas fa-wifi"></i><div class="empty-t">Could not load</div></div>';
-    }
-}
-
-function renderTodaySlots(meals){
-    const el=document.getElementById('todaySlots');
-    if(!meals||!meals.length){
-        el.innerHTML='<div class="empty"><i class="fas fa-sun"></i><div class="empty-t">No deliveries today</div><div class="empty-s">Check your calendar for upcoming meals</div></div>';
-        return;
-    }
-    el.innerHTML=meals.map(m=>mealSlotHTML(m,true)).join('');
-}
-
-function renderUpcoming(meals){
-    const el=document.getElementById('upcomingList');
-    if(!meals||!meals.length){el.innerHTML='<div class="empty"><i class="fas fa-calendar"></i><div class="empty-t">No upcoming meals</div></div>';return;}
-    const grouped={};
-    meals.forEach(m=>{if(!grouped[m.delivery_date])grouped[m.delivery_date]=[];grouped[m.delivery_date].push(m);});
-    let html='';
-    Object.keys(grouped).sort().slice(0,7).forEach(date=>{
-        html+=`<div style="margin-bottom:12px;"><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;">${fmtDateLabel(date)}</div>`;
-        html+=grouped[date].map(m=>mealSlotHTML(m,false)).join('');
-        html+='</div>';
-    });
-    el.innerHTML=html;
-}
-
-function mealSlotHTML(m,showSkip){
-    const icons={breakfast:'🌅',lunch:'☀️',dinner:'🌙'};
-    const ic=icons[m.meal_type]||'🍽️';
-    const icoClass={breakfast:'ico-b',lunch:'ico-l',dinner:'ico-d'}[m.meal_type]||'ico-l';
-    const skipped=m.status==='skipped',delivered=m.status==='delivered';
-    const badge=skipped?'<span class="badge bgr">Skipped</span>':delivered?'<span class="badge bg">✓ Delivered</span>':'<span class="badge ba">Pending</span>';
-    const skipBtn=(showSkip&&!skipped&&!delivered)?`<button class="btn btn-o btn-sm" onclick="openSkip(${m.id},'${m.meal_type}','${m.delivery_date}')"><i class="fas fa-forward"></i> Skip</button>`:'';
-    const opacity=skipped?'opacity:.5;':'';
-    return `<div class="meal-slot-row" style="${opacity}border-bottom:1px solid var(--border);">
-     <div class="meal-slot-left">
-      <div class="meal-ico ${icoClass}">${ic}</div>
-      <div>
-       <div class="meal-name">${cap(m.meal_type)}</div>
-       <div class="meal-item-name">${m.meal_item_name||'Menu not assigned yet'}</div>
-       ${m.calories?`<div class="meal-kcal">${m.calories} kcal</div>`:''}
-      </div>
-     </div>
-     <div style="display:flex;align-items:center;gap:7px;">${badge}${skipBtn}</div>
-    </div>`;
-}
-
-// ===== CALENDAR =====
-async function loadCalendar(){
-    const monthStr=`${calYear}-${String(calMonth+1).padStart(2,'0')}`;
-    document.getElementById('calMonthLabel').textContent=new Date(calYear,calMonth,1).toLocaleDateString('en-IN',{month:'long',year:'numeric'});
-    try{
-        const data=await apiFetch(`/api/customer/calendar?month=${monthStr}`);
-        calData={};
-        (data||[]).forEach(d=>{
-            if(!calData[d.delivery_date])calData[d.delivery_date]=[];
-            calData[d.delivery_date].push(d);
-        });
-        renderCalendar();
-    }catch(e){document.getElementById('calDays').innerHTML='<p style="color:var(--muted);padding:10px;">Error loading</p>';}
-}
-
-function renderCalendar(){
-    const el=document.getElementById('calDays');
-    const today=new Date().toISOString().split('T')[0];
-    const firstDay=new Date(calYear,calMonth,1).getDay();
-    const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
-    const daysInPrev=new Date(calYear,calMonth,0).getDate();
-    let html='';
-    // prev month padding
-    for(let i=firstDay-1;i>=0;i--){
-        const d=daysInPrev-i;
-        html+=`<div class="cal-day other-month"><div class="cal-day-num">${d}</div></div>`;
-    }
-    for(let d=1;d<=daysInMonth;d++){
-        const ds=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-        const isSun=new Date(ds+'T12:00:00').getDay()===0;
-        const isToday=ds===today;
-        const delivs=calData[ds]||[];
-        let cls='cal-day';
-        if(isSun) cls+=' sunday';
-        if(isToday) cls+=' today';
-        if(delivs.length&&!isSun) cls+=' has-delivery';
-        let slots='';
-        if(isSun){
-            slots='<div class="sun-label">No delivery</div>';
-        } else if(delivs.length){
-            slots=`<div class="cal-slots">${delivs.slice(0,3).map(m=>{
-                const sc=m.status==='delivered'?'slot-delivered':m.status==='skipped'?'slot-skipped':'slot-pending';
-                return `<div class="cal-slot ${sc}">${m.meal_type.substring(0,1).toUpperCase()}</div>`;
-            }).join('')}</div>`;
-        }
-        const onclick=(!isSun&&delivs.length)?`onclick="openDayPanel('${ds}')"` : '';
-        html+=`<div class="${cls}" ${onclick}><div class="cal-day-num">${d}</div>${slots}</div>`;
-    }
-    // next month padding to complete grid
-    const total=firstDay+daysInMonth;
-    const remainder=total%7===0?0:7-(total%7);
-    for(let d=1;d<=remainder;d++){
-        html+=`<div class="cal-day other-month"><div class="cal-day-num">${d}</div></div>`;
-    }
-    el.innerHTML=html;
-}
-
-function prevMonth(){
-    calMonth--;if(calMonth<0){calMonth=11;calYear--;}
-    loadCalendar();closePanel();
-}
-function nextMonth(){
-    calMonth++;if(calMonth>11){calMonth=0;calYear++;}
-    loadCalendar();closePanel();
-}
-
-function openDayPanel(dateStr){
-    const delivs=calData[dateStr]||[];
-    const d=new Date(dateStr+'T12:00:00');
-    document.getElementById('panelDateLabel').textContent=d.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-    const today=new Date().toISOString().split('T')[0];
-    const isPast=dateStr<today;
-    const icons={breakfast:'🌅',lunch:'☀️',dinner:'🌙'};
-    const icoClass={breakfast:'ico-b',lunch:'ico-l',dinner:'ico-d'};
-    let html=delivs.map(m=>{
-        const skipped=m.status==='skipped',delivered=m.status==='delivered';
-        const badge=skipped?'<span class="badge bgr">Skipped</span>':delivered?'<span class="badge bg">✓ Delivered</span>':'<span class="badge ba">Pending</span>';
-        const skipBtn=(!skipped&&!delivered&&!isPast)?`<button class="btn btn-a btn-sm" onclick="openSkip(${m.id},'${m.meal_type}','${dateStr}')"><i class="fas fa-forward"></i> Skip</button>`:'';
-        const dietIco=m.veg_tag?'🟢':m.non_veg_tag?'🔴':'';
-        return `<div class="meal-slot-row" style="${skipped?'opacity:.5':''}">
-         <div class="meal-slot-left">
-          <div class="meal-ico ${icoClass[m.meal_type]||'ico-l'}">${icons[m.meal_type]||'🍽️'}</div>
-          <div>
-           <div class="meal-name">${cap(m.meal_type)} ${dietIco}</div>
-           <div class="meal-item-name">${m.meal_item_name||'Menu TBA'} ${m.category_name?'· '+m.category_name:''}</div>
-           ${m.calories?`<div class="meal-kcal">${m.calories} kcal</div>`:''}
-           ${skipped&&m.skipped_reason?`<div style="font-size:10.5px;color:var(--muted);margin-top:2px;">Reason: ${m.skipped_reason}</div>`:''}
-          </div>
-         </div>
-         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;">${badge}${skipBtn}</div>
-        </div>`;
-    }).join('');
-    document.getElementById('panelSlots').innerHTML=html||'<div class="empty"><p>No meals this day</p></div>';
-    document.getElementById('dayPanel').style.display='block';
-    document.getElementById('dayPanel').scrollIntoView({behavior:'smooth',block:'nearest'});
-}
-
-function closePanel(){document.getElementById('dayPanel').style.display='none';}
-
-// ===== SUBSCRIPTIONS =====
-async function loadSubs(){
-    document.getElementById('subList').innerHTML='<div class="loading"><span class="spinner"></span>Loading...</div>';
-    try{
-        const data=await apiFetch('/api/customer/subscriptions');
-        if(!data||!data.length){
-            document.getElementById('subList').innerHTML='<div class="empty"><i class="fas fa-box-open"></i><div class="empty-t">No subscriptions</div><div class="empty-s">Contact us to subscribe to a plan</div></div>';
-            return;
-        }
-        document.getElementById('subList').innerHTML=data.map(subCard).join('');
-    }catch(e){document.getElementById('subList').innerHTML='<div class="empty"><i class="fas fa-exclamation"></i><div class="empty-t">Failed to load</div></div>';}
-}
-
-function subCard(s){
-    const total=(s.delivered_count||0)+(s.pending_count||0)+(s.skipped_count||0);
-    const pct=total>0?Math.round((s.delivered_count/total)*100):0;
-    const sbadge={active:'<span class="badge bg">● Active</span>',paused:'<span class="badge ba">⏸ Paused</span>',cancelled:'<span class="badge br">✕ Cancelled</span>',completed:'<span class="badge bb">✓ Completed</span>'}[s.order_status]||'<span class="badge bgr">—</span>';
-    const dietIco={pure_veg:'🟢',non_veg:'🔴',mixed:'🟡'}[s.diet_type]||'🍽️';
-    const mealTypes=s.meal_types?s.meal_types.split(',').map(m=>cap(m.trim())).join(' + '):'—';
-    const balance=(s.total_amount||0)-(s.paid_amount||0);
-    const canAct=['active','paused'].includes(s.order_status);
-    return `<div class="sub-card">
-     <div class="sub-top">
-      <div>
-       <div class="sub-name">${s.plan_name||'Subscription'}</div>
-       <div class="sub-meta">
-        <span>${dietIco} ${(s.diet_type||'').replace('_',' ')}</span>
-        <span><i class="fas fa-utensils" style="font-size:9px"></i> ${mealTypes}</span>
-        <span><i class="fas fa-calendar" style="font-size:9px"></i> ${s.start_date} → ${s.end_date}</span>
-        ${s.kitchen_name?`<span><i class="fas fa-store" style="font-size:9px"></i> ${s.kitchen_name}</span>`:''}
-       </div>
-       ${balance>0?`<div style="margin-top:7px;font-size:11.5px;color:var(--red);font-weight:600;"><i class="fas fa-exclamation-circle"></i> Balance due: ₹${balance}</div>`:''}
-       ${s.order_status==='paused'?`<div style="margin-top:5px;font-size:11px;color:var(--amber);"><i class="fas fa-pause-circle"></i> Paused: ${s.pause_start} → ${s.pause_end}</div>`:''}
-      </div>
-      ${sbadge}
-     </div>
-     <div class="sub-prog">
-      <div class="prog-lbl"><span>${s.delivered_count||0} delivered</span><span>${s.pending_count||0} remaining · ${s.skipped_count||0} skipped</span></div>
-      <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
-     </div>
-     ${canAct?`<div class="sub-acts">
-      <button class="btn btn-a btn-sm" onclick="openPause(${s.id})"><i class="fas fa-pause"></i> Pause</button>
-      <button class="btn btn-r btn-sm" onclick="openCancel(${s.id})"><i class="fas fa-times"></i> Cancel</button>
-      <span class="no-refund-note">No refund on cancellation</span>
-     </div>`:''}
-    </div>`;
-}
-
-// ===== HISTORY =====
-async function loadHistory(){
-    document.getElementById('histList').innerHTML='<div class="loading"><span class="spinner"></span>Loading...</div>';
-    try{
-        const data=await apiFetch('/api/customer/delivery-history');
-        if(!data||!data.length){document.getElementById('histList').innerHTML='<div class="empty"><i class="fas fa-history"></i><div class="empty-t">No history yet</div></div>';return;}
-        const sb=s=>({delivered:'<span class="badge bg">✓</span>',skipped:'<span class="badge bgr">—</span>',pending:'<span class="badge ba">⏳</span>'}[s]||'');
-        document.getElementById('histList').innerHTML=data.map(d=>`
-         <div class="hist-row">
-          <div class="hist-date">${fmtShort(d.delivery_date)}</div>
-          <div class="hist-info">
-           <div class="hist-meal">${cap(d.meal_type)}</div>
-           <div class="hist-item">${d.meal_item_name||d.plan_name||'—'}</div>
-          </div>
-          ${sb(d.status)}
-         </div>`).join('');
-    }catch(e){document.getElementById('histList').innerHTML='<p style="color:var(--muted)">Failed to load</p>';}
-}
-
-// ===== PROFILE =====
-async function saveProfile(){
-    const body={name:v('pName'),phone:v('pPhone'),address:v('pAddr'),alternate_address:v('pAlt'),diet_preference:v('pDiet'),allergies:v('pAllergies'),health_notes:v('pHealth')};
-    try{
-        const r=await fetch('/api/customer/profile',{method:'PUT',headers:ah(),body:JSON.stringify(body)});
-        const d=await r.json();
-        if(r.ok){
-            showSuc('profOk','✅ Profile saved!');
-            user.name=body.name;
-            document.getElementById('navNm').textContent=body.name.split(' ')[0];
-            document.getElementById('navAv').textContent=body.name.charAt(0).toUpperCase();
-        } else showAlert2('profErr',d.error||'Error');
-    }catch(e){showAlert2('profErr','Connection error');}
-}
-
-// ===== SKIP =====
-function openSkip(id,meal,date){
-    document.getElementById('skipId').value=id;
-    document.getElementById('skipModalSub').textContent=`${cap(meal)} on ${fmtDateLabel(date)}`;
-    document.getElementById('skipReason').value='';
-    openModal('skipModal');
-}
-async function doSkip(){
-    const id=document.getElementById('skipId').value;
-    const reason=v('skipReason');
-    try{
-        const r=await fetch(`/api/customer/skip-meal/${id}`,{method:'POST',headers:ah(),body:JSON.stringify({reason})});
-        const d=await r.json();
-        if(r.ok){
-            closeModal('skipModal');
-            showAlert2('calAlert',d.message);
-            loadHomeData();loadCalendar();
-        } else alert(d.error||'Error');
-    }catch(e){alert('Error');}
-}
-
-// ===== PAUSE =====
-function openPause(id){
-    document.getElementById('pauseOrdId').value=id;
-    document.getElementById('pauseErr').style.display='none';
-    const t=new Date();t.setDate(t.getDate()+1);
-    const t2=new Date();t2.setDate(t2.getDate()+7);
-    document.getElementById('pauseFrom').value=t.toISOString().split('T')[0];
-    document.getElementById('pauseTo').value=t2.toISOString().split('T')[0];
-    openModal('pauseModal');
-}
-async function doPause(){
-    const id=document.getElementById('pauseOrdId').value;
-    const pause_start=v('pauseFrom'),pause_end=v('pauseTo');
-    if(!pause_start||!pause_end){showAlert2('pauseErr','Select both dates');return;}
-    if(new Date(pause_end)<=new Date(pause_start)){showAlert2('pauseErr','End must be after start');return;}
-    try{
-        const r=await fetch(`/api/customer/pause-subscription/${id}`,{method:'POST',headers:ah(),body:JSON.stringify({pause_start,pause_end})});
-        const d=await r.json();
-        if(r.ok){closeModal('pauseModal');showSuc('subOk',d.message);loadSubs();}
-        else showAlert2('pauseErr',d.error||'Error');
-    }catch(e){showAlert2('pauseErr','Error');}
-}
-
-// ===== CANCEL =====
-function openCancel(id){document.getElementById('cancelOrdId').value=id;openModal('cancelModal');}
-async function doCancel(){
-    const id=document.getElementById('cancelOrdId').value;
-    try{
-        const r=await fetch(`/api/customer/cancel-subscription/${id}`,{method:'POST',headers:ah()});
-        const d=await r.json();
-        if(r.ok){closeModal('cancelModal');showSuc('subOk',d.message);loadSubs();}
-        else alert(d.error||'Error');
-    }catch(e){alert('Error');}
-}
-
-// ===== MODAL HELPERS =====
-function openModal(id){document.getElementById(id).classList.add('show');}
-function closeModal(id){document.getElementById(id).classList.remove('show');}
-document.querySelectorAll('.modal-bg').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('show');}));
-
-// ===== UTILS =====
-const ah=()=>({'Content-Type':'application/json','Authorization':'Bearer '+token});
-const v=id=>document.getElementById(id)?.value||'';
-const cap=s=>s?s.charAt(0).toUpperCase()+s.slice(1):s;
-const hide=id=>document.getElementById(id).style.display='none';
-function showErr(id,msg){const el=document.getElementById(id);el.textContent=msg;el.style.display='block';}
-function showSuc(id,msg){const el=document.getElementById(id);el.textContent=msg;el.style.display='block';setTimeout(()=>el.style.display='none',5000);}
-function showAlert2(id,msg){const el=document.getElementById(id);if(!el)return;el.textContent=msg;el.style.display='block';setTimeout(()=>el.style.display='none',5000);}
-
-async function apiFetch(url){
-    const r=await fetch(url,{headers:ah()});
-    return r.json();
-}
-async function post(url,body){
-    const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    return r.json();
-}
-
-function fmtDateLabel(ds){
-    const d=new Date(ds+'T12:00:00');
-    const t=new Date();t.setHours(0,0,0,0);
-    const tm=new Date(t);tm.setDate(t.getDate()+1);
-    if(d.toDateString()===t.toDateString()) return '📍 Today';
-    if(d.toDateString()===tm.toDateString()) return '⭐ Tomorrow';
-    return d.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'short'});
-}
-function fmtShort(ds){return new Date(ds+'T12:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'});}
-
-// ===== INIT =====
-window.addEventListener('load',()=>{
-    const t=sessionStorage.getItem('cTok');
-    if(t){
-        token=t;
-        user=JSON.parse(sessionStorage.getItem('cUser')||'{}');
-        profile=JSON.parse(sessionStorage.getItem('cProf')||'null');
-        showApp();
-    }
+window.addEventListener("load",()=>{
+  const t=sessionStorage.getItem("cToken");
+  if(t){token=t;showApp();}
 });
-document.getElementById('lPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+
+async function doLogin(){
+  const phone=document.getElementById("lPhone").value.trim();
+  const pwd=document.getElementById("lPass").value;
+  const err=document.getElementById("loginErr");
+  err.style.display="none";
+  if(!phone||!pwd){err.textContent="Enter phone/email and password";err.style.display="block";return;}
+  try{
+    const r=await fetch(`${API}/auth/login`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:phone,password:pwd})});
+    const d=await r.json();
+    if(d.error){err.textContent=d.error;err.style.display="block";return;}
+    if(d.user.authority!=="customer"){err.textContent="Customer access only";err.style.display="block";return;}
+    token=d.token;
+    sessionStorage.setItem("cToken",token);
+    showApp();
+  }catch(e){err.textContent="Connection error";err.style.display="block";}
+}
+function doLogout(){sessionStorage.removeItem("cToken");location.reload();}
+
+async function showApp(){
+  document.getElementById("loginPage").style.display="none";
+  document.getElementById("app").classList.add("show");
+  await loadProfile();
+  loadHome();
+}
+
+function switchTab(name,idx){
+  document.querySelectorAll(".tab-panel").forEach(p=>p.classList.remove("active"));
+  document.getElementById("tab-"+name).classList.add("active");
+  document.querySelectorAll(".nav-tab").forEach((t,i)=>t.classList.toggle("active",i===idx));
+  if(name==="deliveries")loadDeliveries();
+  if(name==="subscription")loadSubscriptions();
+}
+
+function ah(){return{"Content-Type":"application/json","Authorization":"Bearer "+token};}
+async function api(url,opts={}){opts.headers={...ah(),...(opts.headers||{})};const r=await fetch(url,opts);return r.json();}
+
+function showToast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),3000);}
+
+// Profile completion calc
+function calcCompletion(p){
+  const fields=["name","phone","alternate_phone","email","address","address_2","city","google_location_1","height","weight","health_conditions","allergy_info","delivery_instructions","diet_goal","diet_preference"];
+  const filled=fields.filter(f=>p[f]&&String(p[f]).trim()).length;
+  return Math.round(filled/fields.length*100);
+}
+
+async function loadProfile(){
+  try{
+    const d=await api(`${API}/customer/profile`);
+    if(d.error)return;
+    profile=d;
+    customerId=d.id;
+    const hour=new Date().getHours();
+    const greet=hour<12?"Good morning":"hour<17?"Good afternoon":"Good evening";
+    document.getElementById("hdrGreeting").textContent=`${hour<12?"Good morning":hour<17?"Good afternoon":"Good evening"}, ${d.name?.split(" ")[0]||"there"}! 👋`;
+    const pct=calcCompletion(d);
+    document.getElementById("pbPct").textContent=pct+"%";
+    document.getElementById("pbFill").style.width=pct+"%";
+    // Fill profile form
+    setVal("pfName",d.name);setVal("pfPhone",d.phone);setVal("pfAltPhone",d.alternate_phone);
+    setVal("pfEmail",d.email);setVal("pfAddr",d.address);setVal("pfAddr2",d.address_2);
+    setVal("pfCity",d.city);setVal("pfHeight",d.height);setVal("pfWeight",d.weight);
+    setVal("pfInstructions",d.delivery_instructions);setVal("pfDietGoal",d.diet_goal);
+    document.getElementById("pfDiet").value=d.diet_preference||"non_veg";
+    // Diet chips
+    document.querySelectorAll("[data-d]").forEach(c=>c.classList.toggle("on",c.dataset.d===(d.diet_preference||"non_veg")));
+    // Health chips
+    const hcs=(d.health_conditions||"").split(",");
+    document.querySelectorAll("[data-h]").forEach(c=>c.classList.toggle("on",hcs.includes(c.dataset.h)));
+    // Allergy chips
+    const algs=(d.allergy_info||"").split(",");
+    document.querySelectorAll("[data-a]").forEach(c=>c.classList.toggle("on",algs.includes(c.dataset.a)));
+  }catch(e){}
+}
+
+function setVal(id,v){const el=document.getElementById(id);if(el&&v!=null)el.value=v;}
+function toggleChip(el){el.classList.toggle("on");}
+function selectDietChip(el){document.querySelectorAll("[data-d]").forEach(c=>c.classList.remove("on"));el.classList.add("on");document.getElementById("pfDiet").value=el.dataset.d;}
+
+async function saveProfile(){
+  const hcs=Array.from(document.querySelectorAll("[data-h].on")).map(c=>c.dataset.h).join(",");
+  const algs=Array.from(document.querySelectorAll("[data-a].on")).map(c=>c.dataset.a).join(",");
+  const body={
+    name:document.getElementById("pfName").value,
+    phone:document.getElementById("pfPhone").value,
+    alternate_phone:document.getElementById("pfAltPhone").value||null,
+    email:document.getElementById("pfEmail").value||null,
+    address:document.getElementById("pfAddr").value||null,
+    address_2:document.getElementById("pfAddr2").value||null,
+    city:document.getElementById("pfCity").value||null,
+    delivery_instructions:document.getElementById("pfInstructions").value||null,
+    height:document.getElementById("pfHeight").value||null,
+    weight:document.getElementById("pfWeight").value||null,
+    health_conditions:hcs||null,
+    allergy_info:algs||null,
+    diet_preference:document.getElementById("pfDiet").value,
+    diet_goal:document.getElementById("pfDietGoal").value||null,
+  };
+  const d=await api(`${API}/customer/profile/full`,{method:"PUT",body:JSON.stringify(body)});
+  if(d.error){showToast("❌ "+d.error);return;}
+  showToast("✅ Profile saved!");
+  await loadProfile();
+}
+
+async function loadHome(){
+  // Today & tomorrow meals
+  try{
+    const d=await api(`${API}/customer/upcoming-meals`);
+    renderTodayCards(d||[]);
+  }catch(e){document.getElementById("todayCards").innerHTML="<div style='color:var(--muted);font-size:13px;'>No upcoming meals</div>";}
+  // Delivery boy
+  try{
+    const d=await api(`${API}/customer/my-delivery-boy`);
+    renderDbCard(d);
+  }catch(e){}
+}
+
+function renderTodayCards(meals){
+  const container=document.getElementById("todayCards");
+  if(!meals.length){container.innerHTML="<div class='empty'><i class='fas fa-calendar-check'></i><p>No deliveries today or tomorrow</p></div>";return;}
+  const today=new Date().toISOString().split("T")[0];
+  container.innerHTML=meals.map(m=>{
+    const isToday=m.delivery_date?.toString().split("T")[0]===today;
+    const img=m.image_base64?`<img src="${m.image_base64}" class="meal-tile-img" alt="">`:`<div class="meal-tile-img-placeholder">🍽️</div>`;
+    const dietDot=m.is_veg_customer?'<span style="color:var(--g);font-size:10px;font-weight:700;">🟢 Veg</span>':'<span style="color:var(--red);font-size:10px;font-weight:700;">🔴 Non-Veg</span>';
+    const statusBadge=m.status==="skipped"?'<span class="badge br">Skipped</span>':m.status==="delivered"?'<span class="badge bg">Delivered</span>':"";
+    return`<div class="meal-tile" onclick="showItemDetail(${JSON.stringify(m).replace(/'/g,"")})">
+      ${img}
+      <div class="meal-tile-body">
+        <div class="meal-tile-day">${isToday?"TODAY":"TOMORROW"} · ${(m.meal_type||"lunch").toUpperCase()}</div>
+        <div class="meal-tile-name">${m.meal_item_name||"Menu TBA"}</div>
+        <div class="meal-tile-cal">${m.calories?m.calories+" kcal":""}</div>
+        <div class="meal-tile-status">${dietDot} ${statusBadge}</div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function renderDbCard(db){
+  const sec=document.getElementById("dbSection");
+  if(!db){sec.innerHTML=`<div class="db-card"><div style="color:var(--muted);font-size:13px;"><i class="fas fa-user-slash" style="margin-right:8px;"></i>No delivery boy assigned for today</div></div>`;return;}
+  const photo=db.photo_base64?`<img src="${db.photo_base64}">`:(db.name?.charAt(0)||"D");
+  const vIcon={bike:"🏍️",cycle:"🚴",auto:"🛺",walk:"🚶"}[db.vehicle_type]||"🏍️";
+  const statusBadge=db.status==="delivered"?'<span class="badge bg" style="font-size:10px">Delivered</span>':db.status==="pending"?'<span class="badge ba" style="font-size:10px">On the way</span>':"";
+  sec.innerHTML=`<div class="db-card">
+    <div class="db-photo">${photo}</div>
+    <div style="flex:1;">
+      <div class="db-name">${db.name||"—"}</div>
+      <div class="db-meta">${vIcon} Delivery Boy &nbsp;·&nbsp; ${statusBadge}</div>
+    </div>
+    ${db.phone?`<div class="db-call"><a href="tel:${db.phone}"><i class="fas fa-phone"></i></a><span style="font-size:10px;color:var(--muted)">Call</span></div>`:""}
+  </div>`;
+}
+
+function showItemDetail(meal){
+  const img=meal.image_base64?`<img src="${meal.image_base64}" class="item-modal-img" alt="">`:`<div class="item-modal-img-placeholder">🍽️</div>`;
+  const allergyTags=meal.allergy_info?meal.allergy_info.split(",").filter(Boolean).map(a=>`<span class="allergy-tag">${a.trim()}</span>`).join(""):"";
+  document.getElementById("itemModalContent").innerHTML=`
+    ${img}
+    <div class="item-modal-body">
+      <div class="item-modal-name">${meal.meal_item_name||"Menu Item"}</div>
+      ${meal.category_name?`<div style="font-size:12px;color:var(--muted);margin-bottom:10px;">📁 ${meal.category_name}</div>`:""}
+      ${meal.description?`<div class="item-modal-desc">${meal.description}</div>`:""}
+      ${(meal.calories||meal.proteins||meal.carbs)?`<div class="nutrition-grid">
+        ${meal.calories?`<div class="nutr-box"><div class="nutr-val">${meal.calories}</div><div class="nutr-lbl">Calories</div></div>`:""}
+        ${meal.proteins?`<div class="nutr-box"><div class="nutr-val">${meal.proteins}g</div><div class="nutr-lbl">Protein</div></div>`:""}
+        ${meal.carbs?`<div class="nutr-box"><div class="nutr-val">${meal.carbs}g</div><div class="nutr-lbl">Carbs</div></div>`:""}
+        ${meal.fiber?`<div class="nutr-box"><div class="nutr-val">${meal.fiber}g</div><div class="nutr-lbl">Fiber</div></div>`:""}
+      </div>`:""}
+      ${allergyTags?`<div style="margin-bottom:12px;"><div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px;">CONTAINS</div><div class="allergy-tags">${allergyTags}</div></div>`:""}
+      ${meal.ingredients?`<div style="margin-bottom:16px;"><div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:4px;">INGREDIENTS</div><div style="font-size:12.5px;color:var(--mid);line-height:1.6;">${meal.ingredients}</div></div>`:""}
+      ${meal.status==="pending"?`<button style="width:100%;padding:11px;background:var(--rl);color:var(--red);border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;margin-bottom:10px;" onclick="skipMeal(${meal.id})">Skip This Delivery</button>`:""}
+      <button class="modal-close-btn" onclick="closeItemModal()">Close</button>
+    </div>`;
+  document.getElementById("itemModal").classList.add("show");
+}
+function closeItemModal(){document.getElementById("itemModal").classList.remove("show");}
+
+async function loadDeliveries(){
+  try{
+    const d=await api(`${API}/customer/calendar?month=${new Date().toISOString().slice(0,7)}`);
+    renderDeliveries(d||[]);
+  }catch(e){}
+}
+
+function renderDeliveries(deliveries){
+  const list=document.getElementById("deliveryList");
+  if(!deliveries.length){list.innerHTML=`<div class="empty"><i class="fas fa-calendar"></i><p>No deliveries scheduled</p></div>`;return;}
+  const today=new Date().toISOString().split("T")[0];
+  const pending=deliveries.filter(d=>d.status==="pending");
+  const delivered=deliveries.filter(d=>d.status==="delivered");
+  const skipped=deliveries.filter(d=>d.status==="skipped");
+  list.innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;">
+      <div style="background:white;border-radius:10px;border:1px solid var(--border);padding:12px;text-align:center;"><div style="font-size:20px;font-weight:800;color:var(--blue)">${pending.length}</div><div style="font-size:10.5px;color:var(--muted);font-weight:600;text-transform:uppercase;">Pending</div></div>
+      <div style="background:white;border-radius:10px;border:1px solid var(--border);padding:12px;text-align:center;"><div style="font-size:20px;font-weight:800;color:var(--gd)">${delivered.length}</div><div style="font-size:10.5px;color:var(--muted);font-weight:600;text-transform:uppercase;">Delivered</div></div>
+      <div style="background:white;border-radius:10px;border:1px solid var(--border);padding:12px;text-align:center;"><div style="font-size:20px;font-weight:800;color:var(--red)">${skipped.length}</div><div style="font-size:10.5px;color:var(--muted);font-weight:600;text-transform:uppercase;">Skipped</div></div>
+    </div>
+    ${deliveries.slice(0,30).map(d=>{
+      const isToday=d.delivery_date?.toString().split("T")[0]===today;
+      const sIcon={delivered:"✅",skipped:"⏭️",pending:"🔵"}[d.status]||"🔵";
+      const diet=d.is_veg_customer?"🟢":"🔴";
+      return`<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:white;border-radius:10px;border:1px solid var(--border);margin-bottom:8px;${isToday?"border-color:var(--g);border-width:2px":""}" onclick="showItemDetail(${JSON.stringify(d).replace(/'/g,"")})">
+        <div style="font-size:10.5px;color:var(--muted);min-width:44px;text-align:center;font-weight:700;">${String(d.delivery_date).split("T")[0].slice(5)}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.meal_item_name||"TBA"}</div>
+          <div style="font-size:11px;color:var(--muted);">${diet} ${d.meal_type||"lunch"} ${isToday?"· <strong style='color:var(--gd)'>TODAY</strong>":""}</div>
+        </div>
+        <div>${sIcon}</div>
+      </div>`;
+    }).join("")}`;
+}
+
+async function loadSubscriptions(){
+  try{
+    const d=await api(`${API}/customer/subscriptions`);
+    renderSubscriptions(d||[]);
+  }catch(e){}
+}
+
+function renderSubscriptions(subs){
+  const area=document.getElementById("subArea");
+  if(!subs.length){area.innerHTML=`<div class="empty"><i class="fas fa-box-open"></i><p>No active subscriptions</p><p style="font-size:12px;margin-top:6px;">Contact us to start your meal plan</p></div>`;return;}
+  area.innerHTML=subs.map(s=>{
+    const total=(s.delivered_count||0)+(s.pending_count||0)+(s.skipped_count||0);
+    const pct=total?Math.round((s.delivered_count||0)/total*100):0;
+    const statusColor={active:"var(--g)",completed:"var(--blue)",cancelled:"var(--red)",paused:"var(--amber)"}[s.order_status]||"var(--muted)";
+    return`<div class="sub-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div class="sub-name">${s.plan_name||"Subscription"}</div>
+        <span style="font-size:11px;font-weight:700;color:${statusColor};text-transform:uppercase;">${s.order_status}</span>
+      </div>
+      <div class="sub-progress">
+        <div class="sub-prog-row"><span class="sub-prog-label">Progress</span><span class="sub-prog-val">${pct}%</span></div>
+        <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="sub-stats">
+        <div class="sub-stat"><div class="sub-stat-val" style="color:var(--gd)">${s.delivered_count||0}</div><div class="sub-stat-lbl">Done</div></div>
+        <div class="sub-stat"><div class="sub-stat-val" style="color:var(--amber)">${s.pending_count||0}</div><div class="sub-stat-lbl">Left</div></div>
+        <div class="sub-stat"><div class="sub-stat-val" style="color:var(--red)">${s.skipped_count||0}</div><div class="sub-stat-lbl">Skipped</div></div>
+      </div>
+      ${s.order_status==="active"?`<div class="action-row">
+        <button class="action-btn act-skip" onclick="skipTodayPrompt(${s.id})">⏭️ Skip Today</button>
+        <button class="action-btn act-pause" onclick="pausePrompt(${s.id})">⏸️ Pause</button>
+        <button class="action-btn act-cancel" onclick="cancelPrompt(${s.id})">✕ Cancel</button>
+      </div>`:""}
+    </div>`;
+  }).join("");
+}
+
+async function skipMeal(deliveryId){
+  if(!confirm("Skip this delivery? Your subscription will be extended by 1 day. No refund."))return;
+  const d=await api(`${API}/customer/skip-meal/${deliveryId}`,{method:"POST",body:JSON.stringify({reason:"Customer request"})});
+  if(d.error){showToast("❌ "+d.error);return;}
+  showToast("✅ Skipped! Subscription extended by 1 day.");
+  closeItemModal();loadHome();loadDeliveries();
+}
+
+async function skipTodayPrompt(orderId){
+  const today=new Date().toISOString().split("T")[0];
+  const dels=await api(`${API}/customer/calendar?month=${today.slice(0,7)}`);
+  const todayDel=dels.find(d=>d.delivery_date?.toString().split("T")[0]===today&&d.status==="pending");
+  if(!todayDel){showToast("No pending delivery today to skip");return;}
+  skipMeal(todayDel.id);
+}
+
+async function pausePrompt(orderId){
+  const start=prompt("Pause start date (YYYY-MM-DD):");
+  if(!start)return;
+  const end=prompt("Pause end date (YYYY-MM-DD):");
+  if(!end)return;
+  const d=await api(`${API}/customer/pause-subscription/${orderId}`,{method:"POST",body:JSON.stringify({pause_start:start,pause_end:end})});
+  if(d.error){showToast("❌ "+d.error);return;}
+  showToast("✅ Subscription paused. No refund for paused days.");
+  loadSubscriptions();
+}
+
+async function cancelPrompt(orderId){
+  if(!confirm("Cancel subscription? This cannot be undone. No refund."))return;
+  const d=await api(`${API}/customer/cancel-subscription/${orderId}`,{method:"POST"});
+  if(d.error){showToast("❌ "+d.error);return;}
+  showToast("Subscription cancelled.");
+  loadSubscriptions();
+}
 </script>
 </body>
 </html>

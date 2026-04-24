@@ -101,12 +101,17 @@ async function initDB() {
     )`)
     await db.query(`CREATE TABLE IF NOT EXISTS customers (
         id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id),
-        name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, phone TEXT,
-        address TEXT, alternate_address TEXT, territory_id INTEGER,
-        delivery_boy_id INTEGER,
+        name TEXT NOT NULL, phone TEXT NOT NULL,
+        alternate_phone TEXT, email TEXT,
+        address TEXT, address_2 TEXT, city TEXT,
+        google_location_1 TEXT, google_location_2 TEXT,
+        territory_id INTEGER, delivery_boy_id INTEGER,
         delivery_sequence INTEGER DEFAULT 0,
-        allergies TEXT, health_notes TEXT,
+        height DECIMAL(5,2), weight DECIMAL(5,2),
+        health_conditions TEXT, allergy_info TEXT,
+        delivery_instructions TEXT, diet_goal TEXT,
         diet_preference TEXT DEFAULT 'non_veg',
+        allergies TEXT, health_notes TEXT,
         status TEXT DEFAULT 'active', created_at TIMESTAMPTZ DEFAULT NOW()
     )`);
     await db.query(`CREATE TABLE IF NOT EXISTS orders (
@@ -174,6 +179,19 @@ async function initDB() {
         `ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS delivery_boy_id INTEGER`,
         `ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS delivery_sequence INTEGER DEFAULT 0`,
         `ALTER TABLE users ADD COLUMN IF NOT EXISTS kitchen_id INTEGER`,
+        `ALTER TABLE customers ADD COLUMN IF NOT EXISTS alternate_phone TEXT`,
+        `ALTER TABLE customers ADD COLUMN IF NOT EXISTS address_2 TEXT`,
+        `ALTER TABLE customers ADD COLUMN IF NOT EXISTS city TEXT`,
+        `ALTER TABLE customers ADD COLUMN IF NOT EXISTS google_location_1 TEXT`,
+        `ALTER TABLE customers ADD COLUMN IF NOT EXISTS google_location_2 TEXT`,
+        `ALTER TABLE customers ADD COLUMN IF NOT EXISTS height DECIMAL(5,2)`,
+        `ALTER TABLE customers ADD COLUMN IF NOT EXISTS weight DECIMAL(5,2)`,
+        `ALTER TABLE customers ADD COLUMN IF NOT EXISTS health_conditions TEXT`,
+        `ALTER TABLE customers ADD COLUMN IF NOT EXISTS delivery_instructions TEXT`,
+        `ALTER TABLE customers ADD COLUMN IF NOT EXISTS diet_goal TEXT`,
+        `ALTER TABLE customers ADD COLUMN IF NOT EXISTS allergy_info TEXT`,
+        `ALTER TABLE customers ALTER COLUMN email DROP NOT NULL`,
+        `ALTER TABLE customers ALTER COLUMN phone SET NOT NULL`,
         `CREATE TABLE IF NOT EXISTS delivery_boys (id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id), kitchen_id INTEGER REFERENCES kitchens(id), territory_id INTEGER REFERENCES territories(id), name TEXT NOT NULL, phone TEXT, email TEXT, photo_base64 TEXT, vehicle_type TEXT DEFAULT 'bike', status TEXT DEFAULT 'active', created_at TIMESTAMPTZ DEFAULT NOW())`,
     ];
     for (const sql of alters) { try { await db.query(sql); } catch(e) {} }
@@ -191,6 +209,20 @@ async function initDB() {
         const h = bcrypt.hashSync('kitchen123', 10);
         await db.query(`INSERT INTO users (name,email,password,authority) VALUES ($1,$2,$3,'kitchen_manager')`,
             ['Kitchen Manager', 'kitchen@test.com', h]);
+    }
+    // Seed sales manager
+    const sm = await db.one(`SELECT id FROM users WHERE email=$1`, ['sales@test.com']);
+    if (!sm) {
+        const h = bcrypt.hashSync('sales123', 10);
+        await db.query(`INSERT INTO users (name,email,password,phone,authority) VALUES ($1,$2,$3,$4,'sales_manager')`,
+            ['Sales Manager', 'sales@test.com', h, '9000000002']);
+    }
+    // Seed kitchen manager
+    const km = await db.one(`SELECT id FROM users WHERE email=$1`, ['km@test.com']);
+    if (!km) {
+        const h = bcrypt.hashSync('km123', 10);
+        await db.query(`INSERT INTO users (name,email,password,phone,authority) VALUES ($1,$2,$3,$4,'kitchen_manager')`,
+            ['Kitchen Manager', 'km@test.com', h, '9000000003']);
     }
     // Seed demo delivery boy
     const dbu = await db.one(`SELECT id FROM users WHERE email=$1`, ['delivery@test.com']);
@@ -280,6 +312,12 @@ function reqKitchen(req, res, next) {
     next();
 }
 
+function reqSales(req, res, next) {
+    if (!['sales_manager','super_admin','admin'].includes(req.user.authority))
+        return res.status(403).json({ error: 'Access denied' });
+    next();
+}
+
 function reqDelivery(req, res, next) {
     if (!['delivery_boy','kitchen_manager','super_admin','admin'].includes(req.user.authority))
         return res.status(403).json({ error: 'Access denied' });
@@ -292,7 +330,8 @@ app.post('/api/auth/login', async (req, res) => {
     try {
         const { email, password } = req.body;
         if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
-        const user = await db.one(`SELECT * FROM users WHERE email=$1`, [email]);
+        // Support login by phone OR email
+        const user = await db.one(`SELECT * FROM users WHERE email=$1 OR phone=$1`, [email]);
         if (!user || !bcrypt.compareSync(password, user.password))
             return res.status(401).json({ error: 'Invalid credentials' });
         const token = jwt.sign(
@@ -315,6 +354,7 @@ app.post('/api/auth/login', async (req, res) => {
             kitchen_manager: '/kitchen',
             kitchen_staff: '/kitchen',
             delivery_boy: '/delivery',
+            sales_manager: '/sales',
         };
 
         res.json({
@@ -355,9 +395,20 @@ app.get('/api/customer/profile', verifyToken, reqCust, async (req, res) => {
 
 app.put('/api/customer/profile', verifyToken, reqCust, async (req, res) => {
     try {
-        const { name, phone, address, alternate_address, allergies, health_notes, diet_preference } = req.body;
-        await db.query(`UPDATE customers SET name=$1,phone=$2,address=$3,alternate_address=$4,allergies=$5,health_notes=$6,diet_preference=$7 WHERE user_id=$8`,
-            [name, phone, address, alternate_address, allergies, health_notes, diet_preference, req.user.id]);
+        const { name, phone, alternate_phone, email, address, address_2, city,
+            google_location_1, google_location_2, height, weight,
+            health_conditions, allergy_info, delivery_instructions, diet_goal,
+            diet_preference, allergies, health_notes } = req.body;
+        await db.query(`UPDATE customers SET name=$1,phone=$2,alternate_phone=$3,email=$4,
+            address=$5,address_2=$6,city=$7,google_location_1=$8,google_location_2=$9,
+            height=$10,weight=$11,health_conditions=$12,allergy_info=$13,
+            delivery_instructions=$14,diet_goal=$15,diet_preference=$16,
+            allergies=$17,health_notes=$18 WHERE user_id=$19`,
+            [name,phone,alternate_phone||null,email||null,address||null,address_2||null,
+            city||null,google_location_1||null,google_location_2||null,
+            height||null,weight||null,health_conditions||null,allergy_info||null,
+            delivery_instructions||null,diet_goal||null,diet_preference||'non_veg',
+            allergies||null,health_notes||null,req.user.id]);
         await db.query(`UPDATE users SET name=$1,phone=$2 WHERE id=$3`, [name, phone, req.user.id]);
         res.json({ message: 'Updated' });
     } catch(e) { res.status(500).json({ error: e.message }); }
@@ -1246,6 +1297,232 @@ app.get('/api/kitchen/delivery-boys', verifyToken, reqKitchen, async (req, res) 
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
+
+// ==================== SALES MANAGER APIs ====================
+
+// Sales: get all customers with subscription status
+app.get('/api/sales/customers', verifyToken, reqSales, async (req, res) => {
+    try {
+        const { search } = req.query;
+        let q = `SELECT c.*,
+            t.name as territory_name,
+            db.name as delivery_boy_name, db.phone as delivery_boy_phone,
+            (SELECT COUNT(*)::int FROM orders WHERE customer_id=c.id) as total_orders,
+            (SELECT o.order_status FROM orders o WHERE o.customer_id=c.id ORDER BY o.created_at DESC LIMIT 1) as latest_status,
+            (SELECT p.name FROM orders o JOIN subscription_plans p ON o.plan_id=p.id WHERE o.customer_id=c.id ORDER BY o.created_at DESC LIMIT 1) as latest_plan
+            FROM customers c
+            LEFT JOIN territories t ON c.territory_id=t.id
+            LEFT JOIN delivery_boys db ON c.delivery_boy_id=db.id
+            WHERE c.status='active'`;
+        const params = [];
+        if (search) {
+            params.push(`%${search}%`);
+            q += ` AND (c.name ILIKE $1 OR c.phone ILIKE $1)`;
+        }
+        q += ' ORDER BY c.created_at DESC';
+        res.json(await db.all(q, params));
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Sales: create customer (phone mandatory)
+app.post('/api/sales/customers', verifyToken, reqSales, async (req, res) => {
+    try {
+        const { name, phone, alternate_phone, email, address, address_2, city, territory_id, diet_preference, delivery_instructions } = req.body;
+        if (!name || !phone) return res.status(400).json({ error: 'Name and phone are required' });
+        // Check phone not already used
+        const existing = await db.one(`SELECT id FROM customers WHERE phone=$1`, [phone]);
+        if (existing) return res.status(400).json({ error: 'A customer with this phone number already exists' });
+        const r = await db.one(`INSERT INTO customers (name,phone,alternate_phone,email,address,address_2,city,territory_id,diet_preference,delivery_instructions)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
+            [name,phone,alternate_phone||null,email||null,address||null,address_2||null,city||null,territory_id||null,diet_preference||'non_veg',delivery_instructions||null]);
+        res.status(201).json({ message: 'Customer created', customerId: r.id });
+    } catch(e) { res.status(400).json({ error: e.message }); }
+});
+
+// Sales: edit customer
+app.put('/api/sales/customers/:id', verifyToken, reqSales, async (req, res) => {
+    try {
+        const { name, phone, alternate_phone, email, address, address_2, city,
+            google_location_1, google_location_2, territory_id, diet_preference,
+            delivery_boy_id, delivery_instructions, height, weight,
+            health_conditions, allergy_info, diet_goal } = req.body;
+        await db.query(`UPDATE customers SET
+            name=COALESCE($1,name), phone=COALESCE($2,phone),
+            alternate_phone=$3, email=$4, address=$5, address_2=$6, city=$7,
+            google_location_1=$8, google_location_2=$9,
+            territory_id=COALESCE($10,territory_id),
+            diet_preference=COALESCE($11,diet_preference),
+            delivery_boy_id=$12, delivery_instructions=$13,
+            height=$14, weight=$15, health_conditions=$16,
+            allergy_info=$17, diet_goal=$18
+            WHERE id=$19`,
+            [name||null,phone||null,alternate_phone||null,email||null,
+            address||null,address_2||null,city||null,
+            google_location_1||null,google_location_2||null,
+            territory_id||null,diet_preference||null,
+            delivery_boy_id||null,delivery_instructions||null,
+            height||null,weight||null,health_conditions||null,
+            allergy_info||null,diet_goal||null,req.params.id]);
+        res.json({ message: 'Updated' });
+    } catch(e) { res.status(400).json({ error: e.message }); }
+});
+
+// Admin: edit customer (same fields)
+app.put('/api/admin/customers/:id', verifyToken, async (req, res) => {
+    try {
+        const { name, phone, alternate_phone, email, address, address_2, city,
+            territory_id, diet_preference, delivery_boy_id, delivery_instructions,
+            height, weight, health_conditions, allergy_info, diet_goal } = req.body;
+        await db.query(`UPDATE customers SET
+            name=COALESCE($1,name), phone=COALESCE($2,phone),
+            alternate_phone=$3, email=$4, address=$5, address_2=$6, city=$7,
+            territory_id=COALESCE($8,territory_id),
+            diet_preference=COALESCE($9,diet_preference),
+            delivery_boy_id=$10, delivery_instructions=$11,
+            height=$12, weight=$13, health_conditions=$14,
+            allergy_info=$15, diet_goal=$16
+            WHERE id=$17`,
+            [name||null,phone||null,alternate_phone||null,email||null,
+            address||null,address_2||null,city||null,
+            territory_id||null,diet_preference||null,
+            delivery_boy_id||null,delivery_instructions||null,
+            height||null,weight||null,health_conditions||null,
+            allergy_info||null,diet_goal||null,req.params.id]);
+        res.json({ message: 'Updated' });
+    } catch(e) { res.status(400).json({ error: e.message }); }
+});
+
+// Sales: get plans for sale
+app.get('/api/sales/plans', verifyToken, reqSales, async (req, res) => {
+    try {
+        res.json(await db.all(`SELECT sp.*, pm.name as menu_name FROM subscription_plans sp
+            LEFT JOIN plan_menus pm ON sp.plan_menu_id=pm.id
+            WHERE sp.status='active' ORDER BY sp.price`));
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Sales: create order (delegates to same logic)
+app.post('/api/sales/orders', verifyToken, reqSales, async (req, res) => {
+    req.url = '/api/admin/orders';
+    // Reuse admin order creation by forwarding
+    try {
+        const { customer_id, plan_id, kitchen_id, start_date, paid_amount, notes, menu_start_slot } = req.body;
+        if (!customer_id || !plan_id || !start_date)
+            return res.status(400).json({ error: 'Customer, plan and start date required' });
+        const plan = await db.one(`SELECT * FROM subscription_plans WHERE id=$1`, [plan_id]);
+        const customer = await db.one(`SELECT * FROM customers WHERE id=$1`, [customer_id]);
+        if (!plan || !customer) return res.status(404).json({ error: 'Plan or customer not found' });
+        const vegCustomer = isVegCustomer(customer.diet_preference);
+        const deliveryDays = (plan.delivery_days||'1,2,3,4,5,6').split(',').map(Number);
+        let allMenuSlots = [];
+        if (plan.plan_menu_id) allMenuSlots = await db.all(`SELECT * FROM plan_menu_slots WHERE plan_menu_id=$1 ORDER BY slot_number`, [plan.plan_menu_id]);
+        const planSlots = allMenuSlots.filter(s => deliveryDays.includes(s.weekday));
+        const startSlotNum = parseInt(menu_start_slot)||1;
+        let startIdx = 0;
+        if (planSlots.length) { const f = planSlots.findIndex(s=>s.slot_number>=startSlotNum); startIdx = f>=0?f:0; }
+        const mealTypes = plan.meal_types?plan.meal_types.split(',').map(s=>s.trim()):['lunch'];
+        const numDeliveries = plan.num_deliveries||24;
+        function genDatesForDays(startStr, count, allowed) {
+            const dates=[]; const d=new Date(startStr+'T12:00:00Z');
+            while(dates.length<count){const dow=d.getUTCDay();if(dow!==0&&allowed.includes(dow))dates.push(d.toISOString().split('T')[0]);d.setUTCDate(d.getUTCDate()+1);}
+            return dates;
+        }
+        const dates = genDatesForDays(start_date, numDeliveries, deliveryDays);
+        const end_date = dates[dates.length-1];
+        const ord = await db.one(`INSERT INTO orders (customer_id,plan_id,kitchen_id,start_date,end_date,menu_start_slot,total_amount,paid_amount,notes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
+            [customer_id,plan_id,kitchen_id||null,start_date,end_date,startSlotNum,plan.price,paid_amount||0,notes||'']);
+        for (let i=0;i<dates.length;i++) {
+            const ds=dates[i]; const slotIdx=(startIdx+i)%(planSlots.length||1);
+            const slot=planSlots.length>0?planSlots[slotIdx]:null;
+            for (const mt of mealTypes) {
+                let mealItemId=null;
+                if(slot) mealItemId=pickItemForCustomer(slot,customer.diet_preference);
+                await db.query(`INSERT INTO deliveries (order_id,customer_id,kitchen_id,delivery_date,meal_type,slot_number,meal_item_id,is_veg_customer,status,is_sunday_skip) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending',0)`,
+                    [ord.id,customer_id,kitchen_id||null,ds,mt,slot?.slot_number||null,mealItemId,vegCustomer?1:0]);
+            }
+        }
+        res.status(201).json({ message:'Order created', orderId:ord.id, deliveries:dates.length*mealTypes.length });
+    } catch(e) { console.error(e); res.status(400).json({ error: e.message }); }
+});
+
+// Sales: daily delivery status
+app.get('/api/sales/daily-status', verifyToken, reqSales, async (req, res) => {
+    try {
+        const { date } = req.query;
+        const targetDate = date || new Date().toISOString().split('T')[0];
+        const deliveries = await db.all(`
+            SELECT d.id, d.status, d.meal_type, d.is_veg_customer, d.delivery_sequence,
+                d.delivery_date,
+                c.name as customer_name, c.phone as customer_phone, c.address,
+                db.name as delivery_boy_name, db.phone as delivery_boy_phone,
+                db.vehicle_type,
+                mi.name as meal_item_name,
+                k.name as kitchen_name,
+                p.name as plan_name
+            FROM deliveries d
+            LEFT JOIN customers c ON d.customer_id=c.id
+            LEFT JOIN delivery_boys db ON d.delivery_boy_id=db.id
+            LEFT JOIN meal_items mi ON d.meal_item_id=mi.id
+            LEFT JOIN kitchens k ON d.kitchen_id=k.id
+            LEFT JOIN orders o ON d.order_id=o.id
+            LEFT JOIN subscription_plans p ON o.plan_id=p.id
+            WHERE d.delivery_date=$1 AND d.is_sunday_skip=0
+            ORDER BY k.name, db.name, d.delivery_sequence
+        `, [targetDate]);
+        const total = deliveries.length;
+        const delivered = deliveries.filter(d=>d.status==='delivered').length;
+        const skipped = deliveries.filter(d=>d.status==='skipped').length;
+        const pending = deliveries.filter(d=>d.status==='pending').length;
+        res.json({ date: targetDate, deliveries, stats: { total, delivered, skipped, pending } });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Customer: update profile (full fields)
+app.put('/api/customer/profile/full', verifyToken, reqCust, async (req, res) => {
+    try {
+        const { name, phone, alternate_phone, email, address, address_2, city,
+            google_location_1, google_location_2, height, weight,
+            health_conditions, allergy_info, delivery_instructions, diet_goal, diet_preference } = req.body;
+        await db.query(`UPDATE customers SET name=$1,phone=$2,alternate_phone=$3,email=$4,
+            address=$5,address_2=$6,city=$7,google_location_1=$8,google_location_2=$9,
+            height=$10,weight=$11,health_conditions=$12,allergy_info=$13,
+            delivery_instructions=$14,diet_goal=$15,diet_preference=$16
+            WHERE user_id=$17`,
+            [name,phone,alternate_phone||null,email||null,address||null,address_2||null,
+            city||null,google_location_1||null,google_location_2||null,
+            height||null,weight||null,health_conditions||null,allergy_info||null,
+            delivery_instructions||null,diet_goal||null,diet_preference||'non_veg',req.user.id]);
+        await db.query(`UPDATE users SET name=$1,phone=$2,email=COALESCE($3,email) WHERE id=$4`,
+            [name,phone,email||null,req.user.id]);
+        res.json({ message: 'Profile updated' });
+    } catch(e) { res.status(400).json({ error: e.message }); }
+});
+
+// Customer: get today's delivery boy
+app.get('/api/customer/my-delivery-boy', verifyToken, reqCust, async (req, res) => {
+    try {
+        const c = await db.one(`SELECT * FROM customers WHERE user_id=$1`, [req.user.id]);
+        if (!c) return res.status(404).json({ error: 'Not found' });
+        const today = new Date().toISOString().split('T')[0];
+        const d = await db.one(`SELECT db.name, db.phone, db.photo_base64, db.vehicle_type,
+            del.status, del.delivery_sequence
+            FROM deliveries del
+            LEFT JOIN delivery_boys db ON del.delivery_boy_id=db.id
+            WHERE del.customer_id=$1 AND del.delivery_date=$2 AND del.is_sunday_skip=0
+            LIMIT 1`, [c.id, today]);
+        res.json(d || null);
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Fix: delivery boys API — include kitchen filter for admin dropdown
+app.get('/api/admin/delivery-boys-by-kitchen', verifyToken, async (req, res) => {
+    try {
+        const { kitchen_id } = req.query;
+        if (!kitchen_id) return res.json([]);
+        res.json(await db.all(`SELECT id,name,phone,vehicle_type FROM delivery_boys WHERE kitchen_id=$1 AND status='active' ORDER BY name`, [kitchen_id]));
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 app.get('/api/health', (req, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));
 
 // ==================== STATIC FILES ====================
@@ -1260,6 +1537,11 @@ app.get('/kitchen', (req, res) => {
     const f = path.join(__dirname, 'public', 'kitchen.html');
     if (fs.existsSync(f)) return res.sendFile(f);
     res.status(404).send('Kitchen portal not found');
+});
+app.get('/sales', (req, res) => {
+    const f = path.join(__dirname, 'public', 'sales.html');
+    if (fs.existsSync(f)) return res.sendFile(f);
+    res.status(404).send('Sales portal not found');
 });
 app.get('/delivery', (req, res) => {
     const f = path.join(__dirname, 'public', 'delivery.html');
@@ -1450,9 +1732,20 @@ app.get('/api/customer/profile', verifyToken, reqCust, async (req, res) => {
 
 app.put('/api/customer/profile', verifyToken, reqCust, async (req, res) => {
     try {
-        const { name, phone, address, alternate_address, allergies, health_notes, diet_preference } = req.body;
-        await db.query(`UPDATE customers SET name=$1,phone=$2,address=$3,alternate_address=$4,allergies=$5,health_notes=$6,diet_preference=$7 WHERE user_id=$8`,
-            [name, phone, address, alternate_address, allergies, health_notes, diet_preference, req.user.id]);
+        const { name, phone, alternate_phone, email, address, address_2, city,
+            google_location_1, google_location_2, height, weight,
+            health_conditions, allergy_info, delivery_instructions, diet_goal,
+            diet_preference, allergies, health_notes } = req.body;
+        await db.query(`UPDATE customers SET name=$1,phone=$2,alternate_phone=$3,email=$4,
+            address=$5,address_2=$6,city=$7,google_location_1=$8,google_location_2=$9,
+            height=$10,weight=$11,health_conditions=$12,allergy_info=$13,
+            delivery_instructions=$14,diet_goal=$15,diet_preference=$16,
+            allergies=$17,health_notes=$18 WHERE user_id=$19`,
+            [name,phone,alternate_phone||null,email||null,address||null,address_2||null,
+            city||null,google_location_1||null,google_location_2||null,
+            height||null,weight||null,health_conditions||null,allergy_info||null,
+            delivery_instructions||null,diet_goal||null,diet_preference||'non_veg',
+            allergies||null,health_notes||null,req.user.id]);
         await db.query(`UPDATE users SET name=$1,phone=$2 WHERE id=$3`, [name, phone, req.user.id]);
         res.json({ message: 'Updated' });
     } catch(e) { res.status(500).json({ error: e.message }); }
@@ -2341,6 +2634,232 @@ app.get('/api/kitchen/delivery-boys', verifyToken, reqKitchen, async (req, res) 
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
+
+// ==================== SALES MANAGER APIs ====================
+
+// Sales: get all customers with subscription status
+app.get('/api/sales/customers', verifyToken, reqSales, async (req, res) => {
+    try {
+        const { search } = req.query;
+        let q = `SELECT c.*,
+            t.name as territory_name,
+            db.name as delivery_boy_name, db.phone as delivery_boy_phone,
+            (SELECT COUNT(*)::int FROM orders WHERE customer_id=c.id) as total_orders,
+            (SELECT o.order_status FROM orders o WHERE o.customer_id=c.id ORDER BY o.created_at DESC LIMIT 1) as latest_status,
+            (SELECT p.name FROM orders o JOIN subscription_plans p ON o.plan_id=p.id WHERE o.customer_id=c.id ORDER BY o.created_at DESC LIMIT 1) as latest_plan
+            FROM customers c
+            LEFT JOIN territories t ON c.territory_id=t.id
+            LEFT JOIN delivery_boys db ON c.delivery_boy_id=db.id
+            WHERE c.status='active'`;
+        const params = [];
+        if (search) {
+            params.push(`%${search}%`);
+            q += ` AND (c.name ILIKE $1 OR c.phone ILIKE $1)`;
+        }
+        q += ' ORDER BY c.created_at DESC';
+        res.json(await db.all(q, params));
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Sales: create customer (phone mandatory)
+app.post('/api/sales/customers', verifyToken, reqSales, async (req, res) => {
+    try {
+        const { name, phone, alternate_phone, email, address, address_2, city, territory_id, diet_preference, delivery_instructions } = req.body;
+        if (!name || !phone) return res.status(400).json({ error: 'Name and phone are required' });
+        // Check phone not already used
+        const existing = await db.one(`SELECT id FROM customers WHERE phone=$1`, [phone]);
+        if (existing) return res.status(400).json({ error: 'A customer with this phone number already exists' });
+        const r = await db.one(`INSERT INTO customers (name,phone,alternate_phone,email,address,address_2,city,territory_id,diet_preference,delivery_instructions)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
+            [name,phone,alternate_phone||null,email||null,address||null,address_2||null,city||null,territory_id||null,diet_preference||'non_veg',delivery_instructions||null]);
+        res.status(201).json({ message: 'Customer created', customerId: r.id });
+    } catch(e) { res.status(400).json({ error: e.message }); }
+});
+
+// Sales: edit customer
+app.put('/api/sales/customers/:id', verifyToken, reqSales, async (req, res) => {
+    try {
+        const { name, phone, alternate_phone, email, address, address_2, city,
+            google_location_1, google_location_2, territory_id, diet_preference,
+            delivery_boy_id, delivery_instructions, height, weight,
+            health_conditions, allergy_info, diet_goal } = req.body;
+        await db.query(`UPDATE customers SET
+            name=COALESCE($1,name), phone=COALESCE($2,phone),
+            alternate_phone=$3, email=$4, address=$5, address_2=$6, city=$7,
+            google_location_1=$8, google_location_2=$9,
+            territory_id=COALESCE($10,territory_id),
+            diet_preference=COALESCE($11,diet_preference),
+            delivery_boy_id=$12, delivery_instructions=$13,
+            height=$14, weight=$15, health_conditions=$16,
+            allergy_info=$17, diet_goal=$18
+            WHERE id=$19`,
+            [name||null,phone||null,alternate_phone||null,email||null,
+            address||null,address_2||null,city||null,
+            google_location_1||null,google_location_2||null,
+            territory_id||null,diet_preference||null,
+            delivery_boy_id||null,delivery_instructions||null,
+            height||null,weight||null,health_conditions||null,
+            allergy_info||null,diet_goal||null,req.params.id]);
+        res.json({ message: 'Updated' });
+    } catch(e) { res.status(400).json({ error: e.message }); }
+});
+
+// Admin: edit customer (same fields)
+app.put('/api/admin/customers/:id', verifyToken, async (req, res) => {
+    try {
+        const { name, phone, alternate_phone, email, address, address_2, city,
+            territory_id, diet_preference, delivery_boy_id, delivery_instructions,
+            height, weight, health_conditions, allergy_info, diet_goal } = req.body;
+        await db.query(`UPDATE customers SET
+            name=COALESCE($1,name), phone=COALESCE($2,phone),
+            alternate_phone=$3, email=$4, address=$5, address_2=$6, city=$7,
+            territory_id=COALESCE($8,territory_id),
+            diet_preference=COALESCE($9,diet_preference),
+            delivery_boy_id=$10, delivery_instructions=$11,
+            height=$12, weight=$13, health_conditions=$14,
+            allergy_info=$15, diet_goal=$16
+            WHERE id=$17`,
+            [name||null,phone||null,alternate_phone||null,email||null,
+            address||null,address_2||null,city||null,
+            territory_id||null,diet_preference||null,
+            delivery_boy_id||null,delivery_instructions||null,
+            height||null,weight||null,health_conditions||null,
+            allergy_info||null,diet_goal||null,req.params.id]);
+        res.json({ message: 'Updated' });
+    } catch(e) { res.status(400).json({ error: e.message }); }
+});
+
+// Sales: get plans for sale
+app.get('/api/sales/plans', verifyToken, reqSales, async (req, res) => {
+    try {
+        res.json(await db.all(`SELECT sp.*, pm.name as menu_name FROM subscription_plans sp
+            LEFT JOIN plan_menus pm ON sp.plan_menu_id=pm.id
+            WHERE sp.status='active' ORDER BY sp.price`));
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Sales: create order (delegates to same logic)
+app.post('/api/sales/orders', verifyToken, reqSales, async (req, res) => {
+    req.url = '/api/admin/orders';
+    // Reuse admin order creation by forwarding
+    try {
+        const { customer_id, plan_id, kitchen_id, start_date, paid_amount, notes, menu_start_slot } = req.body;
+        if (!customer_id || !plan_id || !start_date)
+            return res.status(400).json({ error: 'Customer, plan and start date required' });
+        const plan = await db.one(`SELECT * FROM subscription_plans WHERE id=$1`, [plan_id]);
+        const customer = await db.one(`SELECT * FROM customers WHERE id=$1`, [customer_id]);
+        if (!plan || !customer) return res.status(404).json({ error: 'Plan or customer not found' });
+        const vegCustomer = isVegCustomer(customer.diet_preference);
+        const deliveryDays = (plan.delivery_days||'1,2,3,4,5,6').split(',').map(Number);
+        let allMenuSlots = [];
+        if (plan.plan_menu_id) allMenuSlots = await db.all(`SELECT * FROM plan_menu_slots WHERE plan_menu_id=$1 ORDER BY slot_number`, [plan.plan_menu_id]);
+        const planSlots = allMenuSlots.filter(s => deliveryDays.includes(s.weekday));
+        const startSlotNum = parseInt(menu_start_slot)||1;
+        let startIdx = 0;
+        if (planSlots.length) { const f = planSlots.findIndex(s=>s.slot_number>=startSlotNum); startIdx = f>=0?f:0; }
+        const mealTypes = plan.meal_types?plan.meal_types.split(',').map(s=>s.trim()):['lunch'];
+        const numDeliveries = plan.num_deliveries||24;
+        function genDatesForDays(startStr, count, allowed) {
+            const dates=[]; const d=new Date(startStr+'T12:00:00Z');
+            while(dates.length<count){const dow=d.getUTCDay();if(dow!==0&&allowed.includes(dow))dates.push(d.toISOString().split('T')[0]);d.setUTCDate(d.getUTCDate()+1);}
+            return dates;
+        }
+        const dates = genDatesForDays(start_date, numDeliveries, deliveryDays);
+        const end_date = dates[dates.length-1];
+        const ord = await db.one(`INSERT INTO orders (customer_id,plan_id,kitchen_id,start_date,end_date,menu_start_slot,total_amount,paid_amount,notes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
+            [customer_id,plan_id,kitchen_id||null,start_date,end_date,startSlotNum,plan.price,paid_amount||0,notes||'']);
+        for (let i=0;i<dates.length;i++) {
+            const ds=dates[i]; const slotIdx=(startIdx+i)%(planSlots.length||1);
+            const slot=planSlots.length>0?planSlots[slotIdx]:null;
+            for (const mt of mealTypes) {
+                let mealItemId=null;
+                if(slot) mealItemId=pickItemForCustomer(slot,customer.diet_preference);
+                await db.query(`INSERT INTO deliveries (order_id,customer_id,kitchen_id,delivery_date,meal_type,slot_number,meal_item_id,is_veg_customer,status,is_sunday_skip) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending',0)`,
+                    [ord.id,customer_id,kitchen_id||null,ds,mt,slot?.slot_number||null,mealItemId,vegCustomer?1:0]);
+            }
+        }
+        res.status(201).json({ message:'Order created', orderId:ord.id, deliveries:dates.length*mealTypes.length });
+    } catch(e) { console.error(e); res.status(400).json({ error: e.message }); }
+});
+
+// Sales: daily delivery status
+app.get('/api/sales/daily-status', verifyToken, reqSales, async (req, res) => {
+    try {
+        const { date } = req.query;
+        const targetDate = date || new Date().toISOString().split('T')[0];
+        const deliveries = await db.all(`
+            SELECT d.id, d.status, d.meal_type, d.is_veg_customer, d.delivery_sequence,
+                d.delivery_date,
+                c.name as customer_name, c.phone as customer_phone, c.address,
+                db.name as delivery_boy_name, db.phone as delivery_boy_phone,
+                db.vehicle_type,
+                mi.name as meal_item_name,
+                k.name as kitchen_name,
+                p.name as plan_name
+            FROM deliveries d
+            LEFT JOIN customers c ON d.customer_id=c.id
+            LEFT JOIN delivery_boys db ON d.delivery_boy_id=db.id
+            LEFT JOIN meal_items mi ON d.meal_item_id=mi.id
+            LEFT JOIN kitchens k ON d.kitchen_id=k.id
+            LEFT JOIN orders o ON d.order_id=o.id
+            LEFT JOIN subscription_plans p ON o.plan_id=p.id
+            WHERE d.delivery_date=$1 AND d.is_sunday_skip=0
+            ORDER BY k.name, db.name, d.delivery_sequence
+        `, [targetDate]);
+        const total = deliveries.length;
+        const delivered = deliveries.filter(d=>d.status==='delivered').length;
+        const skipped = deliveries.filter(d=>d.status==='skipped').length;
+        const pending = deliveries.filter(d=>d.status==='pending').length;
+        res.json({ date: targetDate, deliveries, stats: { total, delivered, skipped, pending } });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Customer: update profile (full fields)
+app.put('/api/customer/profile/full', verifyToken, reqCust, async (req, res) => {
+    try {
+        const { name, phone, alternate_phone, email, address, address_2, city,
+            google_location_1, google_location_2, height, weight,
+            health_conditions, allergy_info, delivery_instructions, diet_goal, diet_preference } = req.body;
+        await db.query(`UPDATE customers SET name=$1,phone=$2,alternate_phone=$3,email=$4,
+            address=$5,address_2=$6,city=$7,google_location_1=$8,google_location_2=$9,
+            height=$10,weight=$11,health_conditions=$12,allergy_info=$13,
+            delivery_instructions=$14,diet_goal=$15,diet_preference=$16
+            WHERE user_id=$17`,
+            [name,phone,alternate_phone||null,email||null,address||null,address_2||null,
+            city||null,google_location_1||null,google_location_2||null,
+            height||null,weight||null,health_conditions||null,allergy_info||null,
+            delivery_instructions||null,diet_goal||null,diet_preference||'non_veg',req.user.id]);
+        await db.query(`UPDATE users SET name=$1,phone=$2,email=COALESCE($3,email) WHERE id=$4`,
+            [name,phone,email||null,req.user.id]);
+        res.json({ message: 'Profile updated' });
+    } catch(e) { res.status(400).json({ error: e.message }); }
+});
+
+// Customer: get today's delivery boy
+app.get('/api/customer/my-delivery-boy', verifyToken, reqCust, async (req, res) => {
+    try {
+        const c = await db.one(`SELECT * FROM customers WHERE user_id=$1`, [req.user.id]);
+        if (!c) return res.status(404).json({ error: 'Not found' });
+        const today = new Date().toISOString().split('T')[0];
+        const d = await db.one(`SELECT db.name, db.phone, db.photo_base64, db.vehicle_type,
+            del.status, del.delivery_sequence
+            FROM deliveries del
+            LEFT JOIN delivery_boys db ON del.delivery_boy_id=db.id
+            WHERE del.customer_id=$1 AND del.delivery_date=$2 AND del.is_sunday_skip=0
+            LIMIT 1`, [c.id, today]);
+        res.json(d || null);
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Fix: delivery boys API — include kitchen filter for admin dropdown
+app.get('/api/admin/delivery-boys-by-kitchen', verifyToken, async (req, res) => {
+    try {
+        const { kitchen_id } = req.query;
+        if (!kitchen_id) return res.json([]);
+        res.json(await db.all(`SELECT id,name,phone,vehicle_type FROM delivery_boys WHERE kitchen_id=$1 AND status='active' ORDER BY name`, [kitchen_id]));
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 app.get('/api/health', (req, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));
 
 // ==================== STATIC FILES ====================
@@ -2355,6 +2874,11 @@ app.get('/kitchen', (req, res) => {
     const f = path.join(__dirname, 'public', 'kitchen.html');
     if (fs.existsSync(f)) return res.sendFile(f);
     res.status(404).send('Kitchen portal not found');
+});
+app.get('/sales', (req, res) => {
+    const f = path.join(__dirname, 'public', 'sales.html');
+    if (fs.existsSync(f)) return res.sendFile(f);
+    res.status(404).send('Sales portal not found');
 });
 app.get('/delivery', (req, res) => {
     const f = path.join(__dirname, 'public', 'delivery.html');
