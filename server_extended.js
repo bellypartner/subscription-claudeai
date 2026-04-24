@@ -30,8 +30,8 @@ const db = {
 async function initDB() {
     // Core tables
     await db.query(`CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL, phone TEXT, authority TEXT DEFAULT 'customer',
+        id SERIAL PRIMARY KEY, name TEXT NOT NULL, email TEXT UNIQUE,
+        password TEXT NOT NULL, phone TEXT UNIQUE, authority TEXT DEFAULT 'customer',
         status TEXT DEFAULT 'active', created_at TIMESTAMPTZ DEFAULT NOW()
     )`);
     await db.query(`CREATE TABLE IF NOT EXISTS meal_categories (
@@ -180,7 +180,6 @@ async function initDB() {
         `ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS delivery_sequence INTEGER DEFAULT 0`,
         `ALTER TABLE users ADD COLUMN IF NOT EXISTS kitchen_id INTEGER`,
         `ALTER TABLE customers ADD COLUMN IF NOT EXISTS alternate_phone TEXT`,
-        `ALTER TABLE customers ADD COLUMN IF NOT EXISTS address_2 TEXT`,
         `ALTER TABLE customers ADD COLUMN IF NOT EXISTS city TEXT`,
         `ALTER TABLE customers ADD COLUMN IF NOT EXISTS google_location_1 TEXT`,
         `ALTER TABLE customers ADD COLUMN IF NOT EXISTS google_location_2 TEXT`,
@@ -192,6 +191,8 @@ async function initDB() {
         `ALTER TABLE customers ADD COLUMN IF NOT EXISTS allergy_info TEXT`,
         `ALTER TABLE customers ALTER COLUMN email DROP NOT NULL`,
         `ALTER TABLE customers ALTER COLUMN phone SET NOT NULL`,
+        `ALTER TABLE users ALTER COLUMN email DROP NOT NULL`,
+        `ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT`,
         `CREATE TABLE IF NOT EXISTS delivery_boys (id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id), kitchen_id INTEGER REFERENCES kitchens(id), territory_id INTEGER REFERENCES territories(id), name TEXT NOT NULL, phone TEXT, email TEXT, photo_base64 TEXT, vehicle_type TEXT DEFAULT 'bike', status TEXT DEFAULT 'active', created_at TIMESTAMPTZ DEFAULT NOW())`,
     ];
     for (const sql of alters) { try { await db.query(sql); } catch(e) {} }
