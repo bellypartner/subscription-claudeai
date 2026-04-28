@@ -328,13 +328,13 @@ select[multiple].fc{height:120px;}
       <div id="page-territories" class="page">
         <div class="sec-hd"><span class="sec-title">Territories</span><button class="btn btn-g" onclick="openModal('terrModal')"><i class="fas fa-plus"></i> Add Territory</button></div>
         <div class="alert as" id="terrOk"></div><div class="alert ae" id="terrErr"></div>
-        <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Description</th></tr></thead>
+        <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Description</th><th></th></tr></thead>
         <tbody id="terrBody"><tr><td colspan="2" class="loading"><span class="spinner"></span></td></tr></tbody></table></div></div>
       </div>
       <div id="page-kitchens" class="page">
         <div class="sec-hd"><span class="sec-title">Kitchens</span><button class="btn btn-g" onclick="openModal('kitchenModal')"><i class="fas fa-plus"></i> Add Kitchen</button></div>
         <div class="alert as" id="kitOk"></div><div class="alert ae" id="kitErr"></div>
-        <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Territory</th><th>Capacity</th><th>Address</th></tr></thead>
+        <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Territory</th><th>Capacity</th><th>Address</th><th></th></tr></thead>
         <tbody id="kitBody"><tr><td colspan="4" class="loading"><span class="spinner"></span></td></tr></tbody></table></div></div>
       </div>
       <div id="page-customers" class="page">
@@ -704,7 +704,7 @@ async function loadCategories(){
     const data=await api(`${API}/admin/categories`);cats=data||[];refreshCatDropdowns();
     const body=document.getElementById("catBody");
     if(!cats.length){body.innerHTML="<tr><td colspan='3'><div class='empty'><i class='fas fa-tag'></i><p>No categories yet</p></div></td></tr>";return;}
-    body.innerHTML=cats.map(c=>`<tr><td><strong>${c.name}</strong></td><td>${c.description||"?"}</td><td><button class="btn btn-r btn-sm" onclick="deleteCat(${c.id})"><i class="fas fa-trash"></i></button></td></tr>`).join("");
+    body.innerHTML=cats.map(c=>`<tr><td><strong>${c.name}</strong></td><td>${c.description||"?"}</td><td style="display:flex;gap:6px;"><button class="btn btn-o btn-sm" onclick="openEditCat(${c.id},'${c.name.replace(/'/g,"")}','${(c.description||"").replace(/'/g,"")}')"><i class="fas fa-edit"></i></button><button class="btn btn-r btn-sm" onclick="deleteCat(${c.id})"><i class="fas fa-trash"></i></button></td></tr>`).join("");
   }catch(e){showErr2("catErr","Error loading - check server connection");}
 }
 function refreshCatDropdowns(){
@@ -785,7 +785,7 @@ async function loadTerritories(){
     ["kTerritory","cTerritory","dbTerritory"].forEach(id=>{const el=document.getElementById(id);if(!el)return;el.innerHTML="<option value=''>Select Territory</option>";territories.forEach(t=>{const o=document.createElement("option");o.value=t.id;o.text=t.name;el.appendChild(o);});});
     const body=document.getElementById("terrBody");
     if(!territories.length){body.innerHTML="<tr><td colspan='2'><div class='empty'><i class='fas fa-map-marker-alt'></i><p>No territories</p></div></td></tr>";return;}
-    body.innerHTML=territories.map(t=>`<tr><td><strong>${t.name}</strong></td><td>${t.description||"?"}</td></tr>`).join("");
+    body.innerHTML=territories.map(t=>`<tr><td><strong>${t.name}</strong></td><td>${t.description||"?"}</td><td><button class="btn btn-o btn-sm" onclick="openEditTerr(${t.id},'${t.name.replace(/'/g,"")}','${(t.description||"").replace(/'/g,"")}')"><i class="fas fa-edit"></i></button></td></tr>`).join("");
   }catch(e){showErr2("terrErr","Error loading - check server connection");}
 }
 async function addTerritory(){
@@ -800,7 +800,7 @@ async function loadKitchens(){
     const sel=document.getElementById("oKitchen");sel.innerHTML="<option value=''>Select Kitchen</option>";kitchens.forEach(k=>{const o=document.createElement("option");o.value=k.id;o.text=k.name;sel.appendChild(o);});
     const body=document.getElementById("kitBody");
     if(!kitchens.length){body.innerHTML="<tr><td colspan='4'><div class='empty'><i class='fas fa-store'></i><p>No kitchens</p></div></td></tr>";return;}
-    body.innerHTML=kitchens.map(k=>`<tr><td><strong>${k.name}</strong></td><td>${k.territory_name||"?"}</td><td>${k.capacity||"?"}</td><td>${k.address||"?"}</td></tr>`).join("");
+    body.innerHTML=kitchens.map(k=>`<tr><td><strong>${k.name}</strong></td><td>${k.territory_name||"?"}</td><td>${k.capacity||"?"}</td><td>${k.address||"?"}</td><td><button class="btn btn-o btn-sm" onclick="openEditKit(${k.id},'${k.name.replace(/'/g,"")}','${(k.address||"").replace(/'/g,"")}',${k.capacity||100})"><i class="fas fa-edit"></i></button></td></tr>`).join("");
   }catch(e){}
 }
 async function addKitchen(){
@@ -818,6 +818,7 @@ async function loadPlans(){
     const body=document.getElementById("planBody");
     if(!plans.length){body.innerHTML="<tr><td colspan='8'><div class='empty'><i class='fas fa-box'></i><p>No plans</p></div></td></tr>";return;}
     body.innerHTML=plans.map(p=>{
+    const editBtn=`<button class="btn btn-o btn-sm" onclick="openEditPlan(${p.id},'${p.name.replace(/'/g,"")}',${p.price},${p.num_deliveries})"><i class="fas fa-edit"></i></button>`;
     const days=(p.delivery_days||"1,2,3,4,5,6").split(",").map(n=>["","M","T","W","Th","F","Sa"][parseInt(n)]||"?").join(" ");
     return`<tr><td><strong>${p.name}</strong></td><td>${p.duration_days}d</td><td>${p.num_deliveries}</td><td>${dietLabel(p.diet_type)}</td><td>${p.meal_types||"?"}</td><td style="font-size:12px;font-weight:600;color:var(--blue)">${days}</td><td><strong>Rs ${p.price}</strong></td><td>${p.plan_menu_id?"<span class='badge bg'>Attached</span>":"<span class='badge bgr'>None</span>"}</td><td><button class="btn btn-r btn-sm" onclick="deletePlan(${p.id})"><i class="fas fa-trash"></i></button></td></tr>`;
   }).join("");
@@ -842,7 +843,7 @@ async function loadCustomers(){
     const sel=document.getElementById("oCustomer");sel.innerHTML="<option value=''>Select Customer</option>";customers.forEach(c=>{const o=document.createElement("option");o.value=c.id;o.text=c.name+" ("+(c.phone||c.email)+")";sel.appendChild(o);});
     const body=document.getElementById("custBody");
     if(!customers.length){body.innerHTML="<tr><td colspan='6'><div class='empty'><i class='fas fa-users'></i><p>No customers</p></div></td></tr>";return;}
-    body.innerHTML=customers.map(c=>`<tr><td><strong>${c.name}</strong></td><td>${c.email}</td><td>${c.phone||"?"}</td><td>${c.territory_name||"?"}</td><td><span class="badge" style="background:var(--bl);color:var(--blue)">${c.total_orders||0} orders</span></td><td><button class="btn btn-r btn-sm" onclick="deleteCust(${c.id})"><i class="fas fa-trash"></i></button></td></tr>`).join("");
+    body.innerHTML=customers.map(c=>`<tr><td><strong>${c.name}</strong></td><td>${c.email||c.phone}</td><td>${c.phone||"?"}</td><td>${c.territory_name||"?"}</td><td><span class="badge" style="background:var(--bl);color:var(--blue)">${c.total_orders||0} orders</span></td><td style="display:flex;gap:6px;"><button class="btn btn-o btn-sm" onclick="openEditCust(${c.id})"><i class="fas fa-edit"></i></button><button class="btn btn-r btn-sm" onclick="deleteCust(${c.id})"><i class="fas fa-trash"></i></button></td></tr>`).join("");
   }catch(e){showErr2("custErr","Error loading");}
 }
 async function addCustomer(){
@@ -1286,6 +1287,184 @@ function openModal(id){
     if(tsel&&territories.length){tsel.innerHTML='<option value="">Select Territory</option>';territories.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.text=t.name;tsel.appendChild(o);});}
   }
 }
+
+// ==================== EDIT FUNCTIONS ====================
+
+// CATEGORIES
+function openEditCat(id, name, desc) {
+  document.getElementById('editCatId').value=id;
+  document.getElementById('editCatName').value=name;
+  document.getElementById('editCatDesc').value=desc;
+  openModal('editCatModal');
+}
+async function saveEditCat() {
+  const id=document.getElementById('editCatId').value;
+  const name=document.getElementById('editCatName').value.trim();
+  if(!name){showErr2('catErr','Name required');return;}
+  const d=await api(`${API}/admin/categories/${id}`,{method:'PUT',body:JSON.stringify({name,description:document.getElementById('editCatDesc').value})});
+  if(d.error){showErr2('catErr',d.error);return;}
+  showOk('catOk','✅ Updated!');closeModal('editCatModal');await loadCategories();
+}
+
+// MEAL ITEMS
+let editMealCache = {};
+function openEditMeal(id) {
+  // Find meal from DOM data - load from API
+  api(`${API}/admin/meal-items`).then(data=>{
+    const m=data.find(x=>x.id===id); if(!m)return;
+    editMealCache=m;
+    document.getElementById('editMealId').value=m.id;
+    document.getElementById('editMealName').value=m.name||'';
+    document.getElementById('editMealPrice').value=m.mrp||'';
+    document.getElementById('editMealCal').value=m.calories||'';
+    document.getElementById('editMealIng').value=m.ingredients||'';
+    document.getElementById('editMealAllergy').value=m.allergy_info||'';
+    document.getElementById('editMealVeg').checked=!!m.veg_tag;
+    document.getElementById('editMealNonVeg').checked=!!m.non_veg_tag;
+    document.getElementById('editMealEgg').checked=!!m.eggetarian_tag;
+    // Populate category dropdown
+    const sel=document.getElementById('editMealCat');
+    sel.innerHTML=cats.map(c=>`<option value="${c.id}"${c.id===m.category_id?' selected':''}>${c.name}</option>`).join('');
+    openModal('editMealModal');
+  });
+}
+async function saveEditMeal() {
+  const id=document.getElementById('editMealId').value;
+  const body={
+    name:document.getElementById('editMealName').value,
+    category_id:document.getElementById('editMealCat').value,
+    veg_tag:document.getElementById('editMealVeg').checked?1:0,
+    non_veg_tag:document.getElementById('editMealNonVeg').checked?1:0,
+    eggetarian_tag:document.getElementById('editMealEgg').checked?1:0,
+    mrp:document.getElementById('editMealPrice').value||0,
+    calories:document.getElementById('editMealCal').value||0,
+    ingredients:document.getElementById('editMealIng').value,
+    allergy_info:document.getElementById('editMealAllergy').value,
+  };
+  const d=await api(`${API}/admin/meal-items/${id}`,{method:'PUT',body:JSON.stringify(body)});
+  if(d.error){showErr2('mealErr',d.error);return;}
+  showOk('mealOk','✅ Meal updated!');closeModal('editMealModal');await loadMeals();
+}
+
+// CUSTOMERS
+let custCache = [];
+function openEditCust(id) {
+  const c=customers.find(x=>x.id===id); if(!c)return;
+  document.getElementById('editCustId').value=c.id;
+  document.getElementById('editCustName').value=c.name||'';
+  document.getElementById('editCustPhone').value=c.phone||'';
+  document.getElementById('editCustAlt').value=c.alternate_phone||'';
+  document.getElementById('editCustEmail').value=c.email||'';
+  document.getElementById('editCustAddr').value=c.address||'';
+  document.getElementById('editCustAddr2').value=c.address_2||'';
+  document.getElementById('editCustCity').value=c.city||'';
+  document.getElementById('editCustDiet').value=c.diet_preference||'non_veg';
+  document.getElementById('editCustInstr').value=c.delivery_instructions||'';
+  // Populate territory
+  const tsel=document.getElementById('editCustTerr');
+  tsel.innerHTML='<option value="">Select</option>';
+  territories.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.text=t.name;if(t.id==c.territory_id)o.selected=true;tsel.appendChild(o);});
+  // Populate DB
+  const dbsel=document.getElementById('editCustDB');
+  dbsel.innerHTML='<option value="">Not assigned</option>';
+  // Load delivery boys
+  api(`${API}/admin/delivery-boys`).then(dbs=>{
+    (dbs||[]).forEach(db=>{const o=document.createElement('option');o.value=db.id;o.text=`${db.name} (${db.kitchen_name||'?'})`;if(db.id==c.delivery_boy_id)o.selected=true;dbsel.appendChild(o);});
+  });
+  openModal('editCustModal');
+}
+async function saveEditCust() {
+  const id=document.getElementById('editCustId').value;
+  const body={
+    name:document.getElementById('editCustName').value,
+    phone:document.getElementById('editCustPhone').value,
+    alternate_phone:document.getElementById('editCustAlt').value||null,
+    email:document.getElementById('editCustEmail').value||null,
+    address:document.getElementById('editCustAddr').value||null,
+    address_2:document.getElementById('editCustAddr2').value||null,
+    city:document.getElementById('editCustCity').value||null,
+    territory_id:document.getElementById('editCustTerr').value||null,
+    diet_preference:document.getElementById('editCustDiet').value,
+    delivery_instructions:document.getElementById('editCustInstr').value||null,
+    delivery_boy_id:document.getElementById('editCustDB').value||null,
+  };
+  const d=await api(`${API}/admin/customers/${id}`,{method:'PUT',body:JSON.stringify(body)});
+  if(d.error){showErr2('custErr',d.error);return;}
+  showOk('custOk','✅ Customer updated!');closeModal('editCustModal');await loadCustomers();
+}
+
+// PLANS
+function openEditPlan(id,name,price,deliveries) {
+  document.getElementById('editPlanId').value=id;
+  document.getElementById('editPlanName').value=name;
+  document.getElementById('editPlanPrice').value=price;
+  document.getElementById('editPlanDel').value=deliveries;
+  openModal('editPlanModal');
+}
+async function saveEditPlan() {
+  const id=document.getElementById('editPlanId').value;
+  const body={name:document.getElementById('editPlanName').value,price:document.getElementById('editPlanPrice').value,num_deliveries:document.getElementById('editPlanDel').value,status:document.getElementById('editPlanStatus').value};
+  const d=await api(`${API}/admin/subscription-plans/${id}`,{method:'PUT',body:JSON.stringify(body)});
+  if(d.error){showErr2('planErr',d.error);return;}
+  showOk('planOk','✅ Plan updated!');closeModal('editPlanModal');await loadPlans();
+}
+
+// TERRITORIES
+function openEditTerr(id,name,desc) {
+  document.getElementById('editTerrId').value=id;
+  document.getElementById('editTerrName').value=name;
+  document.getElementById('editTerrDesc').value=desc;
+  openModal('editTerrModal');
+}
+async function saveEditTerr() {
+  const id=document.getElementById('editTerrId').value;
+  const d=await api(`${API}/admin/territories/${id}`,{method:'PUT',body:JSON.stringify({name:document.getElementById('editTerrName').value,description:document.getElementById('editTerrDesc').value})});
+  if(d.error){showErr2('terrErr',d.error);return;}
+  showOk('terrOk','✅ Territory updated!');closeModal('editTerrModal');await loadTerritories();
+}
+
+// KITCHENS
+function openEditKit(id,name,addr,cap) {
+  document.getElementById('editKitId').value=id;
+  document.getElementById('editKitName').value=name;
+  document.getElementById('editKitAddr').value=addr;
+  document.getElementById('editKitCap').value=cap;
+  openModal('editKitModal');
+}
+async function saveEditKit() {
+  const id=document.getElementById('editKitId').value;
+  const body={name:document.getElementById('editKitName').value,address:document.getElementById('editKitAddr').value,capacity:document.getElementById('editKitCap').value,status:document.getElementById('editKitStatus').value};
+  const d=await api(`${API}/admin/kitchens/${id}`,{method:'PUT',body:JSON.stringify(body)});
+  if(d.error){showErr2('kitErr',d.error);return;}
+  showOk('kitOk','✅ Kitchen updated!');closeModal('editKitModal');await loadKitchens();
+}
+
+// DELIVERY BOYS
+function openEditDb(id) {
+  api(`${API}/admin/delivery-boys`).then(data=>{
+    const d=data.find(x=>x.id===id); if(!d)return;
+    document.getElementById('editDbId').value=d.id;
+    document.getElementById('editDbName').value=d.name||'';
+    document.getElementById('editDbPhone').value=d.phone||'';
+    document.getElementById('editDbVehicle').value=d.vehicle_type||'bike';
+    document.getElementById('editDbStatus').value=d.status||'active';
+    const tsel=document.getElementById('editDbTerr');
+    tsel.innerHTML='<option value="">Select</option>';
+    territories.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.text=t.name;if(t.id==d.territory_id)o.selected=true;tsel.appendChild(o);});
+    const ksel=document.getElementById('editDbKit');
+    ksel.innerHTML='<option value="">Select Kitchen</option>';
+    kitchens.forEach(k=>{const o=document.createElement('option');o.value=k.id;o.text=k.name;if(k.id==d.kitchen_id)o.selected=true;ksel.appendChild(o);});
+    openModal('editDbModal');
+  });
+}
+async function saveEditDb() {
+  const id=document.getElementById('editDbId').value;
+  const body={name:document.getElementById('editDbName').value,phone:document.getElementById('editDbPhone').value,vehicle_type:document.getElementById('editDbVehicle').value,territory_id:document.getElementById('editDbTerr').value||null,kitchen_id:document.getElementById('editDbKit').value||null,status:document.getElementById('editDbStatus').value};
+  const d=await api(`${API}/admin/delivery-boys/${id}`,{method:'PUT',body:JSON.stringify(body)});
+  if(d.error){showErr2('dbErr',d.error);return;}
+  showOk('dbOk','✅ Delivery boy updated!');closeModal('editDbModal');await loadDeliveryBoys();
+}
+// ==================== END EDIT FUNCTIONS ====================
 // ===== END MAP & CASCADE =====
 
 </script>
@@ -1336,5 +1515,153 @@ function openModal(id){
 </div></div>
 
 
+
+<!-- EDIT CATEGORY MODAL -->
+<div class="modal-bg" id="editCatModal"><div class="modal-box">
+  <div class="modal-hd"><span class="modal-title">Edit Category</span><button class="modal-close" onclick="closeModal('editCatModal')">&times;</button></div>
+  <div class="modal-body">
+    <input type="hidden" id="editCatId">
+    <div class="fg"><label class="fl">Name *</label><input type="text" class="fc" id="editCatName"></div>
+    <div class="fg"><label class="fl">Description</label><textarea class="fc" id="editCatDesc"></textarea></div>
+    <button class="btn btn-g" style="width:100%;justify-content:center;" onclick="saveEditCat()">Save Changes</button>
+  </div>
+</div></div>
+
+<!-- EDIT MEAL ITEM MODAL -->
+<div class="modal-bg" id="editMealModal"><div class="modal-box wide">
+  <div class="modal-hd"><span class="modal-title">Edit Meal Item</span><button class="modal-close" onclick="closeModal('editMealModal')">&times;</button></div>
+  <div class="modal-body">
+    <input type="hidden" id="editMealId">
+    <div class="frow">
+      <div class="fg"><label class="fl">Name *</label><input type="text" class="fc" id="editMealName"></div>
+      <div class="fg"><label class="fl">Category</label><select class="fc" id="editMealCat"></select></div>
+    </div>
+    <div class="fg"><label class="fl">Dietary Type</label>
+      <div style="display:flex;gap:16px;margin-top:5px;">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:600;"><input type="checkbox" id="editMealVeg" style="accent-color:var(--g);width:15px;height:15px;"> 🟢 Veg</label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:600;"><input type="checkbox" id="editMealNonVeg" style="accent-color:var(--red);width:15px;height:15px;"> 🔴 Non-Veg</label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:600;"><input type="checkbox" id="editMealEgg" style="accent-color:var(--amber);width:15px;height:15px;"> 🥚 Eggetarian</label>
+      </div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label class="fl">Price (Rs)</label><input type="number" class="fc" id="editMealPrice"></div>
+      <div class="fg"><label class="fl">Calories</label><input type="number" class="fc" id="editMealCal"></div>
+    </div>
+    <div class="fg"><label class="fl">Ingredients</label><textarea class="fc" id="editMealIng" rows="2"></textarea></div>
+    <div class="fg"><label class="fl">Allergy Info</label><input type="text" class="fc" id="editMealAllergy"></div>
+    <button class="btn btn-g" style="width:100%;justify-content:center;" onclick="saveEditMeal()">Save Changes</button>
+  </div>
+</div></div>
+
+<!-- EDIT CUSTOMER MODAL (Admin) -->
+<div class="modal-bg" id="editCustModal"><div class="modal-box wide">
+  <div class="modal-hd"><span class="modal-title">Edit Customer</span><button class="modal-close" onclick="closeModal('editCustModal')">&times;</button></div>
+  <div class="modal-body">
+    <input type="hidden" id="editCustId">
+    <div class="frow">
+      <div class="fg"><label class="fl">Name *</label><input type="text" class="fc" id="editCustName"></div>
+      <div class="fg"><label class="fl">Phone *</label><input type="text" class="fc" id="editCustPhone"></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label class="fl">Alternate Phone</label><input type="text" class="fc" id="editCustAlt"></div>
+      <div class="fg"><label class="fl">Email</label><input type="email" class="fc" id="editCustEmail"></div>
+    </div>
+    <div class="fg"><label class="fl">Address</label><input type="text" class="fc" id="editCustAddr"></div>
+    <div class="fg"><label class="fl">Address 2</label><input type="text" class="fc" id="editCustAddr2"></div>
+    <div class="frow">
+      <div class="fg"><label class="fl">City</label>
+        <select class="fc" id="editCustCity">
+          <option value="">Select</option>
+          <option>Kozhikode</option><option>Malappuram</option><option>Thrissur</option>
+          <option>Kochi</option><option>Thiruvananthapuram</option><option>Kannur</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Territory</label><select class="fc" id="editCustTerr" onchange="cascadeKitchen('editCustTerr','editCustKitchen')"><option value="">Select</option></select></div>
+    </div>
+    <div class="fg"><label class="fl">Diet Preference</label>
+      <select class="fc" id="editCustDiet">
+        <option value="non_veg">🔴 Non-Veg</option>
+        <option value="pure_veg">🟢 Pure Veg</option>
+        <option value="eggetarian">🥚 Eggetarian</option>
+        <option value="vegan">🌿 Vegan</option>
+      </select>
+    </div>
+    <div class="fg"><label class="fl">Delivery Instructions</label><input type="text" class="fc" id="editCustInstr"></div>
+    <div class="fg"><label class="fl">Assign Delivery Boy</label><select class="fc" id="editCustDB"><option value="">Not assigned</option></select></div>
+    <button class="btn btn-g" style="width:100%;justify-content:center;" onclick="saveEditCust()">Save Changes</button>
+  </div>
+</div></div>
+
+<!-- EDIT PLAN MODAL -->
+<div class="modal-bg" id="editPlanModal"><div class="modal-box">
+  <div class="modal-hd"><span class="modal-title">Edit Plan</span><button class="modal-close" onclick="closeModal('editPlanModal')">&times;</button></div>
+  <div class="modal-body">
+    <input type="hidden" id="editPlanId">
+    <div class="fg"><label class="fl">Name *</label><input type="text" class="fc" id="editPlanName"></div>
+    <div class="frow">
+      <div class="fg"><label class="fl">Price (Rs)</label><input type="number" class="fc" id="editPlanPrice"></div>
+      <div class="fg"><label class="fl">Deliveries</label><input type="number" class="fc" id="editPlanDel"></div>
+    </div>
+    <div class="fg"><label class="fl">Status</label>
+      <select class="fc" id="editPlanStatus">
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+    </div>
+    <button class="btn btn-g" style="width:100%;justify-content:center;" onclick="saveEditPlan()">Save Changes</button>
+  </div>
+</div></div>
+
+<!-- EDIT TERRITORY MODAL -->
+<div class="modal-bg" id="editTerrModal"><div class="modal-box">
+  <div class="modal-hd"><span class="modal-title">Edit Territory</span><button class="modal-close" onclick="closeModal('editTerrModal')">&times;</button></div>
+  <div class="modal-body">
+    <input type="hidden" id="editTerrId">
+    <div class="fg"><label class="fl">Name *</label><input type="text" class="fc" id="editTerrName"></div>
+    <div class="fg"><label class="fl">Description</label><textarea class="fc" id="editTerrDesc"></textarea></div>
+    <button class="btn btn-g" style="width:100%;justify-content:center;" onclick="saveEditTerr()">Save Changes</button>
+  </div>
+</div></div>
+
+<!-- EDIT KITCHEN MODAL -->
+<div class="modal-bg" id="editKitModal"><div class="modal-box">
+  <div class="modal-hd"><span class="modal-title">Edit Kitchen</span><button class="modal-close" onclick="closeModal('editKitModal')">&times;</button></div>
+  <div class="modal-body">
+    <input type="hidden" id="editKitId">
+    <div class="fg"><label class="fl">Name *</label><input type="text" class="fc" id="editKitName"></div>
+    <div class="fg"><label class="fl">Address</label><input type="text" class="fc" id="editKitAddr"></div>
+    <div class="fg"><label class="fl">Capacity</label><input type="number" class="fc" id="editKitCap"></div>
+    <div class="fg"><label class="fl">Status</label>
+      <select class="fc" id="editKitStatus"><option value="active">Active</option><option value="inactive">Inactive</option></select>
+    </div>
+    <button class="btn btn-g" style="width:100%;justify-content:center;" onclick="saveEditKit()">Save Changes</button>
+  </div>
+</div></div>
+
+<!-- EDIT DELIVERY BOY MODAL -->
+<div class="modal-bg" id="editDbModal"><div class="modal-box">
+  <div class="modal-hd"><span class="modal-title">Edit Delivery Boy</span><button class="modal-close" onclick="closeModal('editDbModal')">&times;</button></div>
+  <div class="modal-body">
+    <input type="hidden" id="editDbId">
+    <div class="frow">
+      <div class="fg"><label class="fl">Name *</label><input type="text" class="fc" id="editDbName"></div>
+      <div class="fg"><label class="fl">Phone</label><input type="text" class="fc" id="editDbPhone"></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label class="fl">Territory</label><select class="fc" id="editDbTerr" onchange="cascadeKitchen('editDbTerr','editDbKit')"><option value="">Select</option></select></div>
+      <div class="fg"><label class="fl">Kitchen</label><select class="fc" id="editDbKit"><option value="">Select Kitchen</option></select></div>
+    </div>
+    <div class="fg"><label class="fl">Vehicle</label>
+      <select class="fc" id="editDbVehicle">
+        <option value="bike">🏍️ Bike</option><option value="cycle">🚴 Cycle</option>
+        <option value="auto">🛺 Auto</option><option value="walk">🚶 Walk</option>
+      </select>
+    </div>
+    <div class="fg"><label class="fl">Status</label>
+      <select class="fc" id="editDbStatus"><option value="active">Active</option><option value="inactive">Inactive</option></select>
+    </div>
+    <button class="btn btn-g" style="width:100%;justify-content:center;" onclick="saveEditDb()">Save Changes</button>
+  </div>
+</div></div>
 </body>
 </html>

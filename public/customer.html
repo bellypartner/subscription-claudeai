@@ -148,11 +148,38 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--dk);font-
 <div id="loginPage">
   <div class="lcard">
     <div class="lbrand"><div class="lbrand-ico">🥗</div><h1>Salad Caffe</h1></div>
-    <p class="lsub">Login to your meal subscription</p>
+    <div style="display:flex;gap:4px;background:#f1f5f9;border-radius:10px;padding:4px;margin-bottom:20px;">
+      <button id="tabLogin" onclick="showAuthTab('login')" style="flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;background:white;color:var(--dk);font-family:'DM Sans',sans-serif;box-shadow:0 1px 3px rgba(0,0,0,.1);">Sign In</button>
+      <button id="tabSignup" onclick="showAuthTab('signup')" style="flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;">Create Account</button>
+    </div>
     <div class="lerr" id="loginErr"></div>
-    <input type="text" class="li" id="lPhone" placeholder="Phone number or email" autocomplete="username">
-    <input type="password" class="li" id="lPass" placeholder="Password" autocomplete="current-password">
-    <button class="lbtn" onclick="doLogin()">Sign In</button>
+
+    <!-- LOGIN -->
+    <div id="loginForm">
+      <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">Sign in with your phone number</p>
+      <input type="text" class="li" id="lPhone" placeholder="Phone number" autocomplete="username">
+      <input type="password" class="li" id="lPass" placeholder="Password" autocomplete="current-password">
+      <button class="lbtn" onclick="doLogin()">Sign In</button>
+    </div>
+
+    <!-- SIGNUP -->
+    <div id="signupForm" style="display:none;">
+      <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">Create your Salad Caffe account</p>
+      <input type="text" class="li" id="sName" placeholder="Full name *">
+      <input type="text" class="li" id="sPhone" placeholder="Phone number *" autocomplete="username">
+      <input type="password" class="li" id="sPass" placeholder="Password * (min 6 chars)" autocomplete="new-password">
+      <input type="email" class="li" id="sEmail" placeholder="Email (optional)">
+      <div style="margin-bottom:12px;">
+        <div style="font-size:12px;font-weight:700;color:var(--mid);margin-bottom:6px;">Diet Preference</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12.5px;font-weight:600;"><input type="radio" name="sDiet" value="non_veg" checked style="accent-color:var(--g)"> 🔴 Non-Veg</label>
+          <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12.5px;font-weight:600;"><input type="radio" name="sDiet" value="pure_veg" style="accent-color:var(--g)"> 🟢 Pure Veg</label>
+          <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12.5px;font-weight:600;"><input type="radio" name="sDiet" value="eggetarian" style="accent-color:var(--g)"> 🥚 Eggetarian</label>
+        </div>
+      </div>
+      <button class="lbtn" onclick="doSignup()">Create Account</button>
+      <p style="font-size:11px;color:var(--muted);text-align:center;margin-top:12px;">By signing up you agree to our terms. Subscription plans available after account creation.</p>
+    </div>
   </div>
 </div>
 
@@ -346,6 +373,35 @@ async function doLogin(){
   }catch(e){err.textContent="Connection error";err.style.display="block";}
 }
 function doLogout(){sessionStorage.removeItem("cToken");location.reload();}
+
+function showAuthTab(tab) {
+  const isLogin = tab==='login';
+  document.getElementById('loginForm').style.display = isLogin?'block':'none';
+  document.getElementById('signupForm').style.display = isLogin?'none':'block';
+  document.getElementById('tabLogin').style.cssText = isLogin?'flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;background:white;color:var(--dk);font-family:DM Sans,sans-serif;box-shadow:0 1px 3px rgba(0,0,0,.1);':'flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;background:transparent;color:var(--muted);font-family:DM Sans,sans-serif;';
+  document.getElementById('tabSignup').style.cssText = !isLogin?'flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;background:white;color:var(--dk);font-family:DM Sans,sans-serif;box-shadow:0 1px 3px rgba(0,0,0,.1);':'flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;background:transparent;color:var(--muted);font-family:DM Sans,sans-serif;';
+  document.getElementById('loginErr').style.display='none';
+}
+
+async function doSignup() {
+  const name=document.getElementById('sName').value.trim();
+  const phone=document.getElementById('sPhone').value.trim();
+  const pass=document.getElementById('sPass').value;
+  const email=document.getElementById('sEmail').value.trim();
+  const diet=document.querySelector('input[name="sDiet"]:checked')?.value||'non_veg';
+  const err=document.getElementById('loginErr');
+  err.style.display='none';
+  if(!name||!phone||!pass){err.textContent='Name, phone and password are required';err.style.display='block';return;}
+  if(pass.length<6){err.textContent='Password must be at least 6 characters';err.style.display='block';return;}
+  try {
+    const r=await fetch(`${API}/auth/customer-signup`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,phone,password:pass,email,diet_preference:diet})});
+    const d=await r.json();
+    if(d.error){err.textContent=d.error;err.style.display='block';return;}
+    token=d.token;
+    sessionStorage.setItem('cToken',token);
+    showApp();
+  } catch(e){err.textContent='Connection error';err.style.display='block';}
+}
 
 async function showApp(){
   document.getElementById("loginPage").style.display="none";
