@@ -635,18 +635,17 @@ function showPage(name,btn){
 }
 function openModal(id){
   document.getElementById(id).classList.add("show");
-  // Refresh DB kitchen dropdown when opening delivery boy modal
-  if(id==="dbModal") {
-    const sel=document.getElementById("dbKitchen");
-    if(sel&&kitchens.length) {
-      sel.innerHTML="<option value=''>Select Kitchen</option>";
-      kitchens.forEach(k=>{const o=document.createElement("option");o.value=k.id;o.text=k.name;sel.appendChild(o);});
-    }
+  // Order modal — populate territory
+  if(id==="orderModal"){
+    const sel=document.getElementById("oTerritory");
+    if(sel){sel.innerHTML="<option value=''>Select Territory</option>";territories.forEach(t=>{const o=document.createElement("option");o.value=t.id;o.text=t.name;sel.appendChild(o);});}
+  }
+  // DB modal — populate kitchen + territory
+  if(id==="dbModal"){
+    const ksel=document.getElementById("dbKitchen");
+    if(ksel&&kitchens.length){ksel.innerHTML="<option value=''>Select Kitchen</option>";kitchens.forEach(k=>{const o=document.createElement("option");o.value=k.id;o.text=k.name;ksel.appendChild(o);});}
     const tsel=document.getElementById("dbTerritory");
-    if(tsel&&territories.length) {
-      tsel.innerHTML="<option value=''>Select Territory</option>";
-      territories.forEach(t=>{const o=document.createElement("option");o.value=t.id;o.text=t.name;tsel.appendChild(o);});
-    }
+    if(tsel&&territories.length){tsel.innerHTML="<option value=''>Select Territory</option>";territories.forEach(t=>{const o=document.createElement("option");o.value=t.id;o.text=t.name;tsel.appendChild(o);});}
   }
 }
 function closeModal(id){document.getElementById(id).classList.remove("show");}
@@ -1271,21 +1270,6 @@ async function cascadeKitchen(terrSelectId, kitchenSelectId) {
   kSel.innerHTML='<option value="">Select Kitchen</option>';
   if(!terrId){kitchens.forEach(k=>{const o=document.createElement('option');o.value=k.id;o.text=k.name;kSel.appendChild(o);});return;}
   try{const ks=await api(`${API}/kitchens-by-territory?territory_id=${terrId}`);(ks||[]).forEach(k=>{const o=document.createElement('option');o.value=k.id;o.text=k.name;kSel.appendChild(o);});}catch(e){}
-}
-
-const _origOpen=openModal;
-function openModal(id){
-  _origOpen(id);
-  if(id==='orderModal'){
-    const sel=document.getElementById('oTerritory');
-    if(sel){sel.innerHTML='<option value="">Select Territory</option>';territories.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.text=t.name;sel.appendChild(o);});}
-  }
-  if(id==='dbModal'){
-    const ksel=document.getElementById('dbKitchen');
-    if(ksel&&kitchens.length){ksel.innerHTML='<option value="">Select Kitchen</option>';kitchens.forEach(k=>{const o=document.createElement('option');o.value=k.id;o.text=k.name;ksel.appendChild(o);});}
-    const tsel=document.getElementById('dbTerritory');
-    if(tsel&&territories.length){tsel.innerHTML='<option value="">Select Territory</option>';territories.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.text=t.name;tsel.appendChild(o);});}
-  }
 }
 
 // ==================== EDIT FUNCTIONS ====================
