@@ -192,6 +192,10 @@ async function initDB() {
         `ALTER TABLE customers ALTER COLUMN email DROP NOT NULL`,
         `ALTER TABLE customers ALTER COLUMN phone SET NOT NULL`,
         `ALTER TABLE users ALTER COLUMN email DROP NOT NULL`,
+        `ALTER TABLE customers ADD COLUMN IF NOT EXISTS lat_1 DECIMAL(10,8)`,
+        `ALTER TABLE customers ADD COLUMN IF NOT EXISTS lng_1 DECIMAL(11,8)`,
+        `ALTER TABLE customers ADD COLUMN IF NOT EXISTS lat_2 DECIMAL(10,8)`,
+        `ALTER TABLE customers ADD COLUMN IF NOT EXISTS lng_2 DECIMAL(11,8)`,
         `ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT`,
         `CREATE TABLE IF NOT EXISTS delivery_boys (id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id), kitchen_id INTEGER REFERENCES kitchens(id), territory_id INTEGER REFERENCES territories(id), name TEXT NOT NULL, phone TEXT, email TEXT, photo_base64 TEXT, vehicle_type TEXT DEFAULT 'bike', status TEXT DEFAULT 'active', created_at TIMESTAMPTZ DEFAULT NOW())`,
     ];
@@ -1509,6 +1513,7 @@ app.put('/api/customer/profile/full', verifyToken, reqCust, async (req, res) => 
             city||null,google_location_1||null,google_location_2||null,
             height||null,weight||null,health_conditions||null,allergy_info||null,
             delivery_instructions||null,diet_goal||null,diet_preference||'non_veg',req.user.id]);
+        // Location is updated via separate /api/customer/location endpoint
         await db.query(`UPDATE users SET name=$1,phone=$2,email=COALESCE($3,email) WHERE id=$4`,
             [name,phone,email||null,req.user.id]);
         res.json({ message: 'Profile updated' });
@@ -1540,7 +1545,147 @@ app.get('/api/admin/delivery-boys-by-kitchen', verifyToken, async (req, res) => 
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-app.get('/api/health', (req, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));
+
+// ==================== LOCATION & MAP APIs ====================
+
+// Extract lat/lng from Google Maps URL (follows redirects for short links)
+app.get('/api/util/extract-location', async (req, res) => {
+    try {
+        let url = req.query.url;
+        if (!url) return res.status(400).json({ error: 'URL required' });
+
+        // Follow redirects for short URLs (maps.app.goo.gl)
+        if (url.includes('goo.gl') || url.includes('maps.app')) {
+            try {
+                const http = require('http');
+                const https = require('https');
+                const followRedirect = (u, depth = 0) => new Promise((resolve, reject) => {
+                    if (depth > 5) return reject(new Error('Too many redirects'));
+                    const mod = u.startsWith('https') ? https : http;
+                    const req2 = mod.get(u, { headers: { 'User-Agent': 'Mozilla/5.0' } }, (r) => {
+                        if (r.statusCode >= 300 && r.statusCode < 400 && r.headers.location) {
+                            resolve(followRedirect(r.headers.location, depth + 1));
+                        } else {
+                            resolve(u);
+                        }
+                        r.resume();
+                    });
+                    req2.on('error', reject);
+                    req2.setTimeout(5000, () => { req2.destroy(); reject(new Error('Timeout')); });
+                });
+                url = await followRedirect(url);
+            } catch(e) {
+                // If redirect fails, try to extract from original URL
+            }
+        }
+
+        // Extract lat/lng from various Google Maps URL formats
+        let lat = null, lng = null;
+
+        // Format: @lat,lng,zoom
+        let m = url.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+        if (m) { lat = parseFloat(m[1]); lng = parseFloat(m[2]); }
+
+        // Format: ?q=lat,lng
+        if (!lat) { m = url.match(/[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/); if (m) { lat = parseFloat(m[1]); lng = parseFloat(m[2]); } }
+
+        // Format: ll=lat,lng
+        if (!lat) { m = url.match(/ll=(-?\d+\.?\d*),(-?\d+\.?\d*)/); if (m) { lat = parseFloat(m[1]); lng = parseFloat(m[2]); } }
+
+        // Format: place/.../@lat,lng
+        if (!lat) { m = url.match(/place\/[^/]+\/@(-?\d+\.?\d*),(-?\d+\.?\d*)/); if (m) { lat = parseFloat(m[1]); lng = parseFloat(m[2]); } }
+
+        if (!lat || !lng) return res.status(400).json({ error: 'Could not extract location from this URL. Try sharing the full Google Maps link.' });
+
+        // Validate coordinates (Kerala roughly: lat 8-13, lng 74-78)
+        const formatted = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+        res.json({ lat, lng, formatted, url });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Map data — all active customers with locations
+app.get('/api/admin/map-data', verifyToken, async (req, res) => {
+    try {
+        const { type, date, kitchen_id, territory_id } = req.query;
+        const targetDate = date || new Date().toISOString().split('T')[0];
+
+        if (type === 'deliveries') {
+            // Today's deliveries with location
+            let q = `SELECT d.id, d.status, d.meal_type, d.is_veg_customer,
+                c.name as customer_name, c.phone as customer_phone,
+                c.lat_1 as lat, c.lng_1 as lng,
+                c.address, c.lat_2, c.lng_2,
+                mi.name as meal_item_name,
+                db.name as delivery_boy_name, db.phone as db_phone,
+                k.name as kitchen_name, t.name as territory_name
+                FROM deliveries d
+                LEFT JOIN customers c ON d.customer_id=c.id
+                LEFT JOIN meal_items mi ON d.meal_item_id=mi.id
+                LEFT JOIN delivery_boys db ON d.delivery_boy_id=db.id
+                LEFT JOIN kitchens k ON d.kitchen_id=k.id
+                LEFT JOIN territories t ON k.territory_id=t.id
+                WHERE d.delivery_date=$1 AND d.is_sunday_skip=0
+                AND (c.lat_1 IS NOT NULL OR c.lat_2 IS NOT NULL)`;
+            const params = [targetDate];
+            if (kitchen_id) { params.push(kitchen_id); q += ` AND d.kitchen_id=$${params.length}`; }
+            if (territory_id) { params.push(territory_id); q += ` AND k.territory_id=$${params.length}`; }
+            const rows = await db.all(q, params);
+            res.json({ type: 'deliveries', date: targetDate, points: rows });
+        } else {
+            // All active customers with locations
+            let q = `SELECT c.id, c.name, c.phone, c.address, c.city,
+                c.lat_1, c.lng_1, c.lat_2, c.lng_2,
+                c.diet_preference, c.delivery_boy_id,
+                t.name as territory_name, t.id as territory_id,
+                k.name as kitchen_name,
+                db.name as delivery_boy_name,
+                (SELECT p.name FROM orders o JOIN subscription_plans p ON o.plan_id=p.id WHERE o.customer_id=c.id AND o.order_status='active' LIMIT 1) as active_plan
+                FROM customers c
+                LEFT JOIN territories t ON c.territory_id=t.id
+                LEFT JOIN delivery_boys db ON c.delivery_boy_id=db.id
+                LEFT JOIN kitchens k ON db.kitchen_id=k.id
+                WHERE c.status='active' AND (c.lat_1 IS NOT NULL OR c.lat_2 IS NOT NULL)`;
+            const params = [];
+            if (territory_id) { params.push(territory_id); q += ` AND c.territory_id=$${params.length}`; }
+            if (kitchen_id) { params.push(kitchen_id); q += ` AND db.kitchen_id=$${params.length}`; }
+            const rows = await db.all(q, params);
+            res.json({ type: 'customers', points: rows });
+        }
+    } catch(e) { console.error(e); res.status(500).json({ error: e.message }); }
+});
+
+// Kitchens filtered by territory
+app.get('/api/kitchens-by-territory', verifyToken, async (req, res) => {
+    try {
+        const { territory_id } = req.query;
+        if (!territory_id) return res.json([]);
+        res.json(await db.all(`SELECT id,name,address FROM kitchens WHERE territory_id=$1 AND status='active' ORDER BY name`, [territory_id]));
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Update customer location
+app.put('/api/admin/customers/:id/location', verifyToken, async (req, res) => {
+    try {
+        const { lat_1, lng_1, lat_2, lng_2, google_location_1, google_location_2 } = req.body;
+        await db.query(`UPDATE customers SET lat_1=$1,lng_1=$2,lat_2=$3,lng_2=$4,google_location_1=COALESCE($5,google_location_1),google_location_2=COALESCE($6,google_location_2) WHERE id=$7`,
+            [lat_1||null, lng_1||null, lat_2||null, lng_2||null, google_location_1||null, google_location_2||null, req.params.id]);
+        res.json({ message: 'Location updated' });
+    } catch(e) { res.status(400).json({ error: e.message }); }
+});
+
+// Update customer profile location (customer self-update)
+app.put('/api/customer/location', verifyToken, reqCust, async (req, res) => {
+    try {
+        const c = await db.one(`SELECT id FROM customers WHERE user_id=$1`, [req.user.id]);
+        if (!c) return res.status(404).json({ error: 'Not found' });
+        const { lat_1, lng_1, lat_2, lng_2, google_location_1, google_location_2 } = req.body;
+        await db.query(`UPDATE customers SET lat_1=$1,lng_1=$2,lat_2=$3,lng_2=$4,google_location_1=COALESCE($5,google_location_1),google_location_2=COALESCE($6,google_location_2) WHERE id=$7`,
+            [lat_1||null, lng_1||null, lat_2||null, lng_2||null, google_location_1||null, google_location_2||null, c.id]);
+        res.json({ message: 'Location saved' });
+    } catch(e) { res.status(400).json({ error: e.message }); }
+});
+
+app.get('/api/health', (req, res) => res.json({ status: 'ok', ts: new Date().toISOString(), maps: !!process.env.GOOGLE_MAPS_KEY }));
 
 // ==================== STATIC FILES ====================
 app.use(express.static(path.join(__dirname, 'public')));
@@ -2843,6 +2988,7 @@ app.put('/api/customer/profile/full', verifyToken, reqCust, async (req, res) => 
             city||null,google_location_1||null,google_location_2||null,
             height||null,weight||null,health_conditions||null,allergy_info||null,
             delivery_instructions||null,diet_goal||null,diet_preference||'non_veg',req.user.id]);
+        // Location is updated via separate /api/customer/location endpoint
         await db.query(`UPDATE users SET name=$1,phone=$2,email=COALESCE($3,email) WHERE id=$4`,
             [name,phone,email||null,req.user.id]);
         res.json({ message: 'Profile updated' });
@@ -2874,7 +3020,147 @@ app.get('/api/admin/delivery-boys-by-kitchen', verifyToken, async (req, res) => 
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-app.get('/api/health', (req, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));
+
+// ==================== LOCATION & MAP APIs ====================
+
+// Extract lat/lng from Google Maps URL (follows redirects for short links)
+app.get('/api/util/extract-location', async (req, res) => {
+    try {
+        let url = req.query.url;
+        if (!url) return res.status(400).json({ error: 'URL required' });
+
+        // Follow redirects for short URLs (maps.app.goo.gl)
+        if (url.includes('goo.gl') || url.includes('maps.app')) {
+            try {
+                const http = require('http');
+                const https = require('https');
+                const followRedirect = (u, depth = 0) => new Promise((resolve, reject) => {
+                    if (depth > 5) return reject(new Error('Too many redirects'));
+                    const mod = u.startsWith('https') ? https : http;
+                    const req2 = mod.get(u, { headers: { 'User-Agent': 'Mozilla/5.0' } }, (r) => {
+                        if (r.statusCode >= 300 && r.statusCode < 400 && r.headers.location) {
+                            resolve(followRedirect(r.headers.location, depth + 1));
+                        } else {
+                            resolve(u);
+                        }
+                        r.resume();
+                    });
+                    req2.on('error', reject);
+                    req2.setTimeout(5000, () => { req2.destroy(); reject(new Error('Timeout')); });
+                });
+                url = await followRedirect(url);
+            } catch(e) {
+                // If redirect fails, try to extract from original URL
+            }
+        }
+
+        // Extract lat/lng from various Google Maps URL formats
+        let lat = null, lng = null;
+
+        // Format: @lat,lng,zoom
+        let m = url.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+        if (m) { lat = parseFloat(m[1]); lng = parseFloat(m[2]); }
+
+        // Format: ?q=lat,lng
+        if (!lat) { m = url.match(/[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/); if (m) { lat = parseFloat(m[1]); lng = parseFloat(m[2]); } }
+
+        // Format: ll=lat,lng
+        if (!lat) { m = url.match(/ll=(-?\d+\.?\d*),(-?\d+\.?\d*)/); if (m) { lat = parseFloat(m[1]); lng = parseFloat(m[2]); } }
+
+        // Format: place/.../@lat,lng
+        if (!lat) { m = url.match(/place\/[^/]+\/@(-?\d+\.?\d*),(-?\d+\.?\d*)/); if (m) { lat = parseFloat(m[1]); lng = parseFloat(m[2]); } }
+
+        if (!lat || !lng) return res.status(400).json({ error: 'Could not extract location from this URL. Try sharing the full Google Maps link.' });
+
+        // Validate coordinates (Kerala roughly: lat 8-13, lng 74-78)
+        const formatted = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+        res.json({ lat, lng, formatted, url });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Map data — all active customers with locations
+app.get('/api/admin/map-data', verifyToken, async (req, res) => {
+    try {
+        const { type, date, kitchen_id, territory_id } = req.query;
+        const targetDate = date || new Date().toISOString().split('T')[0];
+
+        if (type === 'deliveries') {
+            // Today's deliveries with location
+            let q = `SELECT d.id, d.status, d.meal_type, d.is_veg_customer,
+                c.name as customer_name, c.phone as customer_phone,
+                c.lat_1 as lat, c.lng_1 as lng,
+                c.address, c.lat_2, c.lng_2,
+                mi.name as meal_item_name,
+                db.name as delivery_boy_name, db.phone as db_phone,
+                k.name as kitchen_name, t.name as territory_name
+                FROM deliveries d
+                LEFT JOIN customers c ON d.customer_id=c.id
+                LEFT JOIN meal_items mi ON d.meal_item_id=mi.id
+                LEFT JOIN delivery_boys db ON d.delivery_boy_id=db.id
+                LEFT JOIN kitchens k ON d.kitchen_id=k.id
+                LEFT JOIN territories t ON k.territory_id=t.id
+                WHERE d.delivery_date=$1 AND d.is_sunday_skip=0
+                AND (c.lat_1 IS NOT NULL OR c.lat_2 IS NOT NULL)`;
+            const params = [targetDate];
+            if (kitchen_id) { params.push(kitchen_id); q += ` AND d.kitchen_id=$${params.length}`; }
+            if (territory_id) { params.push(territory_id); q += ` AND k.territory_id=$${params.length}`; }
+            const rows = await db.all(q, params);
+            res.json({ type: 'deliveries', date: targetDate, points: rows });
+        } else {
+            // All active customers with locations
+            let q = `SELECT c.id, c.name, c.phone, c.address, c.city,
+                c.lat_1, c.lng_1, c.lat_2, c.lng_2,
+                c.diet_preference, c.delivery_boy_id,
+                t.name as territory_name, t.id as territory_id,
+                k.name as kitchen_name,
+                db.name as delivery_boy_name,
+                (SELECT p.name FROM orders o JOIN subscription_plans p ON o.plan_id=p.id WHERE o.customer_id=c.id AND o.order_status='active' LIMIT 1) as active_plan
+                FROM customers c
+                LEFT JOIN territories t ON c.territory_id=t.id
+                LEFT JOIN delivery_boys db ON c.delivery_boy_id=db.id
+                LEFT JOIN kitchens k ON db.kitchen_id=k.id
+                WHERE c.status='active' AND (c.lat_1 IS NOT NULL OR c.lat_2 IS NOT NULL)`;
+            const params = [];
+            if (territory_id) { params.push(territory_id); q += ` AND c.territory_id=$${params.length}`; }
+            if (kitchen_id) { params.push(kitchen_id); q += ` AND db.kitchen_id=$${params.length}`; }
+            const rows = await db.all(q, params);
+            res.json({ type: 'customers', points: rows });
+        }
+    } catch(e) { console.error(e); res.status(500).json({ error: e.message }); }
+});
+
+// Kitchens filtered by territory
+app.get('/api/kitchens-by-territory', verifyToken, async (req, res) => {
+    try {
+        const { territory_id } = req.query;
+        if (!territory_id) return res.json([]);
+        res.json(await db.all(`SELECT id,name,address FROM kitchens WHERE territory_id=$1 AND status='active' ORDER BY name`, [territory_id]));
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Update customer location
+app.put('/api/admin/customers/:id/location', verifyToken, async (req, res) => {
+    try {
+        const { lat_1, lng_1, lat_2, lng_2, google_location_1, google_location_2 } = req.body;
+        await db.query(`UPDATE customers SET lat_1=$1,lng_1=$2,lat_2=$3,lng_2=$4,google_location_1=COALESCE($5,google_location_1),google_location_2=COALESCE($6,google_location_2) WHERE id=$7`,
+            [lat_1||null, lng_1||null, lat_2||null, lng_2||null, google_location_1||null, google_location_2||null, req.params.id]);
+        res.json({ message: 'Location updated' });
+    } catch(e) { res.status(400).json({ error: e.message }); }
+});
+
+// Update customer profile location (customer self-update)
+app.put('/api/customer/location', verifyToken, reqCust, async (req, res) => {
+    try {
+        const c = await db.one(`SELECT id FROM customers WHERE user_id=$1`, [req.user.id]);
+        if (!c) return res.status(404).json({ error: 'Not found' });
+        const { lat_1, lng_1, lat_2, lng_2, google_location_1, google_location_2 } = req.body;
+        await db.query(`UPDATE customers SET lat_1=$1,lng_1=$2,lat_2=$3,lng_2=$4,google_location_1=COALESCE($5,google_location_1),google_location_2=COALESCE($6,google_location_2) WHERE id=$7`,
+            [lat_1||null, lng_1||null, lat_2||null, lng_2||null, google_location_1||null, google_location_2||null, c.id]);
+        res.json({ message: 'Location saved' });
+    } catch(e) { res.status(400).json({ error: e.message }); }
+});
+
+app.get('/api/health', (req, res) => res.json({ status: 'ok', ts: new Date().toISOString(), maps: !!process.env.GOOGLE_MAPS_KEY }));
 
 // ==================== STATIC FILES ====================
 app.use(express.static(path.join(__dirname, 'public')));

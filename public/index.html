@@ -173,6 +173,7 @@ select[multiple].fc{height:120px;}
     <nav class="sb-nav">
       <div class="sb-sec">Overview</div>
       <button class="sb-item active" onclick="showPage('dashboard',this)"><i class="fas fa-chart-pie"></i> Dashboard</button>
+      <button class="sb-item" onclick="showPage('map',this)"><i class="fas fa-map-marked-alt"></i> Customer Map</button>
       <div class="sb-sec">Operations</div>
       <button class="sb-item" onclick="showPage('customers',this)"><i class="fas fa-users"></i> Customers</button>
       <button class="sb-item" onclick="showPage('orders',this)"><i class="fas fa-receipt"></i> Orders</button>
@@ -209,6 +210,27 @@ select[multiple].fc{height:120px;}
           <div class="tbl-wrap"><table><thead><tr><th>Customer</th><th>Plan</th><th>Status</th><th>Amount</th></tr></thead>
           <tbody id="recentOrders"><tr><td colspan="4" class="loading"><span class="spinner"></span>Loading...</td></tr></tbody></table></div></div>
       </div>
+      <!-- MAP PAGE -->
+      <div id="page-map" class="page">
+        <div class="sec-hd"><span class="sec-title">Customer Map</span></div>
+        <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
+          <select class="fc" id="mapTerr" style="width:180px;" onchange="onMapTerrChange()"><option value="">All Territories</option></select>
+          <select class="fc" id="mapKitchen" style="width:180px;" onchange="loadMapData()"><option value="">All Kitchens</option></select>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-g" id="btnAllCust" onclick="setMapType('customers')"><i class="fas fa-users"></i> All Customers</button>
+            <button class="btn btn-o" id="btnTodayDel" onclick="setMapType('deliveries')"><i class="fas fa-truck"></i> Today's Deliveries</button>
+          </div>
+          <input type="date" class="fc" id="mapDate" style="width:170px;display:none;" onchange="loadMapData()">
+          <span id="mapCount" style="font-size:12px;color:var(--muted);"></span>
+        </div>
+        <div id="mapLegend" style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px;font-size:12px;font-weight:600;"></div>
+        <div id="customerMap" style="width:100%;height:580px;border-radius:12px;border:1px solid var(--border);background:var(--bg);overflow:hidden;">
+          <div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);">
+            <span class="spinner"></span>&nbsp; Loading map...
+          </div>
+        </div>
+      </div>
+
       <div id="page-categories" class="page">
         <div class="sec-hd"><span class="sec-title">Meal Categories</span><button class="btn btn-g" onclick="openModal('catModal')"><i class="fas fa-plus"></i> Add Category</button></div>
         <div class="alert as" id="catOk"></div><div class="alert ae" id="catErr"></div>
@@ -527,7 +549,7 @@ select[multiple].fc{height:120px;}
           <option>Palakkad</option><option>Kollam</option>
         </select>
       </div>
-      <div class="fg"><label class="fl">Territory</label><select class="fc" id="cTerritory"><option value="">Select</option></select></div>
+      <div class="fg"><label class="fl">Territory</label><select class="fc" id="cTerritory" onchange="cascadeKitchen('cTerritory','cKitchen')"><option value="">Select</option></select></div>
     </div>
     <div class="fg"><label class="fl">Diet Preference</label>
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:5px;" id="cDietChips">
@@ -549,6 +571,7 @@ select[multiple].fc{height:120px;}
     <div class="fg"><label class="fl">Customer *</label><select class="fc" id="oCustomer"><option value="">Select Customer</option></select></div>
     <div class="frow">
       <div class="fg"><label class="fl">Plan *</label><select class="fc" id="oPlan" onchange="updateOrderPreview()"><option value="">Select Plan</option></select></div>
+      <div class="fg"><label class="fl">Territory</label><select class="fc" id="oTerritory" onchange="cascadeKitchen('oTerritory','oKitchen')"><option value="">Select Territory</option></select></div>
       <div class="fg"><label class="fl">Kitchen</label><select class="fc" id="oKitchen"><option value="">Select Kitchen</option></select></div>
     </div>
     <div class="frow">
@@ -607,7 +630,7 @@ function showPage(name,btn){
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));document.getElementById("page-"+name)?.classList.add("active");
   document.querySelectorAll(".sb-item").forEach(b=>b.classList.remove("active"));btn?.classList.add("active");
   const m=pageMeta[name]||[name,""];document.getElementById("pgTitle").textContent=m[0];document.getElementById("pgSub").textContent=m[1];
-  if(name==="orders")loadOrders();if(name==="deliveries")loadDeliveries();if(name==="planmenu"){initCatPicker();loadSavedMenus();}if(name==="deliveryboys")loadDeliveryBoys();
+  if(name==="orders")loadOrders();if(name==="deliveries")loadDeliveries();if(name==="planmenu"){initCatPicker();loadSavedMenus();}if(name==="deliveryboys")loadDeliveryBoys();if(name==="map"){initMap();loadMapTerritories();}
   if(name==="plans")loadSavedMenusForPlan();
 }
 function openModal(id){
@@ -1147,6 +1170,124 @@ async function deleteDeliveryBoy(id) {
 }
 // ===== END DELIVERY BOYS =====
 
+// ==================== MAP ====================
+let mapInstance = null, mapMarkers = [], currentMapType = 'customers';
+const TERR_COLORS = ['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e67e22','#34495e'];
+
+function setMapType(type) {
+  currentMapType = type;
+  document.getElementById('btnAllCust').className = type==='customers'?'btn btn-g':'btn btn-o';
+  document.getElementById('btnTodayDel').className = type==='deliveries'?'btn btn-g':'btn btn-o';
+  document.getElementById('mapDate').style.display = type==='deliveries'?'block':'none';
+  if(type==='deliveries'&&!document.getElementById('mapDate').value)
+    document.getElementById('mapDate').value=new Date().toISOString().split('T')[0];
+  loadMapData();
+}
+
+async function loadMapTerritories() {
+  const sel=document.getElementById('mapTerr'); if(!sel)return;
+  sel.innerHTML='<option value="">All Territories</option>';
+  territories.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.text=t.name;sel.appendChild(o);});
+}
+
+async function onMapTerrChange() {
+  const terrId=document.getElementById('mapTerr').value;
+  const kSel=document.getElementById('mapKitchen');
+  kSel.innerHTML='<option value="">All Kitchens</option>';
+  if(terrId){const ks=await api(`${API}/kitchens-by-territory?territory_id=${terrId}`);(ks||[]).forEach(k=>{const o=document.createElement('option');o.value=k.id;o.text=k.name;kSel.appendChild(o);});}
+  loadMapData();
+}
+
+async function loadMapData() {
+  if(!mapInstance)return;
+  const type=currentMapType;
+  const terrId=document.getElementById('mapTerr')?.value||'';
+  const kitchenId=document.getElementById('mapKitchen')?.value||'';
+  const date=document.getElementById('mapDate')?.value||new Date().toISOString().split('T')[0];
+  let url=`${API}/admin/map-data?type=${type}&date=${date}`;
+  if(terrId)url+=`&territory_id=${terrId}`;
+  if(kitchenId)url+=`&kitchen_id=${kitchenId}`;
+  try{const d=await api(url);plotMapPoints(d);}catch(e){console.error(e);}
+}
+
+function plotMapPoints(data) {
+  mapMarkers.forEach(m=>{m._iw?.close();m.setMap(null);});mapMarkers=[];
+  const points=data.points||[];
+  document.getElementById('mapCount').textContent=`${points.length} locations shown`;
+  if(!points.length)return;
+  const terrIds=[...new Set(points.map(p=>p.territory_id||p.territory_name||'?'))];
+  const terrColorMap={};terrIds.forEach((t,i)=>terrColorMap[t]=TERR_COLORS[i%TERR_COLORS.length]);
+  const legendEl=document.getElementById('mapLegend');
+  if(data.type==='deliveries'){
+    legendEl.innerHTML='<span style="display:flex;align-items:center;gap:5px;"><span style="width:12px;height:12px;border-radius:50%;background:#2ecc71;display:inline-block;"></span>Delivered</span><span style="display:flex;align-items:center;gap:5px;"><span style="width:12px;height:12px;border-radius:50%;background:#3498db;display:inline-block;"></span>Pending</span><span style="display:flex;align-items:center;gap:5px;"><span style="width:12px;height:12px;border-radius:50%;background:#95a5a6;display:inline-block;"></span>Skipped</span>';
+  } else {
+    legendEl.innerHTML=terrIds.map((t,i)=>`<span style="display:flex;align-items:center;gap:5px;"><span style="width:12px;height:12px;border-radius:50%;background:${TERR_COLORS[i%TERR_COLORS.length]};display:inline-block;"></span>${t}</span>`).join('');
+  }
+  const bounds=new google.maps.LatLngBounds();
+  let openIW=null;
+  points.forEach(p=>{
+    const lat=parseFloat(p.lat||p.lat_1),lng=parseFloat(p.lng||p.lng_1);
+    if(!lat||!lng||isNaN(lat)||isNaN(lng))return;
+    let color=data.type==='deliveries'?(p.status==='delivered'?'#2ecc71':p.status==='skipped'?'#95a5a6':'#3498db'):(terrColorMap[p.territory_id||p.territory_name||'?']||'#2ecc71');
+    const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 32 40"><path d="M16 0C7.16 0 0 7.16 0 16c0 12 16 24 16 24S32 28 32 16C32 7.16 24.84 0 16 0z" fill="${color}" stroke="white" stroke-width="2"/><circle cx="16" cy="16" r="6" fill="white"/></svg>`;
+    const icon={url:'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg),scaledSize:new google.maps.Size(28,36),anchor:new google.maps.Point(14,36)};
+    const marker=new google.maps.Marker({position:{lat,lng},map:mapInstance,icon,title:p.customer_name||p.name});
+    bounds.extend({lat,lng});
+    let info='';
+    if(data.type==='deliveries'){
+      info=`<div style="font-family:sans-serif;min-width:170px;font-size:13px;"><strong>${p.customer_name}</strong><br>📞 ${p.customer_phone||'—'}<br>🍽️ ${p.meal_item_name||'—'}<br>🏍️ ${p.delivery_boy_name||'Unassigned'}<br><span style="background:${color};color:white;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700;">${p.status}</span></div>`;
+    } else {
+      const d=p.diet_preference==='pure_veg'||p.diet_preference==='vegan'?'🟢':'🔴';
+      info=`<div style="font-family:sans-serif;min-width:170px;font-size:13px;"><strong>${p.name}</strong><br>📞 ${p.phone||'—'}<br>${d} ${p.diet_preference||'—'}${p.active_plan?`<br>📋 ${p.active_plan}`:''}${p.delivery_boy_name?`<br>🏍️ ${p.delivery_boy_name}`:''}<br><span style="color:#666;font-size:11px;">📍 ${p.territory_name||'—'}</span><br><a href="https://maps.google.com/?q=${lat},${lng}" target="_blank" style="font-size:11px;color:#3498db;">Open in Maps ↗</a></div>`;
+    }
+    const iw=new google.maps.InfoWindow({content:info});
+    marker.addListener('click',()=>{if(openIW)openIW.close();iw.open(mapInstance,marker);openIW=iw;});
+    marker._iw=iw;mapMarkers.push(marker);
+  });
+  if(mapMarkers.length)mapInstance.fitBounds(bounds);
+}
+
+function initMap() {
+  if(mapInstance){loadMapData();return;}
+  if(typeof google==='undefined'){
+    const script=document.createElement('script');
+    script.src=`https://maps.googleapis.com/maps/api/js?key=AIzaSyAcKKkjErvVOK3y40_0WgkzQwCt05XK7gM&callback=onGoogleMapsLoaded`;
+    script.async=true;document.head.appendChild(script);
+  } else { onGoogleMapsLoaded(); }
+}
+
+function onGoogleMapsLoaded() {
+  const el=document.getElementById('customerMap');if(!el)return;
+  mapInstance=new google.maps.Map(el,{center:{lat:11.0,lng:76.1},zoom:10,mapTypeControl:false,streetViewControl:false,fullscreenControl:true,styles:[{featureType:'poi',elementType:'labels',stylers:[{visibility:'off'}]}]});
+  loadMapData();
+}
+
+// ==================== TERRITORY → KITCHEN CASCADE ====================
+async function cascadeKitchen(terrSelectId, kitchenSelectId) {
+  const terrId=document.getElementById(terrSelectId)?.value;
+  const kSel=document.getElementById(kitchenSelectId);
+  if(!kSel)return;
+  kSel.innerHTML='<option value="">Select Kitchen</option>';
+  if(!terrId){kitchens.forEach(k=>{const o=document.createElement('option');o.value=k.id;o.text=k.name;kSel.appendChild(o);});return;}
+  try{const ks=await api(`${API}/kitchens-by-territory?territory_id=${terrId}`);(ks||[]).forEach(k=>{const o=document.createElement('option');o.value=k.id;o.text=k.name;kSel.appendChild(o);});}catch(e){}
+}
+
+const _origOpen=openModal;
+function openModal(id){
+  _origOpen(id);
+  if(id==='orderModal'){
+    const sel=document.getElementById('oTerritory');
+    if(sel){sel.innerHTML='<option value="">Select Territory</option>';territories.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.text=t.name;sel.appendChild(o);});}
+  }
+  if(id==='dbModal'){
+    const ksel=document.getElementById('dbKitchen');
+    if(ksel&&kitchens.length){ksel.innerHTML='<option value="">Select Kitchen</option>';kitchens.forEach(k=>{const o=document.createElement('option');o.value=k.id;o.text=k.name;ksel.appendChild(o);});}
+    const tsel=document.getElementById('dbTerritory');
+    if(tsel&&territories.length){tsel.innerHTML='<option value="">Select Territory</option>';territories.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.text=t.name;tsel.appendChild(o);});}
+  }
+}
+// ===== END MAP & CASCADE =====
+
 </script>
 <div class="modal-bg" id="dbModal"><div class="modal-box wide">
   <div class="modal-hd"><span class="modal-title">Add Delivery Boy</span><button class="modal-close" onclick="closeModal('dbModal')">&times;</button></div>
@@ -1157,7 +1298,7 @@ async function deleteDeliveryBoy(id) {
     </div>
     <div class="frow">
       <div class="fg"><label class="fl">Kitchen *</label><select class="fc" id="dbKitchen"><option value="">Select Kitchen</option></select></div>
-      <div class="fg"><label class="fl">Territory</label><select class="fc" id="dbTerritory"><option value="">Select Territory</option></select></div>
+      <div class="fg"><label class="fl">Territory</label><select class="fc" id="dbTerritory" onchange="cascadeKitchen('dbTerritory','dbKitchen')"><option value="">Select Territory</option></select></div>
     </div>
     <div class="frow">
       <div class="fg"><label class="fl">Vehicle Type</label>

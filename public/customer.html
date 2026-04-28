@@ -225,7 +225,25 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--dk);font-
       <div class="profile-section">
         <h3>Address</h3>
         <div class="pf"><label class="pl">Primary Address</label><input type="text" class="pc" id="pfAddr" placeholder="Flat / Building / Street"></div>
+        <div class="pf">
+          <label class="pl">Location 1 — Google Maps Link</label>
+          <div style="display:flex;gap:8px;">
+            <input type="text" class="pc" id="pfLoc1" placeholder="Paste Google Maps share link..." style="flex:1;">
+            <button onclick="extractLocation(1)" style="padding:10px 14px;background:var(--g);color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;">Extract</button>
+          </div>
+          <div id="locResult1" style="display:none;margin-top:6px;background:var(--gl);border-radius:7px;padding:8px 11px;font-size:12px;color:var(--gd);"></div>
+          <input type="hidden" id="pfLat1"><input type="hidden" id="pfLng1">
+        </div>
         <div class="pf"><label class="pl">Secondary Address</label><input type="text" class="pc" id="pfAddr2" placeholder="Alternative delivery address"></div>
+        <div class="pf">
+          <label class="pl">Location 2 — Google Maps Link</label>
+          <div style="display:flex;gap:8px;">
+            <input type="text" class="pc" id="pfLoc2" placeholder="Paste Google Maps share link..." style="flex:1;">
+            <button onclick="extractLocation(2)" style="padding:10px 14px;background:var(--g);color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;">Extract</button>
+          </div>
+          <div id="locResult2" style="display:none;margin-top:6px;background:var(--gl);border-radius:7px;padding:8px 11px;font-size:12px;color:var(--gd);"></div>
+          <input type="hidden" id="pfLat2"><input type="hidden" id="pfLng2">
+        </div>
         <div class="prow">
           <div class="pf"><label class="pl">City</label>
             <select class="pc" id="pfCity">
@@ -388,6 +406,29 @@ async function loadProfile(){
 function setVal(id,v){const el=document.getElementById(id);if(el&&v!=null)el.value=v;}
 function toggleChip(el){el.classList.toggle("on");}
 function selectDietChip(el){document.querySelectorAll("[data-d]").forEach(c=>c.classList.remove("on"));el.classList.add("on");document.getElementById("pfDiet").value=el.dataset.d;}
+
+async function extractLocation(num) {
+  const input = document.getElementById(`pfLoc${num}`);
+  const result = document.getElementById(`locResult${num}`);
+  const url = input.value.trim();
+  if (!url) { showToast("Paste a Google Maps link first"); return; }
+  result.style.display = "none";
+  try {
+    const r = await fetch(`${API}/util/extract-location?url=${encodeURIComponent(url)}`);
+    const d = await r.json();
+    if (d.error) { showToast("❌ " + d.error); return; }
+    document.getElementById(`pfLat${num}`).value = d.lat;
+    document.getElementById(`pfLng${num}`).value = d.lng;
+    result.style.display = "block";
+    result.innerHTML = `📍 ${d.formatted} <a href="https://maps.google.com/?q=${d.lat},${d.lng}" target="_blank" style="color:var(--gd);margin-left:8px;">View ↗</a>`;
+    showToast("✅ Location extracted!");
+    // Auto-save location
+    await api(`${API}/customer/location`, {method:"PUT", body:JSON.stringify({
+      [`lat_${num}`]: d.lat, [`lng_${num}`]: d.lng,
+      [`google_location_${num}`]: url
+    })});
+  } catch(e) { showToast("Connection error"); }
+}
 
 async function saveProfile(){
   const hcs=Array.from(document.querySelectorAll("[data-h].on")).map(c=>c.dataset.h).join(",");

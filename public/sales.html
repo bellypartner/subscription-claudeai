@@ -181,7 +181,8 @@ tbody tr:hover{background:var(--bg);}
         <div class="card-body">
           <div class="frow">
             <div class="fg"><label class="fl">Start Date *</label><input type="date" class="fc" id="saleStartDate"></div>
-            <div class="fg"><label class="fl">Kitchen</label><select class="fc" id="saleKitchen"><option value="">Select Kitchen</option></select></div>
+            <div class="fg"><label class="fl">Territory</label><select class="fc" id="saleTerritory" onchange="cascadeSaleKitchen()"><option value="">Select Territory</option></select></div>
+          <div class="fg"><label class="fl">Kitchen</label><select class="fc" id="saleKitchen"><option value="">Select Kitchen</option></select></div>
           </div>
           <div class="fg"><label class="fl">Paid Amount (Rs)</label><input type="number" class="fc" id="salePaid" placeholder="0"></div>
           <div class="fg"><label class="fl">Notes</label><textarea class="fc" id="saleNotes" rows="2" placeholder="Any special instructions..."></textarea></div>
@@ -233,7 +234,7 @@ tbody tr:hover{background:var(--bg);}
         <option>Kochi</option><option>Thiruvananthapuram</option><option>Kannur</option>
         <option>Palakkad</option><option>Kollam</option>
       </select></div>
-      <div class="fg"><label class="fl">Territory</label><select class="fc" id="ncTerritory"><option value="">Select Territory</option></select></div>
+      <div class="fg"><label class="fl">Territory</label><select class="fc" id="ncTerritory" onchange="cascadeSalesKitchen()"><option value="">Select Territory</option></select></div>
     </div>
     <div class="fg"><label class="fl">Diet Preference</label>
       <div class="chip-row" id="ncDietChips">
@@ -263,9 +264,25 @@ tbody tr:hover{background:var(--bg);}
       <div class="fg"><label class="fl">Alternate Phone</label><input type="text" class="fc" id="ecAltPhone"></div>
       <div class="fg"><label class="fl">Email</label><input type="email" class="fc" id="ecEmail"></div>
     </div>
-    <div class="sdiv">Address</div>
+    <div class="sdiv">Address &amp; Location</div>
     <div class="fg"><label class="fl">Primary Address</label><input type="text" class="fc" id="ecAddr"></div>
+    <div class="fg"><label class="fl">Location 1 — Paste Google Maps Link</label>
+      <div style="display:flex;gap:8px;">
+        <input type="text" class="fc" id="ecLoc1" placeholder="Paste Google Maps share link..." style="flex:1;">
+        <button onclick="extractSalesLoc(1)" style="padding:9px 13px;background:var(--purple);color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">Extract</button>
+      </div>
+      <div id="ecLocRes1" style="display:none;margin-top:5px;background:var(--pl);border-radius:7px;padding:7px 11px;font-size:12px;color:var(--purple);"></div>
+      <input type="hidden" id="ecLat1"><input type="hidden" id="ecLng1">
+    </div>
     <div class="fg"><label class="fl">Secondary Address</label><input type="text" class="fc" id="ecAddr2"></div>
+    <div class="fg"><label class="fl">Location 2 — Paste Google Maps Link</label>
+      <div style="display:flex;gap:8px;">
+        <input type="text" class="fc" id="ecLoc2" placeholder="Paste Google Maps share link..." style="flex:1;">
+        <button onclick="extractSalesLoc(2)" style="padding:9px 13px;background:var(--purple);color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">Extract</button>
+      </div>
+      <div id="ecLocRes2" style="display:none;margin-top:5px;background:var(--pl);border-radius:7px;padding:7px 11px;font-size:12px;color:var(--purple);"></div>
+      <input type="hidden" id="ecLat2"><input type="hidden" id="ecLng2">
+    </div>
     <div class="frow">
       <div class="fg"><label class="fl">City</label><select class="fc" id="ecCity">
         <option value="">Select</option>
@@ -510,6 +527,22 @@ async function loadDeliveryBoysForEdit(kitchenId) {
   }
 }
 
+async function extractSalesLoc(num) {
+  const url = document.getElementById(`ecLoc${num}`).value.trim();
+  if (!url) { showErr("Paste a Google Maps link first"); return; }
+  try {
+    const r = await fetch(`${API}/util/extract-location?url=${encodeURIComponent(url)}`,{headers:{"Authorization":"Bearer "+token}});
+    const d = await r.json();
+    if (d.error) { showErr(d.error); return; }
+    document.getElementById(`ecLat${num}`).value = d.lat;
+    document.getElementById(`ecLng${num}`).value = d.lng;
+    const res = document.getElementById(`ecLocRes${num}`);
+    res.style.display = "block";
+    res.innerHTML = `📍 ${d.formatted} <a href="https://maps.google.com/?q=${d.lat},${d.lng}" target="_blank" style="color:var(--purple)">View ↗</a>`;
+    showOk(`✅ Location ${num} extracted!`);
+  } catch(e) { showErr("Connection error"); }
+}
+
 async function saveEditCustomer() {
   const id = document.getElementById("ecId").value;
   const hcs = Array.from(document.querySelectorAll("[data-h].on")).map(c=>c.dataset.h).join(",");
@@ -530,6 +563,12 @@ async function saveEditCustomer() {
     height: document.getElementById("ecHeight").value||null,
     weight: document.getElementById("ecWeight").value||null,
     delivery_boy_id: document.getElementById("ecDeliveryBoy").value||null,
+    lat_1: document.getElementById("ecLat1").value||null,
+    lng_1: document.getElementById("ecLng1").value||null,
+    lat_2: document.getElementById("ecLat2").value||null,
+    lng_2: document.getElementById("ecLng2").value||null,
+    google_location_1: document.getElementById("ecLoc1").value||null,
+    google_location_2: document.getElementById("ecLoc2").value||null,
   };
   const d = await api(`${API}/sales/customers/${id}`,{method:"PUT",body:JSON.stringify(body)});
   if (d.error) { showErr(d.error); return; }
@@ -600,6 +639,10 @@ function clearSelectedCustomer() {
 }
 
 function showOrderSection() {
+  // Populate territory dropdown
+  const tsel = document.getElementById('saleTerritory');
+  if(tsel&&territories.length){tsel.innerHTML='<option value="">Select Territory</option>';territories.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.text=t.name;tsel.appendChild(o);});}
+
   const plan = plansCache.find(p=>p.id===selectedPlanId);
   const cust = allCustomers.find(c=>c.id===selectedCustomerId);
   if (!plan||!cust) return;
@@ -662,6 +705,23 @@ async function loadStatus() {
     </tr>`).join("");
   } catch(e){body.innerHTML="<tr><td colspan='7'>Connection error</td></tr>";}
 }
+
+async function cascadeSalesKitchen() {
+  // For new customer modal — just territory selection, no kitchen needed
+}
+
+async function cascadeSaleKitchen() {
+  const terrId = document.getElementById('saleTerritory')?.value;
+  const kSel = document.getElementById('saleKitchen');
+  kSel.innerHTML = '<option value="">Select Kitchen</option>';
+  if (!terrId) { kitchens.forEach(k=>{const o=document.createElement('option');o.value=k.id;o.text=k.name;kSel.appendChild(o);}); return; }
+  try {
+    const r = await fetch(`${API}/kitchens-by-territory?territory_id=${terrId}`,{headers:{"Authorization":"Bearer "+token}});
+    const ks = await r.json();
+    (ks||[]).forEach(k=>{const o=document.createElement('option');o.value=k.id;o.text=k.name;kSel.appendChild(o);});
+  } catch(e) {}
+}
+
 </script>
 </body>
 </html>
