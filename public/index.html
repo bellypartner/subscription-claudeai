@@ -340,8 +340,11 @@ select[multiple].fc{height:120px;}
       <div id="page-customers" class="page">
         <div class="sec-hd"><span class="sec-title">Customers</span><button class="btn btn-g" onclick="openModal('custModal')"><i class="fas fa-plus"></i> Add Customer</button></div>
         <div class="alert as" id="custOk"></div><div class="alert ae" id="custErr"></div>
-        <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Territory</th><th>Orders</th><th></th></tr></thead>
-        <tbody id="custBody"><tr><td colspan="6" class="loading"><span class="spinner"></span></td></tr></tbody></table></div></div>
+        <div id="custAlertBanner" style="display:none;background:#fef9c3;border:1px solid #fde68a;border-radius:9px;padding:11px 14px;margin-bottom:12px;font-size:13px;font-weight:600;color:#92400e;gap:8px;align-items:center;"></div>
+        <div class="card"><div class="tbl-wrap"><table>
+          <thead><tr><th>Name</th><th>Diet</th><th>Status</th><th>Plan</th><th>Delivery Boy</th><th>Territory</th><th></th></tr></thead>
+          <tbody id="custBody"><tr><td colspan="7" class="loading"><span class="spinner"></span></td></tr></tbody>
+        </table></div></div>
       </div>
       <div id="page-orders" class="page">
         <div class="sec-hd"><span class="sec-title">Orders</span><button class="btn btn-g" onclick="openModal('orderModal')"><i class="fas fa-plus"></i> New Order</button></div>
@@ -533,13 +536,31 @@ select[multiple].fc{height:120px;}
       <div class="fg"><label class="fl">Name *</label><input type="text" class="fc" id="cName" placeholder="Full name"></div>
       <div class="fg"><label class="fl">Phone Number *</label><input type="text" class="fc" id="cPhone" placeholder="10-digit mobile"></div>
     </div>
-    <div style="background:var(--gl);border-radius:8px;padding:10px 13px;font-size:12.5px;color:var(--gd);margin-bottom:14px;"><i class="fas fa-info-circle"></i> Customer login password = their phone number (they can change it later)</div>
-    <div class="sdiv">Optional</div>
+    <div style="background:var(--gl);border-radius:8px;padding:10px 13px;font-size:12.5px;color:var(--gd);margin-bottom:6px;"><i class="fas fa-info-circle"></i> Default login password = phone number</div>
+    <div class="sdiv">Contact</div>
     <div class="frow">
-      <div class="fg"><label class="fl">Alternate Phone</label><input type="text" class="fc" id="cAltPhone" placeholder=""></div>
-      <div class="fg"><label class="fl">Email</label><input type="email" class="fc" id="cEmail" placeholder=""></div>
+      <div class="fg"><label class="fl">Alternate Phone</label><input type="text" class="fc" id="cAltPhone"></div>
+      <div class="fg"><label class="fl">Email</label><input type="email" class="fc" id="cEmail"></div>
     </div>
-    <div class="fg"><label class="fl">Address</label><input type="text" class="fc" id="cAddr" placeholder="Flat / Building / Street"></div>
+    <div class="sdiv">Address &amp; Location</div>
+    <div class="fg"><label class="fl">Primary Address</label><input type="text" class="fc" id="cAddr" placeholder="Flat / Building / Street"></div>
+    <div class="fg"><label class="fl">Location 1 — Google Maps Link</label>
+      <div style="display:flex;gap:7px;">
+        <input type="text" class="fc" id="cLoc1" placeholder="Paste Google Maps share link..." style="flex:1;">
+        <button onclick="extractCustLoc(1)" style="padding:9px 13px;background:var(--g);color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;">Extract</button>
+      </div>
+      <div id="cLocRes1" style="display:none;margin-top:5px;background:var(--gl);border-radius:7px;padding:7px 11px;font-size:12px;color:var(--gd);"></div>
+      <input type="hidden" id="cLat1"><input type="hidden" id="cLng1">
+    </div>
+    <div class="fg"><label class="fl">Secondary Address</label><input type="text" class="fc" id="cAddr2"></div>
+    <div class="fg"><label class="fl">Location 2 — Google Maps Link</label>
+      <div style="display:flex;gap:7px;">
+        <input type="text" class="fc" id="cLoc2" placeholder="Paste Google Maps share link..." style="flex:1;">
+        <button onclick="extractCustLoc(2)" style="padding:9px 13px;background:var(--g);color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;">Extract</button>
+      </div>
+      <div id="cLocRes2" style="display:none;margin-top:5px;background:var(--gl);border-radius:7px;padding:7px 11px;font-size:12px;color:var(--gd);"></div>
+      <input type="hidden" id="cLat2"><input type="hidden" id="cLng2">
+    </div>
     <div class="frow">
       <div class="fg"><label class="fl">City</label>
         <select class="fc" id="cCity">
@@ -551,6 +572,7 @@ select[multiple].fc{height:120px;}
       </div>
       <div class="fg"><label class="fl">Territory</label><select class="fc" id="cTerritory" onchange="cascadeKitchen('cTerritory','cKitchen')"><option value="">Select</option></select></div>
     </div>
+    <div class="sdiv">Diet &amp; Health</div>
     <div class="fg"><label class="fl">Diet Preference</label>
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:5px;" id="cDietChips">
         <div class="dchip sel" data-diet="non_veg">🔴 Non-Veg</div>
@@ -559,6 +581,10 @@ select[multiple].fc{height:120px;}
         <div class="dchip" data-diet="vegan">🌿 Vegan</div>
       </div>
       <input type="hidden" id="cDiet" value="non_veg">
+    </div>
+    <div class="frow">
+      <div class="fg"><label class="fl">Height (cm)</label><input type="number" class="fc" id="cHeight" placeholder="170"></div>
+      <div class="fg"><label class="fl">Weight (kg)</label><input type="number" class="fc" id="cWeight" placeholder="70"></div>
     </div>
     <div class="fg"><label class="fl">Delivery Instructions</label><input type="text" class="fc" id="cInstructions" placeholder="e.g. Leave at door, call on arrival"></div>
     <button class="btn btn-g" style="width:100%;justify-content:center;" onclick="addCustomer()">Create Customer</button>
@@ -838,13 +864,67 @@ async function addPlan(){
 async function deletePlan(id){if(!confirm("Delete?"))return;await api(`${API}/admin/subscription-plans/${id}`,{method:"DELETE"});await loadPlans();}
 async function loadCustomers(){
   try{
-    const data=await api(`${API}/admin/customers`);customers=data||[];
-    const sel=document.getElementById("oCustomer");sel.innerHTML="<option value=''>Select Customer</option>";customers.forEach(c=>{const o=document.createElement("option");o.value=c.id;o.text=c.name+" ("+(c.phone||c.email)+")";sel.appendChild(o);});
+    // Populate order dropdown with basic list
+    const basic=await api(`${API}/admin/customers`);
+    customers=basic||[];
+    const sel=document.getElementById("oCustomer");
+    sel.innerHTML="<option value=''>Select Customer</option>";
+    customers.forEach(c=>{const o=document.createElement("option");o.value=c.id;o.text=c.name+" ("+(c.phone||c.email||"?")+")";sel.appendChild(o);});
+
+    // Status list for table
+    const data=await api(`${API}/admin/customers/status`);
     const body=document.getElementById("custBody");
-    if(!customers.length){body.innerHTML="<tr><td colspan='6'><div class='empty'><i class='fas fa-users'></i><p>No customers</p></div></td></tr>";return;}
-    body.innerHTML=customers.map(c=>`<tr><td><strong>${c.name}</strong></td><td>${c.email||c.phone}</td><td>${c.phone||"?"}</td><td>${c.territory_name||"?"}</td><td><span class="badge" style="background:var(--bl);color:var(--blue)">${c.total_orders||0} orders</span></td><td style="display:flex;gap:6px;"><button class="btn btn-o btn-sm" onclick="openEditCust(${c.id})"><i class="fas fa-edit"></i></button><button class="btn btn-r btn-sm" onclick="deleteCust(${c.id})"><i class="fas fa-trash"></i></button></td></tr>`).join("");
-  }catch(e){showErr2("custErr","Error loading");}
+    if(!data?.length){body.innerHTML="<tr><td colspan='7'><div class='empty'><i class='fas fa-users'></i><p>No customers yet</p></div></td></tr>";return;}
+
+    // Alert banner for <3 pending
+    const alerts=data.filter(c=>c.order_status==='active'&&parseInt(c.pending_count||0)<3&&parseInt(c.pending_count||0)>0);
+    const banner=document.getElementById("custAlertBanner");
+    if(banner){
+      if(alerts.length){banner.style.display="flex";banner.innerHTML=`<i class="fas fa-exclamation-triangle"></i>&nbsp;<strong>${alerts.length} customer${alerts.length>1?'s':''}</strong>&nbsp;with fewer than 3 deliveries remaining — follow up for renewal`;}
+      else banner.style.display="none";
+    }
+
+    const stMap={
+      active:{label:"Active",bg:"var(--gl)",col:"var(--gd)"},
+      paused:{label:"Paused",bg:"var(--al)",col:"#92400e"},
+      completed:{label:"Finished",bg:"var(--bl)",col:"var(--blue)"},
+      cancelled:{label:"Cancelled",bg:"#f3f4f6",col:"var(--muted)"}
+    };
+    const dietIco={pure_veg:"🟢",non_veg:"🔴",eggetarian:"🥚",vegan:"🌿"};
+    body.innerHTML=data.map(c=>{
+      const st=stMap[c.order_status]||{label:"No Plan",bg:"#f3f4f6",col:"var(--muted)"};
+      const pend=parseInt(c.pending_count||0);
+      const warn=c.order_status==='active'&&pend>0&&pend<3?`<span class="badge" style="background:#fef9c3;color:#92400e;margin-left:4px;">⚠️ ${pend} left</span>`:"";
+      return`<tr style="cursor:pointer;" onclick="window.open('/customer-detail?id=${c.id}','_blank')">
+        <td><strong>${c.name}</strong><div style="font-size:11px;color:var(--muted)">${c.phone||""}</div></td>
+        <td>${dietIco[c.diet_preference]||"🔴"} ${c.diet_preference||"—"}</td>
+        <td><span class="badge" style="background:${st.bg};color:${st.col}">${st.label}</span>${warn}</td>
+        <td>${c.plan_name||"<span style='color:var(--muted)'>—</span>"}</td>
+        <td>${c.delivery_boy_name?`🏍️ ${c.delivery_boy_name}`:"<span style='color:var(--muted)'>—</span>"}</td>
+        <td>${c.territory_name||"—"}</td>
+        <td onclick="event.stopPropagation()" style="display:flex;gap:5px;">
+          <button class="btn btn-b btn-sm" onclick="window.open('/customer-detail?id=${c.id}','_blank')" title="View Detail"><i class="fas fa-eye"></i></button>
+          <button class="btn btn-r btn-sm" onclick="deleteCust(${c.id})"><i class="fas fa-trash"></i></button>
+        </td>
+      </tr>`;
+    }).join("");
+  }catch(e){console.error(e);showErr2("custErr","Error loading customers");}
 }
+async function extractCustLoc(num) {
+  const url=document.getElementById(`cLoc${num}`).value.trim();
+  if(!url){showErr2("custErr","Paste a Google Maps link first");return;}
+  try{
+    const r=await fetch(`${API}/util/extract-location?url=${encodeURIComponent(url)}`);
+    const d=await r.json();
+    if(d.error){showErr2("custErr",d.error);return;}
+    document.getElementById(`cLat${num}`).value=d.lat;
+    document.getElementById(`cLng${num}`).value=d.lng;
+    const res=document.getElementById(`cLocRes${num}`);
+    res.style.display="block";
+    res.innerHTML=`📍 ${d.formatted} <a href="https://maps.google.com/?q=${d.lat},${d.lng}" target="_blank" style="color:var(--gd);margin-left:6px;">View ↗</a>`;
+  }catch(e){showErr2("custErr","Connection error");}
+}
+
 async function addCustomer(){
   const name=document.getElementById("cName").value.trim();
   const phone=document.getElementById("cPhone").value.trim();
@@ -854,15 +934,25 @@ async function addCustomer(){
     alternate_phone:document.getElementById("cAltPhone").value||null,
     email:document.getElementById("cEmail").value||null,
     address:document.getElementById("cAddr").value||null,
+    address_2:document.getElementById("cAddr2").value||null,
     city:document.getElementById("cCity").value||null,
     territory_id:document.getElementById("cTerritory").value||null,
     diet_preference:document.getElementById("cDiet").value||"non_veg",
     delivery_instructions:document.getElementById("cInstructions").value||null,
+    height:document.getElementById("cHeight").value||null,
+    weight:document.getElementById("cWeight").value||null,
+    lat_1:document.getElementById("cLat1").value||null,
+    lng_1:document.getElementById("cLng1").value||null,
+    lat_2:document.getElementById("cLat2").value||null,
+    lng_2:document.getElementById("cLng2").value||null,
+    google_location_1:document.getElementById("cLoc1").value||null,
+    google_location_2:document.getElementById("cLoc2").value||null,
   })});
   if(d.error){showErr2("custErr",d.error);return;}
   showOk("custOk",`✅ Customer created! Login: ${phone} / ${phone}`);
   closeModal("custModal");
-  ["cName","cPhone","cAltPhone","cEmail","cAddr","cInstructions"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
+  ["cName","cPhone","cAltPhone","cEmail","cAddr","cAddr2","cInstructions","cLoc1","cLoc2","cLat1","cLng1","cLat2","cLng2"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
+  ["cLocRes1","cLocRes2"].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display="none";});
   document.getElementById("cCity").value="";document.getElementById("cTerritory").value="";
   document.getElementById("cDiet").value="non_veg";
   document.querySelectorAll("#cDietChips .dchip").forEach((c,i)=>c.classList.toggle("sel",i===0));

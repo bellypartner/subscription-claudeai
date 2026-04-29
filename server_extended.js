@@ -1750,11 +1750,153 @@ app.post('/api/auth/customer-signup', async (req, res) => {
     } catch(e) { res.status(400).json({ error: e.message }); }
 });
 
+
+// ==================== ADMIN CUSTOMER DETAIL ====================
+
+// Get single customer full profile + subscription status + calendar
+app.get('/api/admin/customers/:id/detail', verifyToken, async (req, res) => {
+    try {
+        const c = await db.one(`
+            SELECT c.*,
+                t.name as territory_name,
+                db.name as delivery_boy_name, db.phone as db_phone, db.vehicle_type,
+                (SELECT COUNT(*)::int FROM orders WHERE customer_id=c.id) as total_orders
+            FROM customers c
+            LEFT JOIN territories t ON c.territory_id=t.id
+            LEFT JOIN delivery_boys db ON c.delivery_boy_id=db.id
+            WHERE c.id=$1`, [req.params.id]);
+        if (!c) return res.status(404).json({ error: 'Customer not found' });
+
+        // Active subscription with delivery counts
+        const orders = await db.all(`
+            SELECT o.*,
+                p.name as plan_name, p.diet_type, p.meal_types, p.num_deliveries,
+                (SELECT COUNT(*)::int FROM deliveries WHERE order_id=o.id AND status='delivered') as delivered_count,
+                (SELECT COUNT(*)::int FROM deliveries WHERE order_id=o.id AND status='pending' AND is_sunday_skip=0) as pending_count,
+                (SELECT COUNT(*)::int FROM deliveries WHERE order_id=o.id AND status='skipped' AND is_sunday_skip=0) as skipped_count
+            FROM orders o
+            LEFT JOIN subscription_plans p ON o.plan_id=p.id
+            WHERE o.customer_id=$1 ORDER BY o.created_at DESC`, [req.params.id]);
+
+        // Calendar for current month
+        const month = new Date().toISOString().slice(0, 7);
+        const calendar = await db.all(`
+            SELECT d.*,
+                mi.name as meal_item_name, mi.calories, mi.veg_tag, mi.non_veg_tag,
+                mi.image_base64, mi.proteins, mi.carbs, mi.ingredients, mi.allergy_info,
+                mc.name as category_name,
+                db2.name as delivery_boy_name, db2.phone as db_phone
+            FROM deliveries d
+            LEFT JOIN meal_items mi ON d.meal_item_id=mi.id
+            LEFT JOIN meal_categories mc ON mi.category_id=mc.id
+            LEFT JOIN delivery_boys db2 ON d.delivery_boy_id=db2.id
+            WHERE d.customer_id=$1 AND d.is_sunday_skip=0
+              AND d.delivery_date >= ($2||'-01')::date
+              AND d.delivery_date <= ($2||'-31')::date
+            ORDER BY d.delivery_date ASC`, [req.params.id, month]);
+
+        res.json({ customer: c, orders, calendar, month });
+    } catch(e) { console.error(e); res.status(500).json({ error: e.message }); }
+});
+
+// Admin: skip a delivery on behalf of customer
+app.post('/api/admin/deliveries/:id/skip', verifyToken, async (req, res) => {
+    try {
+        const { reason } = req.body;
+        const d = await db.one(`SELECT * FROM deliveries WHERE id=$1`, [req.params.id]);
+        if (!d) return res.status(404).json({ error: 'Delivery not found' });
+        if (d.status !== 'pending') return res.status(400).json({ error: 'Already ' + d.status });
+        await db.query(`UPDATE deliveries SET status='skipped',skipped_reason=$1 WHERE id=$2`,
+            [reason||'Admin skip', d.id]);
+        await db.query(`INSERT INTO meal_skip_log (delivery_id,customer_id,reason) VALUES ($1,$2,$3)`,
+            [d.id, d.customer_id, reason||'Admin skip']);
+        // Extend subscription end date
+        const order = await db.one(`SELECT * FROM orders WHERE id=$1`, [d.order_id]);
+        if (order) {
+            const ne = nextWorkDay(toDS(order.end_date));
+            await db.query(`UPDATE orders SET end_date=$1,extended_days=extended_days+1 WHERE id=$2`, [ne, order.id]);
+        }
+        res.json({ message: 'Delivery skipped, subscription extended 1 day' });
+    } catch(e) { res.status(400).json({ error: e.message }); }
+});
+
+// Admin: pause subscription on behalf of customer
+app.post('/api/admin/orders/:id/pause', verifyToken, async (req, res) => {
+    try {
+        const { pause_start, pause_end, reason } = req.body;
+        if (!pause_start || !pause_end) return res.status(400).json({ error: 'Dates required' });
+        const order = await db.one(`SELECT * FROM orders WHERE id=$1`, [req.params.id]);
+        if (!order) return res.status(404).json({ error: 'Order not found' });
+        if (order.order_status !== 'active') return res.status(400).json({ error: 'Order not active' });
+        // Count working days being paused
+        let ext = 0;
+        const cur = new Date(pause_start + 'T12:00:00Z');
+        const ed = new Date(pause_end + 'T12:00:00Z');
+        while (cur <= ed) { if (cur.getUTCDay() !== 0) ext++; cur.setUTCDate(cur.getUTCDate() + 1); }
+        // Mark deliveries as skipped
+        await db.query(`UPDATE deliveries SET status='skipped',skipped_reason=$1 WHERE order_id=$2 AND delivery_date>=$3 AND delivery_date<=$4 AND status='pending' AND is_sunday_skip=0`,
+            [reason||'Paused by admin', order.id, pause_start, pause_end]);
+        // Extend end date
+        let ne = new Date(toDS(order.end_date) + 'T12:00:00Z');
+        let added = 0;
+        while (added < ext) { ne.setUTCDate(ne.getUTCDate() + 1); if (ne.getUTCDay() !== 0) added++; }
+        await db.query(`UPDATE orders SET order_status='paused',pause_start=$1,pause_end=$2,end_date=$3 WHERE id=$4`,
+            [pause_start, pause_end, ne.toISOString().split('T')[0], order.id]);
+        res.json({ message: `Paused ${ext} working days. End date extended.` });
+    } catch(e) { res.status(400).json({ error: e.message }); }
+});
+
+// Admin: update customer location
+app.put('/api/admin/customers/:id/location', verifyToken, async (req, res) => {
+    try {
+        const { lat_1, lng_1, lat_2, lng_2, google_location_1, google_location_2 } = req.body;
+        await db.query(`UPDATE customers SET lat_1=$1,lng_1=$2,lat_2=$3,lng_2=$4,
+            google_location_1=COALESCE($5,google_location_1),
+            google_location_2=COALESCE($6,google_location_2) WHERE id=$7`,
+            [lat_1||null,lng_1||null,lat_2||null,lng_2||null,
+            google_location_1||null,google_location_2||null,req.params.id]);
+        res.json({ message: 'Location updated' });
+    } catch(e) { res.status(400).json({ error: e.message }); }
+});
+
+// Enhanced customers list with subscription status
+app.get('/api/admin/customers/status', verifyToken, async (req, res) => {
+    try {
+        const rows = await db.all(`
+            SELECT c.*,
+                t.name as territory_name,
+                db.name as delivery_boy_name, db.phone as db_phone,
+                o.id as order_id, o.order_status, o.end_date,
+                o.pause_start, o.pause_end,
+                p.name as plan_name,
+                COUNT(d.id) FILTER (WHERE d.status='pending' AND d.is_sunday_skip=0)::int as pending_count,
+                COUNT(d.id) FILTER (WHERE d.status='delivered')::int as delivered_count,
+                COUNT(d.id) FILTER (WHERE d.status='skipped' AND d.is_sunday_skip=0)::int as skipped_count
+            FROM customers c
+            LEFT JOIN territories t ON c.territory_id=t.id
+            LEFT JOIN delivery_boys db ON c.delivery_boy_id=db.id
+            LEFT JOIN LATERAL (
+                SELECT * FROM orders WHERE customer_id=c.id ORDER BY created_at DESC LIMIT 1
+            ) o ON true
+            LEFT JOIN subscription_plans p ON o.plan_id=p.id
+            LEFT JOIN deliveries d ON d.order_id=o.id
+            WHERE c.status='active'
+            GROUP BY c.id,t.name,db.name,db.phone,o.id,o.order_status,o.end_date,o.pause_start,o.pause_end,p.name
+            ORDER BY c.name ASC`);
+        res.json(rows);
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 app.get('/api/health', (req, res) => res.json({ status: 'ok', ts: new Date().toISOString(), maps: !!process.env.GOOGLE_MAPS_KEY }));
 
 // ==================== STATIC FILES ====================
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.get('/customer-detail', (req, res) => {
+    const f = path.join(__dirname, 'public', 'customer_detail.html');
+    if (fs.existsSync(f)) return res.sendFile(f);
+    res.status(404).send('Not found');
+});
 app.get('/customer', (req, res) => {
     const f = path.join(__dirname, 'public', 'customer.html');
     if (fs.existsSync(f)) return res.sendFile(f);
