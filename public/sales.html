@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Salad Caffe — Sales</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--g:#2ecc71;--gd:#27ae60;--gl:#eafaf1;--gm:#a9dfbf;--dk:#111827;--mid:#374151;--muted:#6b7280;--border:#e5e7eb;--bg:#f9fafb;--red:#ef4444;--rl:#fef2f2;--amber:#f59e0b;--al:#fffbeb;--blue:#3b82f6;--bl:#eff6ff;--purple:#8b5cf6;--pl:#ede9fe;--sh:0 1px 3px rgba(0,0,0,.08);}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--dk);font-size:14px;}
+#loginPage{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#1e1b4b,#312e81,#4338ca);}
+.lcard{background:white;padding:44px 40px;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.3);width:100%;max-width:400px;}
+.lbrand{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.lbrand-ico{width:44px;height:44px;background:var(--purple);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;}
+.lbrand h1{font-size:22px;font-weight:700;}
+.lsub{color:var(--muted);font-size:13px;margin-bottom:28px;}
+.li{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:"DM Sans",sans-serif;margin-bottom:12px;}
+.li:focus{outline:none;border-color:var(--purple);}
+.lbtn{width:100%;padding:12px;background:var(--purple);color:white;border:none;border-radius:8px;font-size:15px;font-weight:700;font-family:"DM Sans",sans-serif;cursor:pointer;}
+.lbtn:hover{background:#7c3aed;}
+.lerr{background:var(--rl);color:var(--red);padding:10px 13px;border-radius:7px;margin-bottom:14px;font-size:13px;display:none;}
+#app{display:none;min-height:100vh;flex-direction:column;}
+#app.show{display:flex;}
+.topbar{background:#1e1b4b;padding:0 24px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.tb-left{display:flex;align-items:center;gap:12px;}
+.tb-ico{width:34px;height:34px;background:var(--purple);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;}
+.tb-title{color:white;font-weight:700;font-size:16px;}
+.tb-right{display:flex;align-items:center;gap:10px;}
+.tb-user{color:rgba(255,255,255,.6);font-size:12px;}
+.tb-logout{padding:6px 13px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:7px;color:white;cursor:pointer;font-size:12px;font-family:"DM Sans",sans-serif;}
+.tab-bar{background:#13104a;display:flex;padding:0 24px;gap:4px;}
+.tab-btn{padding:12px 18px;border:none;background:none;color:rgba(255,255,255,.5);font-size:13px;font-weight:600;cursor:pointer;font-family:"DM Sans",sans-serif;border-bottom:2px solid transparent;transition:all .2s;}
+.tab-btn.active{color:#a78bfa;border-bottom-color:#a78bfa;}
+.tab-btn i{margin-right:6px;}
+.content{padding:22px;flex:1;}
+.tab-panel{display:none;}.tab-panel.active{display:block;}
+.sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.sec-title{font-size:16px;font-weight:700;}
+.card{background:white;border-radius:12px;box-shadow:var(--sh);border:1px solid var(--border);overflow:hidden;margin-bottom:18px;}
+.card-hd{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-size:14.5px;font-weight:700;}
+.card-body{padding:18px;}
+.fc{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:"DM Sans",sans-serif;color:var(--dk);background:white;}
+.fc:focus{outline:none;border-color:var(--purple);}
+textarea.fc{resize:vertical;min-height:72px;}
+.fg{margin-bottom:14px;}
+.fl{display:block;font-size:11px;font-weight:700;color:var(--mid);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.frow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:9px 16px;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;font-family:"DM Sans",sans-serif;}
+.btn-p{background:var(--purple);color:white;}.btn-p:hover{background:#7c3aed;}
+.btn-g{background:var(--g);color:white;}.btn-g:hover{background:var(--gd);}
+.btn-o{background:white;border:1.5px solid var(--border);color:var(--mid);}
+.btn-r{background:var(--rl);color:var(--red);border:1px solid #fecaca;}
+.btn-b{background:var(--bl);color:var(--blue);border:1px solid #bfdbfe;}
+.btn-sm{padding:5px 10px;font-size:11.5px;border-radius:6px;}
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+thead th{background:var(--bg);padding:10px 14px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);}
+tbody td{padding:12px 14px;border-bottom:1px solid var(--border);}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover{background:var(--bg);}
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;}
+.bg{background:var(--gl);color:var(--gd);}
+.br{background:var(--rl);color:var(--red);}
+.ba{background:var(--al);color:#92400e;}
+.bgr{background:#f3f4f6;color:var(--muted);}
+.bb{background:var(--bl);color:var(--blue);}
+.bp{background:var(--pl);color:var(--purple);}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;}
+.modal-bg.show{display:flex;}
+.modal-box{background:white;border-radius:16px;width:100%;max-width:620px;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2);animation:mi .2s ease;}
+.modal-box.wide{max-width:780px;}
+@keyframes mi{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+.modal-hd{padding:18px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;background:white;z-index:1;}
+.modal-title{font-size:17px;font-weight:700;}
+.modal-close{background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer;}
+.modal-body{padding:20px 24px 26px;}
+.sdiv{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:18px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.alert{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;display:none;}
+.as{background:var(--gl);color:var(--gd);border:1px solid var(--gm);}
+.ae{background:var(--rl);color:var(--red);border:1px solid #fecaca;}
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+.stat-card{background:white;border-radius:12px;padding:18px;box-shadow:var(--sh);border:1px solid var(--border);}
+.stat-val{font-size:24px;font-weight:800;line-height:1;}
+.stat-lbl{font-size:11.5px;color:var(--muted);margin-top:3px;}
+.progress-bar-wrap{background:var(--border);border-radius:4px;height:6px;margin-top:6px;}
+.progress-bar{height:6px;border-radius:4px;background:var(--g);transition:width .3s;}
+.search-bar{display:flex;gap:10px;margin-bottom:16px;}
+.search-bar input{flex:1;}
+.status-tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;}
+.chip-row{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px;}
+.chip{padding:5px 12px;border:1.5px solid var(--border);border-radius:20px;cursor:pointer;font-size:12px;font-weight:600;background:white;transition:all .15s;}
+.chip.on{background:var(--gl);border-color:var(--g);color:var(--gd);}
+.empty{text-align:center;padding:40px 20px;color:var(--muted);}
+.empty i{font-size:32px;margin-bottom:12px;display:block;opacity:.3;}
+.spinner{display:inline-block;width:18px;height:18px;border:2.5px solid var(--border);border-top-color:var(--purple);border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle;margin-right:5px;}
+@keyframes sp{to{transform:rotate(360deg);}}
+.loading{text-align:center;padding:28px;color:var(--muted);}
+</style>
+</head>
+<body>
+
+<div id="loginPage">
+  <div class="lcard">
+    <div class="lbrand"><div class="lbrand-ico">💼</div><h1>Sales Portal</h1></div>
+    <p class="lsub">Salad Caffe — Sales Management</p>
+    <div class="lerr" id="loginErr"></div>
+    <input type="text" class="li" id="lPhone" placeholder="Phone number or email">
+    <input type="password" class="li" id="lPass" placeholder="Password">
+    <button class="lbtn" onclick="doLogin()">Sign In</button>
+    <p style="text-align:center;margin-top:12px;font-size:11px;color:var(--muted)">sales@test.com / sales123</p>
+  </div>
+</div>
+
+<div id="app">
+  <div class="topbar">
+    <div class="tb-left">
+      <div class="tb-ico">💼</div>
+      <span class="tb-title">Sales Manager</span>
+    </div>
+    <div class="tb-right">
+      <span class="tb-user" id="tbUser"></span>
+      <button class="tb-logout" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('customers',this)"><i class="fas fa-users"></i> Customers</button>
+    <button class="tab-btn" onclick="switchTab('newsale',this)"><i class="fas fa-tag"></i> New Sale</button>
+    <button class="tab-btn" onclick="switchTab('status',this)"><i class="fas fa-chart-bar"></i> Daily Status</button>
+  </div>
+
+  <div class="content">
+    <div class="alert as" id="salesOk"></div>
+    <div class="alert ae" id="salesErr"></div>
+
+    <!-- CUSTOMERS TAB -->
+    <div id="tab-customers" class="tab-panel active">
+      <div class="sec-hd">
+        <span class="sec-title">Customers</span>
+        <button class="btn btn-p" onclick="openModal('newCustModal')"><i class="fas fa-plus"></i> Add Customer</button>
+      </div>
+      <div class="search-bar">
+        <input type="text" class="fc" id="custSearch" placeholder="Search by name or phone..." oninput="searchCustomers()">
+      </div>
+      <div class="card"><div class="tbl-wrap"><table>
+        <thead><tr><th>Name</th><th>Phone</th><th>Diet</th><th>Plan</th><th>Status</th><th>Delivery Boy</th><th></th></tr></thead>
+        <tbody id="custBody"><tr><td colspan="7" class="loading"><span class="spinner"></span></td></tr></tbody>
+      </table></div></div>
+    </div>
+
+    <!-- NEW SALE TAB -->
+    <div id="tab-newsale" class="tab-panel">
+      <div class="sec-hd"><span class="sec-title">Create New Subscription</span></div>
+      <div class="card">
+        <div class="card-hd"><span class="card-title">Step 1 — Select Customer</span></div>
+        <div class="card-body">
+          <div class="fg">
+            <input type="text" class="fc" id="saleSearch" placeholder="Search customer by name or phone..." oninput="searchSaleCustomer()">
+            <div id="saleSearchResults" style="margin-top:8px;"></div>
+          </div>
+          <div id="selectedCustomer" style="display:none;background:var(--pl);border:1px solid #c4b5fd;border-radius:10px;padding:14px 16px;">
+            <div style="font-weight:700;font-size:15px;" id="selCustName"></div>
+            <div style="font-size:12px;color:var(--muted);margin-top:3px;" id="selCustInfo"></div>
+            <button class="btn btn-o btn-sm" style="margin-top:8px;" onclick="clearSelectedCustomer()">Change Customer</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="planSection" style="display:none;">
+        <div class="card-hd"><span class="card-title">Step 2 — Select Plan</span></div>
+        <div class="card-body">
+          <div id="planCards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;"></div>
+        </div>
+      </div>
+
+      <div class="card" id="orderSection" style="display:none;">
+        <div class="card-hd"><span class="card-title">Step 3 — Confirm Order</span></div>
+        <div class="card-body">
+          <div class="frow">
+            <div class="fg"><label class="fl">Start Date *</label><input type="date" class="fc" id="saleStartDate"></div>
+            <div class="fg"><label class="fl">Territory</label><select class="fc" id="saleTerritory" onchange="cascadeSaleKitchen()"><option value="">Select Territory</option></select></div>
+          <div class="fg"><label class="fl">Kitchen</label><select class="fc" id="saleKitchen"><option value="">Select Kitchen</option></select></div>
+          </div>
+          <div class="fg"><label class="fl">Paid Amount (Rs)</label><input type="number" class="fc" id="salePaid" placeholder="0"></div>
+          <div class="fg"><label class="fl">Notes</label><textarea class="fc" id="saleNotes" rows="2" placeholder="Any special instructions..."></textarea></div>
+          <div id="orderSummary" style="background:var(--gl);border-radius:10px;padding:14px 16px;margin-bottom:14px;font-size:13px;"></div>
+          <button class="btn btn-g" style="width:100%;justify-content:center;" onclick="confirmOrder()"><i class="fas fa-check"></i> Confirm & Create Order</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DAILY STATUS TAB -->
+    <div id="tab-status" class="tab-panel">
+      <div style="display:flex;gap:10px;margin-bottom:16px;align-items:center;">
+        <input type="date" class="fc" id="statusDate" style="width:200px;" onchange="loadStatus()">
+        <button class="btn btn-p btn-sm" onclick="loadStatus()"><i class="fas fa-sync"></i> Refresh</button>
+      </div>
+      <div class="stat-row" id="statusStats">
+        <div class="stat-card"><div class="stat-val" id="sSTotal">0</div><div class="stat-lbl">Total</div></div>
+        <div class="stat-card"><div class="stat-val" style="color:var(--g)" id="sSDelivered">0</div><div class="stat-lbl">Delivered</div><div class="progress-bar-wrap"><div class="progress-bar" id="sSDBar" style="width:0%"></div></div></div>
+        <div class="stat-card"><div class="stat-val" style="color:var(--amber)" id="sSPending">0</div><div class="stat-lbl">Pending</div></div>
+        <div class="stat-card"><div class="stat-val" style="color:var(--red)" id="sSSkipped">0</div><div class="stat-lbl">Skipped</div></div>
+      </div>
+      <div class="card"><div class="tbl-wrap"><table>
+        <thead><tr><th>Customer</th><th>Phone</th><th>Plan</th><th>Item</th><th>Delivery Boy</th><th>Kitchen</th><th>Status</th></tr></thead>
+        <tbody id="statusBody"><tr><td colspan="7" class="loading"><span class="spinner"></span></td></tr></tbody>
+      </table></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- NEW CUSTOMER MODAL -->
+<div class="modal-bg" id="newCustModal"><div class="modal-box wide">
+  <div class="modal-hd"><span class="modal-title">Add New Customer</span><button class="modal-close" onclick="closeModal('newCustModal')">&times;</button></div>
+  <div class="modal-body">
+    <div class="sdiv">Required</div>
+    <div class="frow">
+      <div class="fg"><label class="fl">Name *</label><input type="text" class="fc" id="ncName" placeholder="Full name"></div>
+      <div class="fg"><label class="fl">Phone Number *</label><input type="text" class="fc" id="ncPhone" placeholder="10-digit mobile"></div>
+    </div>
+    <div class="sdiv">Optional — Complete later</div>
+    <div class="frow">
+      <div class="fg"><label class="fl">Alternate Phone</label><input type="text" class="fc" id="ncAltPhone" placeholder=""></div>
+      <div class="fg"><label class="fl">Email</label><input type="email" class="fc" id="ncEmail" placeholder=""></div>
+    </div>
+    <div class="fg"><label class="fl">Address</label><input type="text" class="fc" id="ncAddr" placeholder="Flat / Building / Street"></div>
+    <div class="frow">
+      <div class="fg"><label class="fl">City</label><select class="fc" id="ncCity">
+        <option value="">Select City</option>
+        <option>Kozhikode</option><option>Malappuram</option><option>Thrissur</option>
+        <option>Kochi</option><option>Thiruvananthapuram</option><option>Kannur</option>
+        <option>Palakkad</option><option>Kollam</option>
+      </select></div>
+      <div class="fg"><label class="fl">Territory</label><select class="fc" id="ncTerritory" onchange="cascadeSalesKitchen()"><option value="">Select Territory</option></select></div>
+    </div>
+    <div class="fg"><label class="fl">Diet Preference</label>
+      <div class="chip-row" id="ncDietChips">
+        <div class="chip on" data-v="non_veg" onclick="selectDiet(this)">🔴 Non-Veg</div>
+        <div class="chip" data-v="pure_veg" onclick="selectDiet(this)">🟢 Pure Veg</div>
+        <div class="chip" data-v="eggetarian" onclick="selectDiet(this)">🥚 Eggetarian</div>
+        <div class="chip" data-v="vegan" onclick="selectDiet(this)">🌿 Vegan</div>
+      </div>
+      <input type="hidden" id="ncDiet" value="non_veg">
+    </div>
+    <div class="fg"><label class="fl">Delivery Instructions</label><textarea class="fc" id="ncInstructions" rows="2" placeholder="e.g. Leave at door, call on arrival..."></textarea></div>
+    <button class="btn btn-p" style="width:100%;justify-content:center;" onclick="createCustomer()"><i class="fas fa-user-plus"></i> Create Customer</button>
+  </div>
+</div></div>
+
+<!-- EDIT CUSTOMER MODAL -->
+<div class="modal-bg" id="editCustModal"><div class="modal-box wide">
+  <div class="modal-hd"><span class="modal-title">Edit Customer</span><button class="modal-close" onclick="closeModal('editCustModal')">&times;</button></div>
+  <div class="modal-body">
+    <input type="hidden" id="ecId">
+    <div class="sdiv">Basic Info</div>
+    <div class="frow">
+      <div class="fg"><label class="fl">Name *</label><input type="text" class="fc" id="ecName"></div>
+      <div class="fg"><label class="fl">Phone *</label><input type="text" class="fc" id="ecPhone"></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label class="fl">Alternate Phone</label><input type="text" class="fc" id="ecAltPhone"></div>
+      <div class="fg"><label class="fl">Email</label><input type="email" class="fc" id="ecEmail"></div>
+    </div>
+    <div class="sdiv">Address &amp; Location</div>
+    <div class="fg"><label class="fl">Primary Address</label><input type="text" class="fc" id="ecAddr"></div>
+    <div class="fg"><label class="fl">Location 1 — Paste Google Maps Link</label>
+      <div style="display:flex;gap:8px;">
+        <input type="text" class="fc" id="ecLoc1" placeholder="Paste Google Maps share link..." style="flex:1;">
+        <button onclick="extractSalesLoc(1)" style="padding:9px 13px;background:var(--purple);color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">Extract</button>
+      </div>
+      <div id="ecLocRes1" style="display:none;margin-top:5px;background:var(--pl);border-radius:7px;padding:7px 11px;font-size:12px;color:var(--purple);"></div>
+      <input type="hidden" id="ecLat1"><input type="hidden" id="ecLng1">
+    </div>
+    <div class="fg"><label class="fl">Secondary Address</label><input type="text" class="fc" id="ecAddr2"></div>
+    <div class="fg"><label class="fl">Location 2 — Paste Google Maps Link</label>
+      <div style="display:flex;gap:8px;">
+        <input type="text" class="fc" id="ecLoc2" placeholder="Paste Google Maps share link..." style="flex:1;">
+        <button onclick="extractSalesLoc(2)" style="padding:9px 13px;background:var(--purple);color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">Extract</button>
+      </div>
+      <div id="ecLocRes2" style="display:none;margin-top:5px;background:var(--pl);border-radius:7px;padding:7px 11px;font-size:12px;color:var(--purple);"></div>
+      <input type="hidden" id="ecLat2"><input type="hidden" id="ecLng2">
+    </div>
+    <div class="frow">
+      <div class="fg"><label class="fl">City</label><select class="fc" id="ecCity">
+        <option value="">Select</option>
+        <option>Kozhikode</option><option>Malappuram</option><option>Thrissur</option>
+        <option>Kochi</option><option>Thiruvananthapuram</option><option>Kannur</option>
+        <option>Palakkad</option><option>Kollam</option>
+      </select></div>
+      <div class="fg"><label class="fl">Territory</label><select class="fc" id="ecTerritory"><option value="">Select</option></select></div>
+    </div>
+    <div class="sdiv">Health & Diet</div>
+    <div class="frow">
+      <div class="fg"><label class="fl">Height (cm)</label><input type="number" class="fc" id="ecHeight" placeholder="170"></div>
+      <div class="fg"><label class="fl">Weight (kg)</label><input type="number" class="fc" id="ecWeight" placeholder="70"></div>
+    </div>
+    <div class="fg"><label class="fl">Health Conditions</label>
+      <div class="chip-row">
+        <div class="chip" data-h="BP" onclick="this.classList.toggle('on')">🩺 BP</div>
+        <div class="chip" data-h="Cholesterol" onclick="this.classList.toggle('on')">🫀 Cholesterol</div>
+        <div class="chip" data-h="Diabetes" onclick="this.classList.toggle('on')">🩸 Diabetes</div>
+        <div class="chip" data-h="Thyroid" onclick="this.classList.toggle('on')">Thyroid</div>
+        <div class="chip" data-h="None" onclick="this.classList.toggle('on')">✅ None</div>
+      </div>
+    </div>
+    <div class="fg"><label class="fl">Diet Preference</label>
+      <div class="chip-row" id="ecDietChips">
+        <div class="chip" data-v="non_veg" onclick="selectEcDiet(this)">🔴 Non-Veg</div>
+        <div class="chip" data-v="pure_veg" onclick="selectEcDiet(this)">🟢 Pure Veg</div>
+        <div class="chip" data-v="eggetarian" onclick="selectEcDiet(this)">🥚 Eggetarian</div>
+        <div class="chip" data-v="vegan" onclick="selectEcDiet(this)">🌿 Vegan</div>
+      </div>
+      <input type="hidden" id="ecDiet" value="non_veg">
+    </div>
+    <div class="fg"><label class="fl">Diet Goal</label>
+      <select class="fc" id="ecDietGoal">
+        <option value="">Select</option>
+        <option value="weight_loss">⚖️ Weight Loss</option>
+        <option value="muscle_gain">💪 Muscle Gain</option>
+        <option value="healthy_eating">🥗 Healthy Eating</option>
+        <option value="medical">🏥 Medical / Therapeutic</option>
+        <option value="maintenance">🔄 Maintenance</option>
+      </select>
+    </div>
+    <div class="fg"><label class="fl">Allergy Info</label><input type="text" class="fc" id="ecAllergy" placeholder="e.g. Gluten, Dairy, Nuts"></div>
+    <div class="fg"><label class="fl">Delivery Instructions</label><textarea class="fc" id="ecInstructions" rows="2"></textarea></div>
+    <div class="sdiv">Delivery Assignment</div>
+    <div class="frow">
+      <div class="fg"><label class="fl">Assigned Delivery Boy</label><select class="fc" id="ecDeliveryBoy"><option value="">Not assigned</option></select></div>
+    </div>
+    <button class="btn btn-p" style="width:100%;justify-content:center;" onclick="saveEditCustomer()"><i class="fas fa-save"></i> Save Changes</button>
+  </div>
+</div></div>
+
+<script>
+const API = "/api";
+let token = null, user = null;
+let allCustomers = [], selectedCustomerId = null, selectedPlanId = null;
+let kitchens = [], territories = [], deliveryBoys = [];
+
+document.getElementById("statusDate").value = new Date().toISOString().split("T")[0];
+
+window.addEventListener("load", () => {
+  const t = sessionStorage.getItem("salesToken");
+  if (t) { token = t; user = JSON.parse(sessionStorage.getItem("salesUser")||"{}"); showApp(); }
+});
+
+async function doLogin() {
+  const phone = document.getElementById("lPhone").value.trim();
+  const pwd = document.getElementById("lPass").value;
+  const err = document.getElementById("loginErr");
+  err.style.display = "none";
+  try {
+    const r = await fetch(`${API}/auth/login`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:phone,password:pwd})});
+    const d = await r.json();
+    if (d.error) { err.textContent=d.error; err.style.display="block"; return; }
+    if (!["sales_manager","super_admin","admin"].includes(d.user.authority)) {
+      err.textContent="Sales staff access only"; err.style.display="block"; return;
+    }
+    token=d.token; user=d.user;
+    sessionStorage.setItem("salesToken",token);
+    sessionStorage.setItem("salesUser",JSON.stringify(user));
+    showApp();
+  } catch(e) { err.textContent="Connection error"; err.style.display="block"; }
+}
+function doLogout() { sessionStorage.clear(); location.reload(); }
+
+async function showApp() {
+  document.getElementById("loginPage").style.display="none";
+  document.getElementById("app").classList.add("show");
+  document.getElementById("tbUser").textContent=user.name||"";
+  await loadMeta();
+  loadCustomers();
+}
+
+async function loadMeta() {
+  try {
+    const [kt, tr] = await Promise.all([
+      fetch(`${API}/kitchen/list`,{headers:{Authorization:"Bearer "+token}}).then(r=>r.json()),
+      fetch(`${API}/admin/territories`,{headers:{Authorization:"Bearer "+token}}).then(r=>r.json()),
+    ]);
+    kitchens = kt||[];
+    territories = tr||[];
+    // Populate dropdowns
+    const kSel = document.getElementById("saleKitchen");
+    kitchens.forEach(k=>{const o=document.createElement("option");o.value=k.id;o.text=k.name;kSel.appendChild(o);});
+    ["ncTerritory","ecTerritory"].forEach(id=>{
+      const sel=document.getElementById(id);if(!sel)return;
+      territories.forEach(t=>{const o=document.createElement("option");o.value=t.id;o.text=t.name;sel.appendChild(o);});
+    });
+  } catch(e) {}
+}
+
+function switchTab(name,btn) {
+  document.querySelectorAll(".tab-panel").forEach(p=>p.classList.remove("active"));
+  document.getElementById("tab-"+name).classList.add("active");
+  document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  if (name==="newsale") loadPlans();
+  if (name==="status") loadStatus();
+}
+
+function openModal(id){document.getElementById(id).classList.add("show");}
+function closeModal(id){document.getElementById(id).classList.remove("show");}
+document.addEventListener("click",e=>{if(e.target.classList.contains("modal-bg"))e.target.classList.remove("show");});
+
+function ah(){return{"Content-Type":"application/json","Authorization":"Bearer "+token};}
+async function api(url,opts={}){opts.headers={...ah(),...(opts.headers||{})};const r=await fetch(url,opts);return r.json();}
+function showOk(msg){const el=document.getElementById("salesOk");el.textContent=msg;el.style.display="block";setTimeout(()=>el.style.display="none",4000);}
+function showErr(msg){const el=document.getElementById("salesErr");el.textContent=msg;el.style.display="block";setTimeout(()=>el.style.display="none",5000);}
+function fmtDate(v){if(!v)return"—";return String(v).split("T")[0];}
+
+// ===== CUSTOMERS =====
+async function loadCustomers() {
+  try {
+    const data = await api(`${API}/sales/customers`);
+    allCustomers = data||[];
+    renderCustomers(allCustomers);
+  } catch(e) { showErr("Error loading customers"); }
+}
+
+function searchCustomers() {
+  const q = document.getElementById("custSearch").value.toLowerCase();
+  const filtered = allCustomers.filter(c=>c.name.toLowerCase().includes(q)||c.phone.includes(q));
+  renderCustomers(filtered);
+}
+
+function renderCustomers(list) {
+  const body = document.getElementById("custBody");
+  if (!list.length) { body.innerHTML="<tr><td colspan='7'><div class='empty'><i class='fas fa-users'></i><p>No customers found</p></div></td></tr>"; return; }
+  const dietIcons = {pure_veg:"🟢",non_veg:"🔴",eggetarian:"🥚",vegan:"🌿"};
+  body.innerHTML = list.map(c => {
+    const statusBadge = c.latest_status==="active"?'<span class="badge bg">Active</span>':
+      c.latest_status==="completed"?'<span class="badge bb">Done</span>':
+      c.latest_status?`<span class="badge bgr">${c.latest_status}</span>`:"<span class='badge bgr'>No plan</span>";
+    return `<tr>
+      <td><strong>${c.name}</strong><div style="font-size:11px;color:var(--muted)">${c.city||""}</div></td>
+      <td>${c.phone}</td>
+      <td>${dietIcons[c.diet_preference]||"🔴"} ${c.diet_preference||"non_veg"}</td>
+      <td>${c.latest_plan||"<span style='color:var(--muted)'>None</span>"}</td>
+      <td>${statusBadge}</td>
+      <td>${c.delivery_boy_name?`🏍️ ${c.delivery_boy_name}<div style="font-size:11px;color:var(--blue)">${c.delivery_boy_phone||""}</div>`:"<span style='color:var(--muted)'>Unassigned</span>"}</td>
+      <td>
+        <button class="btn btn-o btn-sm" onclick="openEditCustomer(${c.id})" style="margin-right:4px;"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-b btn-sm" onclick="quickSale(${c.id},'${c.name.replace(/'/g,"")}')"><i class="fas fa-tag"></i> Sell</button>
+      </td>
+    </tr>`;
+  }).join("");
+}
+
+function selectDiet(el) {
+  document.querySelectorAll("#ncDietChips .chip").forEach(c=>c.classList.remove("on"));
+  el.classList.add("on");
+  document.getElementById("ncDiet").value = el.dataset.v;
+}
+
+function selectEcDiet(el) {
+  document.querySelectorAll("#ecDietChips .chip").forEach(c=>c.classList.remove("on"));
+  el.classList.add("on");
+  document.getElementById("ecDiet").value = el.dataset.v;
+}
+
+async function createCustomer() {
+  const name = document.getElementById("ncName").value.trim();
+  const phone = document.getElementById("ncPhone").value.trim();
+  if (!name||!phone) { showErr("Name and phone are required"); return; }
+  const body = {
+    name, phone,
+    alternate_phone: document.getElementById("ncAltPhone").value||null,
+    email: document.getElementById("ncEmail").value||null,
+    address: document.getElementById("ncAddr").value||null,
+    city: document.getElementById("ncCity").value||null,
+    territory_id: document.getElementById("ncTerritory").value||null,
+    diet_preference: document.getElementById("ncDiet").value||"non_veg",
+    delivery_instructions: document.getElementById("ncInstructions").value||null,
+  };
+  const d = await api(`${API}/sales/customers`,{method:"POST",body:JSON.stringify(body)});
+  if (d.error) { showErr(d.error); return; }
+  showOk("✅ Customer created!");
+  closeModal("newCustModal");
+  ["ncName","ncPhone","ncAltPhone","ncEmail","ncAddr","ncInstructions"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("ncCity").value="";
+  document.getElementById("ncTerritory").value="";
+  await loadCustomers();
+}
+
+async function openEditCustomer(id) {
+  const c = allCustomers.find(x=>x.id===id);
+  if (!c) return;
+  document.getElementById("ecId").value = id;
+  document.getElementById("ecName").value = c.name||"";
+  document.getElementById("ecPhone").value = c.phone||"";
+  document.getElementById("ecAltPhone").value = c.alternate_phone||"";
+  document.getElementById("ecEmail").value = c.email||"";
+  document.getElementById("ecAddr").value = c.address||"";
+  document.getElementById("ecAddr2").value = c.address_2||"";
+  document.getElementById("ecCity").value = c.city||"";
+  document.getElementById("ecTerritory").value = c.territory_id||"";
+  document.getElementById("ecHeight").value = c.height||"";
+  document.getElementById("ecWeight").value = c.weight||"";
+  document.getElementById("ecAllergy").value = c.allergy_info||"";
+  document.getElementById("ecInstructions").value = c.delivery_instructions||"";
+  document.getElementById("ecDietGoal").value = c.diet_goal||"";
+  document.getElementById("ecDiet").value = c.diet_preference||"non_veg";
+  document.querySelectorAll("#ecDietChips .chip").forEach(ch=>{ch.classList.toggle("on",ch.dataset.v===c.diet_preference);});
+  // Health conditions chips
+  const hcs = (c.health_conditions||"").split(",");
+  document.querySelectorAll("[data-h]").forEach(ch=>{ch.classList.toggle("on",hcs.includes(ch.dataset.h));});
+  // Load delivery boys for territory
+  await loadDeliveryBoysForEdit(c.kitchen_id||null);
+  document.getElementById("ecDeliveryBoy").value = c.delivery_boy_id||"";
+  openModal("editCustModal");
+}
+
+async function loadDeliveryBoysForEdit(kitchenId) {
+  const sel = document.getElementById("ecDeliveryBoy");
+  sel.innerHTML = "<option value=''>Not assigned</option>";
+  if (!kitchenId) {
+    // Load all delivery boys
+    try {
+      const data = await api(`${API}/admin/delivery-boys`);
+      (data||[]).forEach(db=>{const o=document.createElement("option");o.value=db.id;o.text=`${db.name} (${db.kitchen_name||"?"})`;sel.appendChild(o);});
+    } catch(e) {}
+  }
+}
+
+async function extractSalesLoc(num) {
+  const url = document.getElementById(`ecLoc${num}`).value.trim();
+  if (!url) { showErr("Paste a Google Maps link first"); return; }
+  try {
+    const r = await fetch(`${API}/util/extract-location?url=${encodeURIComponent(url)}`,{headers:{"Authorization":"Bearer "+token}});
+    const d = await r.json();
+    if (d.error) { showErr(d.error); return; }
+    document.getElementById(`ecLat${num}`).value = d.lat;
+    document.getElementById(`ecLng${num}`).value = d.lng;
+    const res = document.getElementById(`ecLocRes${num}`);
+    res.style.display = "block";
+    res.innerHTML = `📍 ${d.formatted} <a href="https://maps.google.com/?q=${d.lat},${d.lng}" target="_blank" style="color:var(--purple)">View ↗</a>`;
+    showOk(`✅ Location ${num} extracted!`);
+  } catch(e) { showErr("Connection error"); }
+}
+
+async function saveEditCustomer() {
+  const id = document.getElementById("ecId").value;
+  const hcs = Array.from(document.querySelectorAll("[data-h].on")).map(c=>c.dataset.h).join(",");
+  const body = {
+    name: document.getElementById("ecName").value,
+    phone: document.getElementById("ecPhone").value,
+    alternate_phone: document.getElementById("ecAltPhone").value||null,
+    email: document.getElementById("ecEmail").value||null,
+    address: document.getElementById("ecAddr").value||null,
+    address_2: document.getElementById("ecAddr2").value||null,
+    city: document.getElementById("ecCity").value||null,
+    territory_id: document.getElementById("ecTerritory").value||null,
+    diet_preference: document.getElementById("ecDiet").value,
+    diet_goal: document.getElementById("ecDietGoal").value||null,
+    health_conditions: hcs||null,
+    allergy_info: document.getElementById("ecAllergy").value||null,
+    delivery_instructions: document.getElementById("ecInstructions").value||null,
+    height: document.getElementById("ecHeight").value||null,
+    weight: document.getElementById("ecWeight").value||null,
+    delivery_boy_id: document.getElementById("ecDeliveryBoy").value||null,
+    lat_1: document.getElementById("ecLat1").value||null,
+    lng_1: document.getElementById("ecLng1").value||null,
+    lat_2: document.getElementById("ecLat2").value||null,
+    lng_2: document.getElementById("ecLng2").value||null,
+    google_location_1: document.getElementById("ecLoc1").value||null,
+    google_location_2: document.getElementById("ecLoc2").value||null,
+  };
+  const d = await api(`${API}/sales/customers/${id}`,{method:"PUT",body:JSON.stringify(body)});
+  if (d.error) { showErr(d.error); return; }
+  showOk("✅ Customer updated!");
+  closeModal("editCustModal");
+  await loadCustomers();
+}
+
+// ===== NEW SALE =====
+let plansCache = [];
+
+async function loadPlans() {
+  const data = await api(`${API}/sales/plans`);
+  plansCache = data||[];
+  const container = document.getElementById("planCards");
+  const dl={pure_veg:"🟢 Pure Veg",non_veg:"🔴 Non-Veg",eggetarian:"🥚 Eggetarian",vegan:"🌿 Vegan",mixed:"🟡 Mixed"};
+  container.innerHTML = plansCache.map(p=>`
+    <div style="border:2px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s;" 
+      id="planCard-${p.id}" onclick="selectPlan(${p.id})">
+      <div style="font-size:15px;font-weight:700;margin-bottom:6px;">${p.name}</div>
+      <div style="font-size:24px;font-weight:800;color:var(--purple);margin-bottom:8px;">Rs ${p.price}</div>
+      <div style="font-size:12px;color:var(--muted);">${dl[p.diet_type]||p.diet_type} · ${p.num_deliveries} deliveries · ${p.meal_types||"lunch"}</div>
+      <div style="font-size:11.5px;color:var(--muted);margin-top:4px;">${(p.delivery_days||"1,2,3,4,5,6").split(",").length} days/week</div>
+      ${p.menu_name?`<div style="font-size:11px;color:var(--g);margin-top:4px;">✓ ${p.menu_name}</div>`:""}
+    </div>`).join("");
+}
+
+function selectPlan(id) {
+  selectedPlanId = id;
+  document.querySelectorAll("[id^=planCard-]").forEach(el=>{
+    el.style.borderColor = el.id===`planCard-${id}` ? "var(--purple)" : "var(--border)";
+    el.style.background = el.id===`planCard-${id}` ? "var(--pl)" : "white";
+  });
+  if (selectedCustomerId) showOrderSection();
+}
+
+function searchSaleCustomer() {
+  const q = document.getElementById("saleSearch").value.toLowerCase();
+  const results = document.getElementById("saleSearchResults");
+  if (!q) { results.innerHTML=""; return; }
+  const filtered = allCustomers.filter(c=>c.name.toLowerCase().includes(q)||c.phone.includes(q)).slice(0,5);
+  results.innerHTML = filtered.map(c=>`
+    <div style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;cursor:pointer;background:white;" onclick="selectSaleCustomer(${c.id})">
+      <strong>${c.name}</strong> · ${c.phone} · ${c.diet_preference||"non_veg"}
+      ${c.latest_plan?`<span class="badge bg" style="margin-left:6px;font-size:10px">${c.latest_plan}</span>`:""}
+    </div>`).join("") || "<div style='color:var(--muted);font-size:13px;padding:8px'>No customers found</div>";
+}
+
+function selectSaleCustomer(id) {
+  selectedCustomerId = id;
+  const c = allCustomers.find(x=>x.id===id);
+  if (!c) return;
+  document.getElementById("saleSearch").value="";
+  document.getElementById("saleSearchResults").innerHTML="";
+  document.getElementById("selectedCustomer").style.display="block";
+  document.getElementById("selCustName").textContent=c.name;
+  document.getElementById("selCustInfo").textContent=`📞 ${c.phone} · ${c.diet_preference||"non_veg"} · ${c.city||""}`;
+  document.getElementById("planSection").style.display="block";
+  if (selectedPlanId) showOrderSection();
+}
+
+function clearSelectedCustomer() {
+  selectedCustomerId=null; selectedPlanId=null;
+  document.getElementById("selectedCustomer").style.display="none";
+  document.getElementById("planSection").style.display="none";
+  document.getElementById("orderSection").style.display="none";
+  document.querySelectorAll("[id^=planCard-]").forEach(el=>{el.style.borderColor="var(--border)";el.style.background="white";});
+}
+
+function showOrderSection() {
+  // Populate territory dropdown
+  const tsel = document.getElementById('saleTerritory');
+  if(tsel&&territories.length){tsel.innerHTML='<option value="">Select Territory</option>';territories.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.text=t.name;tsel.appendChild(o);});}
+
+  const plan = plansCache.find(p=>p.id===selectedPlanId);
+  const cust = allCustomers.find(c=>c.id===selectedCustomerId);
+  if (!plan||!cust) return;
+  document.getElementById("orderSection").style.display="block";
+  document.getElementById("orderSummary").innerHTML=`
+    <strong>📋 Order Summary</strong><br>
+    Customer: <strong>${cust.name}</strong> (${cust.diet_preference||"non_veg"})<br>
+    Plan: <strong>${plan.name}</strong> — Rs ${plan.price}<br>
+    ${plan.num_deliveries} deliveries · ${plan.meal_types||"lunch"} · ${(plan.delivery_days||"1,2,3,4,5,6").split(",").length} days/week`;
+  document.getElementById("saleStartDate").value = new Date().toISOString().split("T")[0];
+}
+
+function quickSale(custId, custName) {
+  selectedCustomerId = custId;
+  document.getElementById("selectedCustomer").style.display="block";
+  document.getElementById("selCustName").textContent=custName;
+  const c = allCustomers.find(x=>x.id===custId);
+  if(c) document.getElementById("selCustInfo").textContent=`📞 ${c.phone} · ${c.diet_preference||"non_veg"}`;
+  document.getElementById("planSection").style.display="block";
+  switchTab("newsale", document.querySelectorAll(".tab-btn")[1]);
+}
+
+async function confirmOrder() {
+  if(!selectedCustomerId||!selectedPlanId){showErr("Select customer and plan first");return;}
+  const start=document.getElementById("saleStartDate").value;
+  if(!start){showErr("Select start date");return;}
+  const body={customer_id:selectedCustomerId,plan_id:selectedPlanId,start_date:start,kitchen_id:document.getElementById("saleKitchen").value||null,paid_amount:document.getElementById("salePaid").value||0,notes:document.getElementById("saleNotes").value};
+  const d=await api(`${API}/sales/orders`,{method:"POST",body:JSON.stringify(body)});
+  if(d.error){showErr(d.error);return;}
+  showOk(`✅ Order created! ${d.deliveries} delivery slots generated.`);
+  clearSelectedCustomer();
+  await loadCustomers();
+}
+
+// ===== DAILY STATUS =====
+async function loadStatus() {
+  const date=document.getElementById("statusDate").value;
+  const body=document.getElementById("statusBody");
+  body.innerHTML="<tr><td colspan='7' class='loading'><span class='spinner'></span></td></tr>";
+  try {
+    const d=await api(`${API}/sales/daily-status?date=${date}`);
+    if(d.error){body.innerHTML=`<tr><td colspan='7'>Error: ${d.error}</td></tr>`;return;}
+    const {stats,deliveries}=d;
+    document.getElementById("sSTotal").textContent=stats.total;
+    document.getElementById("sSDelivered").textContent=stats.delivered;
+    document.getElementById("sSPending").textContent=stats.pending;
+    document.getElementById("sSSkipped").textContent=stats.skipped;
+    const pct=stats.total?Math.round(stats.delivered/stats.total*100):0;
+    document.getElementById("sSDBar").style.width=pct+"%";
+    if(!deliveries.length){body.innerHTML="<tr><td colspan='7'><div class='empty'><i class='fas fa-truck'></i><p>No deliveries for this date</p></div></td></tr>";return;}
+    const sMap={delivered:'<span class="badge bg">✓ Done</span>',pending:'<span class="badge ba">Pending</span>',skipped:'<span class="badge bgr">Skip</span>'};
+    body.innerHTML=deliveries.map(d=>`<tr>
+      <td><strong>${d.customer_name}</strong></td>
+      <td>${d.customer_phone||"—"}</td>
+      <td>${d.plan_name||"—"}</td>
+      <td>${d.meal_item_name||"<span style='color:var(--muted)'>Not set</span>"}</td>
+      <td>${d.delivery_boy_name?`🏍️ ${d.delivery_boy_name}<div style="font-size:11px;color:var(--blue)">${d.delivery_boy_phone||""}</div>`:"<span style='color:var(--muted)'>Unassigned</span>"}</td>
+      <td>${d.kitchen_name||"—"}</td>
+      <td>${sMap[d.status]||d.status}</td>
+    </tr>`).join("");
+  } catch(e){body.innerHTML="<tr><td colspan='7'>Connection error</td></tr>";}
+}
+
+async function cascadeSalesKitchen() {
+  // For new customer modal — just territory selection, no kitchen needed
+}
+
+async function cascadeSaleKitchen() {
+  const terrId = document.getElementById('saleTerritory')?.value;
+  const kSel = document.getElementById('saleKitchen');
+  kSel.innerHTML = '<option value="">Select Kitchen</option>';
+  if (!terrId) { kitchens.forEach(k=>{const o=document.createElement('option');o.value=k.id;o.text=k.name;kSel.appendChild(o);}); return; }
+  try {
+    const r = await fetch(`${API}/kitchens-by-territory?territory_id=${terrId}`,{headers:{"Authorization":"Bearer "+token}});
+    const ks = await r.json();
+    (ks||[]).forEach(k=>{const o=document.createElement('option');o.value=k.id;o.text=k.name;kSel.appendChild(o);});
+  } catch(e) {}
+}
+
+</script>
+</body>
+</html>

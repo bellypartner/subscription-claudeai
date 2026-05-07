@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Salad Caffe</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{--g:#2ecc71;--gd:#27ae60;--gl:#eafaf1;--gm:#a9dfbf;--dk:#111827;--mid:#374151;--muted:#6b7280;--border:#e5e7eb;--bg:#f9fafb;--red:#ef4444;--rl:#fef2f2;--amber:#f59e0b;--al:#fffbeb;--blue:#3b82f6;--bl:#eff6ff;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--dk);font-size:14px;max-width:500px;margin:0 auto;min-height:100vh;}
+#loginPage{min-height:100vh;background:linear-gradient(160deg,#064e3b,#065f46,#0d9488);padding:24px 20px;display:flex;align-items:center;justify-content:center;}
+.lcard{background:white;padding:32px 28px;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.3);width:100%;max-width:420px;}
+.lbrand{display:flex;align-items:center;gap:10px;margin-bottom:20px;}
+.lbrand-ico{width:42px;height:42px;background:var(--g);border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;}
+.lbrand h1{font-family:"Playfair Display",serif;font-size:21px;}
+.tab-row{display:flex;gap:4px;background:#f1f5f9;border-radius:10px;padding:4px;margin-bottom:18px;}
+.tab-btn{flex:1;padding:9px;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:"DM Sans",sans-serif;transition:all .2s;}
+.tab-btn.active{background:white;color:var(--dk);box-shadow:0 1px 3px rgba(0,0,0,.12);}
+.tab-btn.inactive{background:transparent;color:var(--muted);}
+.err{background:var(--rl);color:var(--red);padding:10px 13px;border-radius:8px;margin-bottom:14px;font-size:13px;display:none;border:1px solid #fecaca;}
+.fi{width:100%;padding:12px 13px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;font-family:"DM Sans",sans-serif;margin-bottom:11px;color:var(--dk);}
+.fi:focus{outline:none;border-color:var(--g);}
+.fbtn{width:100%;padding:14px;background:var(--g);color:white;border:none;border-radius:10px;font-size:16px;font-weight:700;font-family:"DM Sans",sans-serif;cursor:pointer;}
+.fbtn:hover{background:var(--gd);}
+.form-section{display:none;}.form-section.active{display:block;}
+.hint{font-size:12px;color:var(--muted);margin-bottom:14px;}
+
+#app{display:none;flex-direction:column;min-height:100vh;}
+#app.show{display:flex;}
+.header{background:linear-gradient(135deg,var(--gd),#059669);padding:20px 18px 22px;}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.hdr-brand{color:white;font-family:"Playfair Display",serif;font-size:17px;}
+.hdr-out{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);border-radius:8px;color:white;padding:6px 12px;cursor:pointer;font-size:12px;font-family:"DM Sans",sans-serif;}
+.hdr-name{color:white;font-size:21px;font-weight:700;margin-bottom:3px;}
+.hdr-sub{color:rgba(255,255,255,.75);font-size:13px;}
+.pb-wrap{background:rgba(255,255,255,.15);border-radius:11px;padding:12px 15px;margin-top:13px;}
+.pb-top{display:flex;justify-content:space-between;color:white;font-size:12.5px;font-weight:600;margin-bottom:7px;}
+.pb-track{height:6px;background:rgba(255,255,255,.25);border-radius:3px;}
+.pb-fill{height:6px;background:white;border-radius:3px;transition:width .5s;}
+.pb-link{color:rgba(255,255,255,.75);font-size:11.5px;margin-top:5px;cursor:pointer;text-decoration:underline;}
+.nav-tabs{background:white;display:flex;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
+.ntab{flex:1;padding:11px 4px;text-align:center;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;text-transform:uppercase;letter-spacing:.04em;}
+.ntab i{display:block;font-size:15px;margin-bottom:3px;}
+.ntab.active{color:var(--gd);border-bottom-color:var(--g);}
+.content{padding:15px;flex:1;}
+.tp{display:none;}.tp.active{display:block;}
+.sec-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:9px;}
+.today-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
+.meal-tile{background:white;border-radius:13px;border:1px solid var(--border);overflow:hidden;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.07);transition:transform .15s;}
+.meal-tile:active{transform:scale(.97);}
+.tile-img{width:100%;height:105px;object-fit:cover;background:linear-gradient(135deg,var(--gl),#d1fae5);}
+.tile-img-ph{width:100%;height:105px;background:linear-gradient(135deg,var(--gl),#d1fae5);display:flex;align-items:center;justify-content:center;font-size:38px;}
+.tile-body{padding:10px 11px;}
+.tile-day{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:3px;}
+.tile-name{font-size:13px;font-weight:700;line-height:1.3;margin-bottom:3px;}
+.tile-cal{font-size:11px;color:var(--muted);}
+.db-card{background:white;border-radius:13px;border:1px solid var(--border);padding:13px 15px;margin-bottom:16px;display:flex;align-items:center;gap:13px;}
+.db-av{width:44px;height:44px;border-radius:50%;background:var(--amber);color:white;font-weight:700;font-size:17px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;}
+.db-av img{width:100%;height:100%;object-fit:cover;}
+.db-name{font-size:14px;font-weight:700;}
+.db-meta{font-size:11.5px;color:var(--muted);margin-top:2px;}
+.db-call{margin-left:auto;}
+.db-call a{width:42px;height:42px;background:var(--gl);border:1px solid var(--gm);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--gd);font-size:17px;text-decoration:none;}
+.sub-card{background:white;border-radius:13px;border:1px solid var(--border);padding:15px;margin-bottom:12px;}
+.sub-name{font-size:15px;font-weight:700;margin-bottom:10px;}
+.prog-row{display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:5px;}
+.prog-track{height:7px;background:var(--border);border-radius:4px;margin-bottom:12px;}
+.prog-fill{height:7px;background:var(--g);border-radius:4px;}
+.sub-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:13px;}
+.ss{background:var(--bg);border-radius:8px;padding:8px;text-align:center;}
+.ss-v{font-size:19px;font-weight:800;line-height:1;}
+.ss-l{font-size:10px;color:var(--muted);margin-top:2px;font-weight:600;text-transform:uppercase;}
+.act-row{display:flex;gap:7px;}
+.act-btn{flex:1;padding:9px;border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:"DM Sans",sans-serif;}
+.ps{background:var(--gl);color:var(--gd);}.pf{background:var(--bl);color:var(--blue);}.pc{background:var(--rl);color:var(--red);}
+.pf-wrap{background:white;border-radius:13px;border:1px solid var(--border);padding:15px;margin-bottom:13px;}
+.pf-wrap h3{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:13px;}
+.pfi{margin-bottom:11px;}
+.pfl{display:block;font-size:11px;font-weight:700;color:var(--mid);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+.pfc{width:100%;padding:10px 11px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:"DM Sans",sans-serif;color:var(--dk);background:white;}
+.pfc:focus{outline:none;border-color:var(--g);}
+.pfrow{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.chip-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+.chip{padding:5px 11px;border:1.5px solid var(--border);border-radius:20px;cursor:pointer;font-size:12px;font-weight:600;background:white;user-select:none;}
+.chip.on{background:var(--gl);border-color:var(--g);color:var(--gd);}
+.save-btn{width:100%;padding:13px;background:var(--g);color:white;border:none;border-radius:10px;font-size:15px;font-weight:700;font-family:"DM Sans",sans-serif;cursor:pointer;margin-top:5px;}
+.loc-row{display:flex;gap:7px;}
+.loc-row input{flex:1;}
+.loc-extract{padding:10px 13px;background:var(--g);color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:"DM Sans",sans-serif;}
+.loc-result{display:none;margin-top:5px;background:var(--gl);border-radius:7px;padding:7px 11px;font-size:12px;color:var(--gd);}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:flex-end;justify-content:center;}
+.modal-bg.show{display:flex;}
+.item-modal{background:white;border-radius:20px 20px 0 0;width:100%;max-width:500px;max-height:85vh;overflow-y:auto;animation:sup .25s ease;}
+@keyframes sup{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.im-img{width:100%;height:190px;object-fit:cover;background:linear-gradient(135deg,var(--gl),#d1fae5);}
+.im-ph{width:100%;height:190px;background:linear-gradient(135deg,var(--gl),#d1fae5);display:flex;align-items:center;justify-content:center;font-size:60px;}
+.im-body{padding:18px;}
+.im-name{font-size:20px;font-weight:800;margin-bottom:5px;}
+.im-desc{font-size:13px;color:var(--mid);line-height:1.6;margin-bottom:14px;}
+.nutr-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;background:var(--bg);border-radius:11px;padding:13px;margin-bottom:14px;}
+.ng-box{text-align:center;}
+.ng-v{font-size:15px;font-weight:800;color:var(--gd);}
+.ng-l{font-size:10px;color:var(--muted);margin-top:2px;}
+.alg-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px;}
+.alg-tag{padding:3px 10px;background:var(--al);color:#92400e;border-radius:20px;font-size:11px;font-weight:700;}
+.close-btn{width:100%;padding:12px;background:var(--bg);border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:"DM Sans",sans-serif;color:var(--mid);}
+.badge{display:inline-flex;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;}
+.bg{background:var(--gl);color:var(--gd);}
+.br{background:var(--rl);color:var(--red);}
+.ba{background:var(--al);color:#92400e;}
+.bgr{background:#f3f4f6;color:var(--muted);}
+.empty{text-align:center;padding:36px 20px;color:var(--muted);}
+.empty i{font-size:30px;margin-bottom:10px;display:block;opacity:.25;}
+.spinner{display:inline-block;width:20px;height:20px;border:2.5px solid var(--border);border-top-color:var(--g);border-radius:50%;animation:sp .7s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg);}}
+.loading{text-align:center;padding:30px;color:var(--muted);}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--dk);color:white;padding:10px 20px;border-radius:30px;font-size:13px;font-weight:600;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN PAGE -->
+<div id="loginPage">
+  <div class="lcard">
+    <div class="lbrand">
+      <div class="lbrand-ico">&#129795;</div>
+      <h1>Salad Caffe</h1>
+    </div>
+
+    <div class="tab-row">
+      <button class="tab-btn active" id="tabLogin" onclick="showTab('login')">Sign In</button>
+      <button class="tab-btn inactive" id="tabSignup" onclick="showTab('signup')">Create Account</button>
+    </div>
+
+    <div class="err" id="authErr"></div>
+
+    <!-- SIGN IN -->
+    <div class="form-section active" id="loginForm">
+      <p class="hint">Sign in with your phone number and password</p>
+      <input type="text" class="fi" id="lPhone" placeholder="Phone number" inputmode="numeric">
+      <input type="password" class="fi" id="lPass" placeholder="Password">
+      <button class="fbtn" onclick="doLogin()">Sign In</button>
+    </div>
+
+    <!-- SIGN UP -->
+    <div class="form-section" id="signupForm">
+      <p class="hint">New to Salad Caffe? Create your account below.</p>
+      <input type="text" class="fi" id="sName" placeholder="Full name *">
+      <input type="text" class="fi" id="sPhone" placeholder="Phone number *" inputmode="numeric">
+      <input type="password" class="fi" id="sPass" placeholder="Password * (min 6 characters)">
+      <input type="email" class="fi" id="sEmail" placeholder="Email (optional)">
+      <div style="margin-bottom:14px;">
+        <div style="font-size:12px;font-weight:700;color:var(--mid);margin-bottom:7px;">Diet Preference</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12.5px;font-weight:600;"><input type="radio" name="sDiet" value="non_veg" checked style="accent-color:var(--g)"> &#128308; Non-Veg</label>
+          <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12.5px;font-weight:600;"><input type="radio" name="sDiet" value="pure_veg" style="accent-color:var(--g)"> &#128994; Pure Veg</label>
+          <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12.5px;font-weight:600;"><input type="radio" name="sDiet" value="eggetarian" style="accent-color:var(--g)"> &#129424; Eggetarian</label>
+        </div>
+      </div>
+      <button class="fbtn" onclick="doSignup()">Create Account</button>
+      <p style="font-size:11px;color:var(--muted);text-align:center;margin-top:10px;">By creating an account you agree to our terms.</p>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="header">
+    <div class="hdr-top">
+      <div class="hdr-brand">&#129795; Salad Caffe</div>
+      <button class="hdr-out" onclick="doLogout()">Sign Out</button>
+    </div>
+    <div class="hdr-name" id="hdrName">Hello!</div>
+    <div class="hdr-sub">Your healthy meal subscription</div>
+    <div class="pb-wrap">
+      <div class="pb-top"><span>Profile Completion</span><span id="pbPct">0%</span></div>
+      <div class="pb-track"><div class="pb-fill" id="pbFill" style="width:0%"></div></div>
+      <div class="pb-link" onclick="switchTab('profile',3)">Complete your profile &#8594;</div>
+    </div>
+  </div>
+
+  <div class="nav-tabs">
+    <div class="ntab active" onclick="switchTab('home',0)"><i class="fas fa-home"></i>Home</div>
+    <div class="ntab" onclick="switchTab('deliveries',1)"><i class="fas fa-truck"></i>Deliveries</div>
+    <div class="ntab" onclick="switchTab('plan',2)"><i class="fas fa-box"></i>My Plan</div>
+    <div class="ntab" onclick="switchTab('profile',3)"><i class="fas fa-user"></i>Profile</div>
+  </div>
+
+  <div class="content">
+    <!-- HOME -->
+    <div id="tp-home" class="tp active">
+      <div class="sec-lbl">Today &amp; Tomorrow</div>
+      <div class="today-grid" id="todayCards"><div class="loading"><span class="spinner"></span></div></div>
+      <div class="sec-lbl">Your Delivery Boy Today</div>
+      <div id="dbSection"><div class="loading"><span class="spinner"></span></div></div>
+    </div>
+
+    <!-- DELIVERIES -->
+    <div id="tp-deliveries" class="tp">
+      <div class="sec-lbl" style="margin-top:4px;">This Month's Deliveries</div>
+      <div id="delList"><div class="loading"><span class="spinner"></span></div></div>
+    </div>
+
+    <!-- MY PLAN -->
+    <div id="tp-plan" class="tp">
+      <div class="sec-lbl" style="margin-top:4px;">My Subscription</div>
+      <div id="planArea"><div class="loading"><span class="spinner"></span></div></div>
+    </div>
+
+    <!-- PROFILE -->
+    <div id="tp-profile" class="tp">
+      <div class="pf-wrap">
+        <h3>Basic Info</h3>
+        <div class="pfi"><label class="pfl">Name *</label><input type="text" class="pfc" id="pfName"></div>
+        <div class="pfrow">
+          <div class="pfi"><label class="pfl">Phone *</label><input type="text" class="pfc" id="pfPhone" inputmode="numeric"></div>
+          <div class="pfi"><label class="pfl">Alt Phone</label><input type="text" class="pfc" id="pfAlt" inputmode="numeric"></div>
+        </div>
+        <div class="pfi"><label class="pfl">Email</label><input type="email" class="pfc" id="pfEmail"></div>
+      </div>
+      <div class="pf-wrap">
+        <h3>Address &amp; Location</h3>
+        <div class="pfi"><label class="pfl">Primary Address</label><input type="text" class="pfc" id="pfAddr" placeholder="Flat / Building / Street"></div>
+        <div class="pfi">
+          <label class="pfl">Location 1 — Google Maps Link</label>
+          <div class="loc-row">
+            <input type="text" class="pfc" id="pfLoc1" placeholder="Paste Google Maps share link...">
+            <button class="loc-extract" onclick="extractLoc(1)">Extract</button>
+          </div>
+          <div class="loc-result" id="locRes1"></div>
+          <input type="hidden" id="pfLat1"><input type="hidden" id="pfLng1">
+        </div>
+        <div class="pfi"><label class="pfl">Secondary Address</label><input type="text" class="pfc" id="pfAddr2" placeholder="Alternative address"></div>
+        <div class="pfi">
+          <label class="pfl">Location 2 — Google Maps Link</label>
+          <div class="loc-row">
+            <input type="text" class="pfc" id="pfLoc2" placeholder="Paste Google Maps share link...">
+            <button class="loc-extract" onclick="extractLoc(2)">Extract</button>
+          </div>
+          <div class="loc-result" id="locRes2"></div>
+          <input type="hidden" id="pfLat2"><input type="hidden" id="pfLng2">
+        </div>
+        <div class="pfi">
+          <label class="pfl">City</label>
+          <select class="pfc" id="pfCity">
+            <option value="">Select City</option>
+            <option>Kozhikode</option><option>Malappuram</option><option>Thrissur</option>
+            <option>Kochi</option><option>Thiruvananthapuram</option><option>Kannur</option>
+            <option>Palakkad</option><option>Kollam</option>
+          </select>
+        </div>
+        <div class="pfi"><label class="pfl">Delivery Instructions</label>
+          <input type="text" class="pfc" id="pfInstr" placeholder="e.g. Leave at door, ring bell twice">
+        </div>
+      </div>
+      <div class="pf-wrap">
+        <h3>Health &amp; Body</h3>
+        <div class="pfrow">
+          <div class="pfi"><label class="pfl">Height (cm)</label><input type="number" class="pfc" id="pfHeight" placeholder="170"></div>
+          <div class="pfi"><label class="pfl">Weight (kg)</label><input type="number" class="pfc" id="pfWeight" placeholder="70"></div>
+        </div>
+        <div class="pfi"><label class="pfl">Health Conditions</label>
+          <div class="chip-row">
+            <div class="chip" data-h="BP" onclick="this.classList.toggle('on')">&#129298; BP</div>
+            <div class="chip" data-h="Cholesterol" onclick="this.classList.toggle('on')">&#129488; Cholesterol</div>
+            <div class="chip" data-h="Diabetes" onclick="this.classList.toggle('on')">&#129704; Diabetes</div>
+            <div class="chip" data-h="Thyroid" onclick="this.classList.toggle('on')">Thyroid</div>
+            <div class="chip" data-h="None" onclick="this.classList.toggle('on')">&#9989; None</div>
+          </div>
+        </div>
+        <div class="pfi"><label class="pfl">Allergy Info</label>
+          <div class="chip-row">
+            <div class="chip" data-a="Gluten" onclick="this.classList.toggle('on')">Gluten</div>
+            <div class="chip" data-a="Dairy" onclick="this.classList.toggle('on')">Dairy</div>
+            <div class="chip" data-a="Nuts" onclick="this.classList.toggle('on')">Nuts</div>
+            <div class="chip" data-a="Shellfish" onclick="this.classList.toggle('on')">Shellfish</div>
+            <div class="chip" data-a="Eggs" onclick="this.classList.toggle('on')">Eggs</div>
+            <div class="chip" data-a="Soy" onclick="this.classList.toggle('on')">Soy</div>
+            <div class="chip" data-a="Sesame" onclick="this.classList.toggle('on')">Sesame</div>
+          </div>
+        </div>
+      </div>
+      <div class="pf-wrap">
+        <h3>Diet &amp; Goals</h3>
+        <div class="pfi"><label class="pfl">Diet Preference</label>
+          <div class="chip-row" id="dietChips">
+            <div class="chip" data-d="pure_veg" onclick="selDiet(this)">&#128994; Pure Veg</div>
+            <div class="chip" data-d="non_veg" onclick="selDiet(this)">&#128308; Non-Veg</div>
+            <div class="chip" data-d="eggetarian" onclick="selDiet(this)">&#129424; Eggetarian</div>
+            <div class="chip" data-d="vegan" onclick="selDiet(this)">&#127807; Vegan</div>
+          </div>
+          <input type="hidden" id="pfDiet" value="non_veg">
+        </div>
+        <div class="pfi"><label class="pfl">Diet Goal</label>
+          <select class="pfc" id="pfGoal">
+            <option value="">Select goal</option>
+            <option value="weight_loss">&#9878; Weight Loss</option>
+            <option value="muscle_gain">&#128170; Muscle Gain</option>
+            <option value="healthy_eating">&#129705; Healthy Eating</option>
+            <option value="medical">&#127973; Medical</option>
+            <option value="maintenance">&#128260; Maintenance</option>
+          </select>
+        </div>
+      </div>
+      <button class="save-btn" onclick="saveProfile()">Save Profile</button>
+    </div>
+  </div>
+</div>
+
+<!-- ITEM DETAIL MODAL -->
+<div class="modal-bg" id="itemModal" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="item-modal" id="itemContent"></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API="/api";
+let token=null,profile=null;
+
+// ===== INIT =====
+window.addEventListener("load",()=>{
+  const t=sessionStorage.getItem("cToken");
+  if(t){token=t;showApp();}
+});
+
+// ===== AUTH TABS =====
+function showTab(tab){
+  const isLogin=tab==="login";
+  document.getElementById("loginForm").className="form-section"+(isLogin?" active":"");
+  document.getElementById("signupForm").className="form-section"+(!isLogin?" active":"");
+  document.getElementById("tabLogin").className="tab-btn"+(isLogin?" active":" inactive");
+  document.getElementById("tabSignup").className="tab-btn"+(!isLogin?" active":" inactive");
+  document.getElementById("authErr").style.display="none";
+}
+
+function showErr(msg){
+  const e=document.getElementById("authErr");
+  e.textContent=msg;e.style.display="block";
+}
+
+async function doLogin(){
+  const phone=document.getElementById("lPhone").value.trim();
+  const pwd=document.getElementById("lPass").value;
+  if(!phone||!pwd){showErr("Enter phone number and password");return;}
+  try{
+    const r=await fetch(`${API}/auth/login`,{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({email:phone,password:pwd})
+    });
+    const d=await r.json();
+    if(d.error){showErr(d.error);return;}
+    if(d.user.authority!=="customer"){showErr("This portal is for customers only. Please use the correct login page.");return;}
+    token=d.token;
+    sessionStorage.setItem("cToken",token);
+    showApp();
+  }catch(e){showErr("Connection error. Please try again.");}
+}
+
+document.addEventListener("keydown",function(e){
+  if(e.key==="Enter"){
+    const lf=document.getElementById("loginForm");
+    const sf=document.getElementById("signupForm");
+    if(lf.classList.contains("active"))doLogin();
+    else if(sf.classList.contains("active"))doSignup();
+  }
+});
+
+async function doSignup(){
+  const name=document.getElementById("sName").value.trim();
+  const phone=document.getElementById("sPhone").value.trim();
+  const pass=document.getElementById("sPass").value;
+  const email=document.getElementById("sEmail").value.trim();
+  const diet=document.querySelector("input[name='sDiet']:checked")?.value||"non_veg";
+  if(!name||!phone||!pass){showErr("Name, phone and password are required");return;}
+  if(pass.length<6){showErr("Password must be at least 6 characters");return;}
+  if(!/^[0-9]{10}$/.test(phone)){showErr("Enter a valid 10-digit phone number");return;}
+  try{
+    const r=await fetch(`${API}/auth/customer-signup`,{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({name,phone,password:pass,email:email||null,diet_preference:diet})
+    });
+    const d=await r.json();
+    if(d.error){showErr(d.error);return;}
+    token=d.token;
+    sessionStorage.setItem("cToken",token);
+    showApp();
+  }catch(e){showErr("Connection error. Please try again.");}
+}
+
+function doLogout(){sessionStorage.removeItem("cToken");location.reload();}
+
+// ===== APP =====
+async function showApp(){
+  document.getElementById("loginPage").style.display="none";
+  document.getElementById("app").classList.add("show");
+  await loadProfile();
+  loadHome();
+}
+
+function switchTab(name,idx){
+  document.querySelectorAll(".tp").forEach(p=>p.classList.remove("active"));
+  document.getElementById("tp-"+name).classList.add("active");
+  document.querySelectorAll(".ntab").forEach((t,i)=>t.classList.toggle("active",i===idx));
+  if(name==="deliveries")loadDeliveries();
+  if(name==="plan")loadPlan();
+}
+
+function ah(){return{"Content-Type":"application/json","Authorization":"Bearer "+token};}
+async function api(url,opts={}){opts.headers={...ah(),...(opts.headers||{})};const r=await fetch(url,opts);return r.json();}
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),3000);}
+
+function pct(p){
+  const flds=["name","phone","alternate_phone","email","address","address_2","city","lat_1","height","weight","health_conditions","allergy_info","delivery_instructions","diet_goal","diet_preference"];
+  const filled=flds.filter(f=>p[f]&&String(p[f]).trim()).length;
+  return Math.round(filled/flds.length*100);
+}
+
+async function loadProfile(){
+  try{
+    const d=await api(`${API}/customer/profile`);
+    if(!d||d.error)return;
+    profile=d;
+    const hr=new Date().getHours();
+    const gr=hr<12?"Good morning":hr<17?"Good afternoon":"Good evening";
+    document.getElementById("hdrName").textContent=`${gr}, ${(d.name||"").split(" ")[0]}! &#128075;`;
+    const p=pct(d);
+    document.getElementById("pbPct").textContent=p+"%";
+    document.getElementById("pbFill").style.width=p+"%";
+    // Fill form
+    const sv=(id,v)=>{const el=document.getElementById(id);if(el&&v!=null)el.value=v;};
+    sv("pfName",d.name);sv("pfPhone",d.phone);sv("pfAlt",d.alternate_phone);
+    sv("pfEmail",d.email);sv("pfAddr",d.address);sv("pfAddr2",d.address_2);
+    sv("pfCity",d.city);sv("pfHeight",d.height);sv("pfWeight",d.weight);
+    sv("pfInstr",d.delivery_instructions);sv("pfGoal",d.diet_goal);
+    document.getElementById("pfDiet").value=d.diet_preference||"non_veg";
+    document.querySelectorAll("[data-d]").forEach(c=>c.classList.toggle("on",c.dataset.d===(d.diet_preference||"non_veg")));
+    const hcs=(d.health_conditions||"").split(",");
+    document.querySelectorAll("[data-h]").forEach(c=>c.classList.toggle("on",hcs.includes(c.dataset.h)));
+    const algs=(d.allergy_info||"").split(",");
+    document.querySelectorAll("[data-a]").forEach(c=>c.classList.toggle("on",algs.includes(c.dataset.a)));
+    if(d.lat_1){sv("pfLat1",d.lat_1);sv("pfLng1",d.lng_1);showLocResult(1,d.lat_1,d.lng_1);}
+    if(d.google_location_1)sv("pfLoc1",d.google_location_1);
+    if(d.lat_2){sv("pfLat2",d.lat_2);sv("pfLng2",d.lng_2);showLocResult(2,d.lat_2,d.lng_2);}
+    if(d.google_location_2)sv("pfLoc2",d.google_location_2);
+  }catch(e){console.error(e);}
+}
+
+function showLocResult(num,lat,lng){
+  const r=document.getElementById(`locRes${num}`);
+  r.style.display="block";
+  r.innerHTML=`&#128205; ${parseFloat(lat).toFixed(6)}, ${parseFloat(lng).toFixed(6)} <a href="https://maps.google.com/?q=${lat},${lng}" target="_blank" style="color:var(--gd);margin-left:6px;">View &#8599;</a>`;
+}
+
+async function extractLoc(num){
+  const url=document.getElementById(`pfLoc${num}`).value.trim();
+  if(!url){toast("Paste a Google Maps link first");return;}
+  try{
+    const r=await fetch(`${API}/util/extract-location?url=${encodeURIComponent(url)}`);
+    const d=await r.json();
+    if(d.error){toast("&#10060; "+d.error);return;}
+    document.getElementById(`pfLat${num}`).value=d.lat;
+    document.getElementById(`pfLng${num}`).value=d.lng;
+    showLocResult(num,d.lat,d.lng);
+    toast("&#9989; Location extracted!");
+    await api(`${API}/customer/location`,{method:"PUT",body:JSON.stringify({[`lat_${num}`]:d.lat,[`lng_${num}`]:d.lng,[`google_location_${num}`]:url})});
+  }catch(e){toast("Connection error");}
+}
+
+function selDiet(el){
+  document.querySelectorAll("[data-d]").forEach(c=>c.classList.remove("on"));
+  el.classList.add("on");
+  document.getElementById("pfDiet").value=el.dataset.d;
+}
+
+async function saveProfile(){
+  const hcs=Array.from(document.querySelectorAll("[data-h].on")).map(c=>c.dataset.h).join(",");
+  const algs=Array.from(document.querySelectorAll("[data-a].on")).map(c=>c.dataset.a).join(",");
+  const body={
+    name:document.getElementById("pfName").value,
+    phone:document.getElementById("pfPhone").value,
+    alternate_phone:document.getElementById("pfAlt").value||null,
+    email:document.getElementById("pfEmail").value||null,
+    address:document.getElementById("pfAddr").value||null,
+    address_2:document.getElementById("pfAddr2").value||null,
+    city:document.getElementById("pfCity").value||null,
+    delivery_instructions:document.getElementById("pfInstr").value||null,
+    height:document.getElementById("pfHeight").value||null,
+    weight:document.getElementById("pfWeight").value||null,
+    health_conditions:hcs||null,
+    allergy_info:algs||null,
+    diet_preference:document.getElementById("pfDiet").value,
+    diet_goal:document.getElementById("pfGoal").value||null,
+  };
+  const d=await api(`${API}/customer/profile/full`,{method:"PUT",body:JSON.stringify(body)});
+  if(d.error){toast("&#10060; "+d.error);return;}
+  toast("&#9989; Profile saved!");
+  await loadProfile();
+}
+
+// ===== HOME =====
+async function loadHome(){
+  try{
+    const d=await api(`${API}/customer/upcoming-meals`);
+    renderToday(d||[]);
+  }catch(e){document.getElementById("todayCards").innerHTML="<div style='color:var(--muted);font-size:13px;'>No upcoming meals</div>";}
+  try{
+    const d=await api(`${API}/customer/my-delivery-boy`);
+    renderDB(d);
+  }catch(e){}
+}
+
+function renderToday(meals){
+  const c=document.getElementById("todayCards");
+  if(!meals.length){c.innerHTML="<div class='empty'><i class='fas fa-calendar-check'></i><p>No deliveries today or tomorrow</p></div>";return;}
+  const today=new Date().toISOString().split("T")[0];
+  c.innerHTML=meals.map(m=>{
+    const isT=m.delivery_date?.toString().split("T")[0]===today;
+    const img=m.image_base64?`<img src="${m.image_base64}" class="tile-img" alt="">`:`<div class="tile-img-ph">&#127869;</div>`;
+    const stBadge=m.status==="skipped"?`<span class="badge br">Skipped</span>`:m.status==="delivered"?`<span class="badge bg">Done</span>`:"";
+    const diet=m.is_veg_customer?"&#128994;":"&#128308;";
+    return `<div class="meal-tile" onclick="showItem(${JSON.stringify(m).replace(/"/g,"&quot;")})">
+      ${img}
+      <div class="tile-body">
+        <div class="tile-day">${isT?"TODAY":"TOMORROW"} &middot; ${(m.meal_type||"lunch").toUpperCase()}</div>
+        <div class="tile-name">${m.meal_item_name||"Menu TBA"}</div>
+        <div class="tile-cal">${diet} ${m.calories?m.calories+" kcal":""} ${stBadge}</div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function renderDB(db){
+  const s=document.getElementById("dbSection");
+  if(!db){s.innerHTML=`<div class="db-card"><div style="color:var(--muted);font-size:13px;"><i class="fas fa-user-slash" style="margin-right:8px;"></i>No delivery boy assigned today</div></div>`;return;}
+  const ph=db.photo_base64?`<img src="${db.photo_base64}">`:(db.name?.charAt(0)||"D");
+  const vi={bike:"&#128689;",cycle:"&#128690;",auto:"&#128666;",walk:"&#128694;"}[db.vehicle_type]||"&#128689;";
+  s.innerHTML=`<div class="db-card">
+    <div class="db-av">${ph}</div>
+    <div><div class="db-name">${db.name||"—"}</div><div class="db-meta">${vi} Delivery Boy</div></div>
+    ${db.phone?`<div class="db-call"><a href="tel:${db.phone}"><i class="fas fa-phone"></i></a></div>`:""}
+  </div>`;
+}
+
+function showItem(meal){
+  const img=meal.image_base64?`<img src="${meal.image_base64}" class="im-img" alt="">`:`<div class="im-ph">&#127869;</div>`;
+  const alg=meal.allergy_info?meal.allergy_info.split(",").filter(Boolean).map(a=>`<span class="alg-tag">${a.trim()}</span>`).join(""):"";
+  document.getElementById("itemContent").innerHTML=`
+    ${img}
+    <div class="im-body">
+      <div class="im-name">${meal.meal_item_name||"Menu Item"}</div>
+      ${meal.description?`<div class="im-desc">${meal.description}</div>`:""}
+      ${meal.calories?`<div class="nutr-grid">
+        ${meal.calories?`<div class="ng-box"><div class="ng-v">${meal.calories}</div><div class="ng-l">Calories</div></div>`:""}
+        ${meal.proteins?`<div class="ng-box"><div class="ng-v">${meal.proteins}g</div><div class="ng-l">Protein</div></div>`:""}
+        ${meal.carbs?`<div class="ng-box"><div class="ng-v">${meal.carbs}g</div><div class="ng-l">Carbs</div></div>`:""}
+        ${meal.fiber?`<div class="ng-box"><div class="ng-v">${meal.fiber}g</div><div class="ng-l">Fiber</div></div>`:""}
+      </div>`:""}
+      ${alg?`<div style="margin-bottom:12px;"><div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px;">CONTAINS</div><div class="alg-tags">${alg}</div></div>`:""}
+      ${meal.ingredients?`<div style="margin-bottom:14px;"><div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:4px;">INGREDIENTS</div><div style="font-size:12.5px;color:var(--mid);line-height:1.6;">${meal.ingredients}</div></div>`:""}
+      ${meal.status==="pending"?`<button style="width:100%;padding:11px;background:var(--rl);color:var(--red);border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:10px;font-family:'DM Sans',sans-serif;" onclick="skipMeal(${meal.id})">Skip This Delivery</button>`:""}
+      <button class="close-btn" onclick="document.getElementById('itemModal').classList.remove('show')">Close</button>
+    </div>`;
+  document.getElementById("itemModal").classList.add("show");
+}
+
+// ===== DELIVERIES =====
+async function loadDeliveries(){
+  try{
+    const month=new Date().toISOString().slice(0,7);
+    const d=await api(`${API}/customer/calendar?month=${month}`);
+    renderDeliveries(d||[]);
+  }catch(e){}
+}
+
+function renderDeliveries(list){
+  const el=document.getElementById("delList");
+  if(!list.length){el.innerHTML=`<div class="empty"><i class="fas fa-calendar"></i><p>No deliveries scheduled</p></div>`;return;}
+  const today=new Date().toISOString().split("T")[0];
+  const pend=list.filter(d=>d.status==="pending").length;
+  const done=list.filter(d=>d.status==="delivered").length;
+  const skip=list.filter(d=>d.status==="skipped").length;
+  el.innerHTML=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;">
+    <div class="ss"><div class="ss-v" style="color:var(--blue)">${pend}</div><div class="ss-l">Pending</div></div>
+    <div class="ss"><div class="ss-v" style="color:var(--gd)">${done}</div><div class="ss-l">Delivered</div></div>
+    <div class="ss"><div class="ss-v" style="color:var(--red)">${skip}</div><div class="ss-l">Skipped</div></div>
+  </div>`+list.slice(0,40).map((d,i)=>{
+    const isT=d.delivery_date?.toString().split("T")[0]===today;
+    const ic={delivered:"&#9989;",skipped:"&#9196;",pending:"&#128309;"}[d.status]||"&#128309;";
+    const diet=d.is_veg_customer?"&#128994;":"&#128308;";
+    return`<div style="display:flex;align-items:center;gap:9px;padding:10px 13px;background:white;border-radius:10px;border:${isT?"2px solid var(--g)":"1px solid var(--border)"};margin-bottom:7px;cursor:pointer;" onclick="showItem(${JSON.stringify(d).replace(/"/g,"&quot;")})">
+      <div style="font-size:10.5px;color:var(--muted);min-width:42px;text-align:center;font-weight:700;">${String(d.delivery_date).split("T")[0].slice(5)}</div>
+      <div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.meal_item_name||"TBA"}</div><div style="font-size:11px;color:var(--muted);">${diet} ${d.meal_type||"lunch"}${isT?" &middot; <strong style='color:var(--gd)'>TODAY</strong>":""}</div></div>
+      <div>${ic}</div>
+    </div>`;
+  }).join("");
+}
+
+// ===== MY PLAN =====
+async function loadPlan(){
+  try{
+    const d=await api(`${API}/customer/subscriptions`);
+    renderPlan(d||[]);
+  }catch(e){}
+}
+
+function renderPlan(subs){
+  const area=document.getElementById("planArea");
+  if(!subs.length){area.innerHTML=`<div class="empty"><i class="fas fa-box-open"></i><p>No active subscriptions</p><p style="font-size:12px;margin-top:6px;">Contact us to start your meal plan</p></div>`;return;}
+  area.innerHTML=subs.map(s=>{
+    const tot=(s.delivered_count||0)+(s.pending_count||0)+(s.skipped_count||0);
+    const p=tot?Math.round((s.delivered_count||0)/tot*100):0;
+    const sc={active:"var(--g)",completed:"var(--blue)",cancelled:"var(--red)",paused:"var(--amber)"}[s.order_status]||"var(--muted)";
+    return`<div class="sub-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div class="sub-name">${s.plan_name||"Subscription"}</div>
+        <span style="font-size:11px;font-weight:700;color:${sc};text-transform:uppercase;">${s.order_status}</span>
+      </div>
+      <div class="prog-row"><span style="font-size:11.5px;color:var(--muted)">Progress</span><span style="font-size:12px;font-weight:700;">${p}%</span></div>
+      <div class="prog-track"><div class="prog-fill" style="width:${p}%"></div></div>
+      <div class="sub-stats">
+        <div class="ss"><div class="ss-v" style="color:var(--gd)">${s.delivered_count||0}</div><div class="ss-l">Done</div></div>
+        <div class="ss"><div class="ss-v" style="color:var(--amber)">${s.pending_count||0}</div><div class="ss-l">Left</div></div>
+        <div class="ss"><div class="ss-v" style="color:var(--red)">${s.skipped_count||0}</div><div class="ss-l">Skipped</div></div>
+      </div>
+      ${s.order_status==="active"?`<div class="act-row">
+        <button class="act-btn ps" onclick="skipToday(${s.id})">&#9197; Skip Today</button>
+        <button class="act-btn pf" onclick="pausePrompt(${s.id})">&#9208; Pause</button>
+        <button class="act-btn pc" onclick="cancelPrompt(${s.id})">&#10005; Cancel</button>
+      </div>`:""}
+    </div>`;
+  }).join("");
+}
+
+async function skipMeal(id){
+  if(!confirm("Skip this delivery? Subscription extended 1 day. No refund."))return;
+  const d=await api(`${API}/customer/skip-meal/${id}`,{method:"POST",body:JSON.stringify({reason:"Customer request"})});
+  if(d.error){toast("&#10060; "+d.error);return;}
+  toast("&#9989; Skipped! Extended by 1 day.");
+  document.getElementById("itemModal").classList.remove("show");
+  loadHome();loadDeliveries();
+}
+
+async function skipToday(orderId){
+  const month=new Date().toISOString().slice(0,7);
+  const dels=await api(`${API}/customer/calendar?month=${month}`);
+  const today=new Date().toISOString().split("T")[0];
+  const td=dels.find(d=>d.delivery_date?.toString().split("T")[0]===today&&d.status==="pending");
+  if(!td){toast("No pending delivery today");return;}
+  skipMeal(td.id);
+}
+
+async function pausePrompt(orderId){
+  const start=prompt("Pause from (YYYY-MM-DD):");if(!start)return;
+  const end=prompt("Pause until (YYYY-MM-DD):");if(!end)return;
+  const d=await api(`${API}/customer/pause-subscription/${orderId}`,{method:"POST",body:JSON.stringify({pause_start:start,pause_end:end})});
+  if(d.error){toast("&#10060; "+d.error);return;}
+  toast("&#9989; Paused. No refund for paused days.");loadPlan();
+}
+
+async function cancelPrompt(orderId){
+  if(!confirm("Cancel subscription? No refund."))return;
+  const d=await api(`${API}/customer/cancel-subscription/${orderId}`,{method:"POST"});
+  if(d.error){toast("&#10060; "+d.error);return;}
+  toast("Cancelled.");loadPlan();
+}
+</script>
+</body>
+</html>

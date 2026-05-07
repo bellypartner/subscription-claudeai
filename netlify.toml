@@ -1,0 +1,8 @@
+[build]
+  command = "echo 'Frontend only - no build needed'"
+  publish = "public"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

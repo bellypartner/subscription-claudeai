@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Customer Detail — Salad Caffe Admin</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--g:#2ecc71;--gd:#27ae60;--gl:#eafaf1;--gm:#a9dfbf;--dk:#111827;--mid:#374151;--muted:#6b7280;--border:#e5e7eb;--bg:#f9fafb;--red:#ef4444;--rl:#fef2f2;--amber:#f59e0b;--al:#fffbeb;--blue:#3b82f6;--bl:#eff6ff;--sh:0 1px 3px rgba(0,0,0,.08);}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--dk);font-size:14px;}
+.topbar{background:#1f2937;padding:0 24px;height:56px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100;}
+.back-btn{color:rgba(255,255,255,.7);text-decoration:none;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;}
+.back-btn:hover{color:white;}
+.topbar-title{color:white;font-size:15px;font-weight:700;}
+.content{padding:24px;max-width:1100px;margin:0 auto;}
+.grid2{display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start;}
+/* PROFILE CARD */
+.profile-card{background:white;border-radius:14px;border:1px solid var(--border);box-shadow:var(--sh);overflow:hidden;}
+.pc-header{background:linear-gradient(135deg,#1f2937,#374151);padding:20px;text-align:center;}
+.pc-av{width:64px;height:64px;border-radius:50%;background:var(--g);color:white;font-size:26px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;}
+.pc-name{color:white;font-size:18px;font-weight:700;}
+.pc-phone{color:rgba(255,255,255,.65);font-size:13px;margin-top:3px;}
+.pc-body{padding:18px;}
+.pf-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.pf-row:last-child{border-bottom:none;}
+.pf-label{color:var(--muted);font-weight:600;}
+.pf-val{font-weight:600;text-align:right;max-width:180px;}
+.status-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;}
+.sp-active{background:var(--gl);color:var(--gd);}
+.sp-paused{background:var(--al);color:#92400e;}
+.sp-finished{background:var(--bl);color:var(--blue);}
+.sp-inactive{background:#f3f4f6;color:var(--muted);}
+.sp-warning{background:#fef2f2;color:var(--red);}
+/* SUBSCRIPTION */
+.sub-block{background:white;border-radius:14px;border:1px solid var(--border);box-shadow:var(--sh);padding:18px;margin-bottom:16px;}
+.sub-block h3{font-size:14px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;}
+.prog-track{height:8px;background:var(--border);border-radius:4px;margin:8px 0;}
+.prog-fill{height:8px;background:var(--g);border-radius:4px;}
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;}
+.stat-box{background:var(--bg);border-radius:8px;padding:10px;text-align:center;}
+.stat-v{font-size:20px;font-weight:800;line-height:1;}
+.stat-l{font-size:10.5px;color:var(--muted);margin-top:2px;font-weight:600;text-transform:uppercase;}
+.action-strip{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
+/* CALENDAR */
+.cal-block{background:white;border-radius:14px;border:1px solid var(--border);box-shadow:var(--sh);padding:18px;}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.cal-nav button{background:none;border:1.5px solid var(--border);border-radius:8px;padding:6px 12px;cursor:pointer;font-family:"DM Sans",sans-serif;font-weight:600;font-size:13px;}
+.cal-nav button:hover{border-color:var(--g);color:var(--gd);}
+.cal-title{font-size:15px;font-weight:700;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+.cal-hd{text-align:center;font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;padding:6px 0;}
+.cal-day{border-radius:9px;padding:6px 4px;min-height:54px;font-size:11.5px;position:relative;cursor:pointer;border:1px solid transparent;transition:all .15s;}
+.cal-day:hover{border-color:var(--g);}
+.cal-day.empty{background:transparent;cursor:default;pointer-events:none;}
+.cal-day.sunday{background:#f9fafb;color:var(--muted);cursor:default;pointer-events:none;}
+.cal-day.today{border-color:var(--g)!important;background:var(--gl);}
+.cal-day .day-num{font-weight:700;font-size:12px;margin-bottom:4px;color:var(--mid);}
+.cal-day.sunday .day-num{color:var(--muted);}
+.del-dot{display:flex;align-items:center;gap:3px;font-size:10px;font-weight:600;padding:2px 5px;border-radius:5px;margin-bottom:2px;}
+.dot-pend{background:var(--al);color:#92400e;}
+.dot-done{background:var(--gl);color:var(--gd);}
+.dot-skip{background:#f3f4f6;color:var(--muted);}
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;border:none;border-radius:8px;cursor:pointer;font-size:12.5px;font-weight:600;font-family:"DM Sans",sans-serif;}
+.btn-g{background:var(--g);color:white;}.btn-g:hover{background:var(--gd);}
+.btn-amber{background:var(--amber);color:white;}.btn-amber:hover{background:#d97706;}
+.btn-r{background:var(--rl);color:var(--red);border:1px solid #fecaca;}
+.btn-o{background:white;border:1.5px solid var(--border);color:var(--mid);}
+.btn-b{background:var(--bl);color:var(--blue);border:1px solid #bfdbfe;}
+.btn-sm{padding:5px 10px;font-size:11.5px;border-radius:6px;}
+/* MODALS */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;}
+.modal-bg.show{display:flex;}
+.modal-box{background:white;border-radius:16px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2);animation:mi .2s ease;}
+@keyframes mi{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+.modal-hd{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:white;}
+.modal-title{font-size:16px;font-weight:700;}
+.modal-close{background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer;}
+.modal-body{padding:18px 22px 24px;}
+.fg{margin-bottom:13px;}
+.fl{display:block;font-size:11px;font-weight:700;color:var(--mid);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+.fc{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:"DM Sans",sans-serif;color:var(--dk);}
+.fc:focus{outline:none;border-color:var(--g);}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.sdiv{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:15px 0 10px;padding-bottom:5px;border-bottom:1px solid var(--border);}
+.badge{display:inline-flex;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;}
+.bg{background:var(--gl);color:var(--gd);}
+.br{background:var(--rl);color:var(--red);}
+.ba{background:var(--al);color:#92400e;}
+.bgr{background:#f3f4f6;color:var(--muted);}
+.alert-warn{background:#fef9c3;border:1px solid #fde68a;border-radius:9px;padding:11px 14px;font-size:13px;font-weight:600;color:#92400e;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.loc-row{display:flex;gap:7px;margin-top:4px;}
+.loc-result{display:none;margin-top:5px;background:var(--gl);border-radius:7px;padding:7px 11px;font-size:12px;color:var(--gd);}
+.chip-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+.chip{padding:4px 11px;border:1.5px solid var(--border);border-radius:20px;cursor:pointer;font-size:12px;font-weight:600;background:white;}
+.chip.on{background:var(--gl);border-color:var(--g);color:var(--gd);}
+.spinner{display:inline-block;width:18px;height:18px;border:2.5px solid var(--border);border-top-color:var(--g);border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle;}
+@keyframes sp{to{transform:rotate(360deg);}}
+.loading{text-align:center;padding:30px;color:var(--muted);}
+.toast{position:fixed;bottom:22px;right:22px;background:var(--dk);color:white;padding:10px 18px;border-radius:12px;font-size:13px;font-weight:600;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="/" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Admin</a>
+  <span style="color:rgba(255,255,255,.3)">|</span>
+  <span class="topbar-title" id="pageTitle">Customer Detail</span>
+</div>
+
+<div class="content" id="mainContent">
+  <div class="loading"><span class="spinner"></span> Loading customer...</div>
+</div>
+
+<!-- PAUSE MODAL -->
+<div class="modal-bg" id="pauseModal"><div class="modal-box">
+  <div class="modal-hd"><span class="modal-title">Pause Subscription</span><button class="modal-close" onclick="closeModal('pauseModal')">&times;</button></div>
+  <div class="modal-body">
+    <input type="hidden" id="pauseOrderId">
+    <div class="frow">
+      <div class="fg"><label class="fl">Pause From *</label><input type="date" class="fc" id="pauseStart"></div>
+      <div class="fg"><label class="fl">Pause Until *</label><input type="date" class="fc" id="pauseEnd"></div>
+    </div>
+    <div class="fg"><label class="fl">Reason</label><input type="text" class="fc" id="pauseReason" placeholder="Customer request, travel, etc."></div>
+    <div style="background:var(--al);border-radius:8px;padding:10px 13px;font-size:12.5px;color:#92400e;margin-bottom:14px;">
+      <i class="fas fa-info-circle"></i> Deliveries in this range will be skipped. Subscription end date will be extended. No refund.
+    </div>
+    <button class="btn btn-amber" style="width:100%;justify-content:center;" onclick="doPause()">Confirm Pause</button>
+  </div>
+</div></div>
+
+<!-- EDIT PROFILE MODAL -->
+<div class="modal-bg" id="editModal"><div class="modal-box" style="max-width:680px;">
+  <div class="modal-hd"><span class="modal-title">Edit Customer Profile</span><button class="modal-close" onclick="closeModal('editModal')">&times;</button></div>
+  <div class="modal-body">
+    <input type="hidden" id="editId">
+    <div class="sdiv">Basic Info</div>
+    <div class="frow">
+      <div class="fg"><label class="fl">Name *</label><input type="text" class="fc" id="eName"></div>
+      <div class="fg"><label class="fl">Phone *</label><input type="text" class="fc" id="ePhone"></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label class="fl">Alternate Phone</label><input type="text" class="fc" id="eAlt"></div>
+      <div class="fg"><label class="fl">Email</label><input type="email" class="fc" id="eEmail"></div>
+    </div>
+    <div class="sdiv">Address &amp; Location</div>
+    <div class="fg"><label class="fl">Primary Address</label><input type="text" class="fc" id="eAddr"></div>
+    <div class="fg"><label class="fl">Location 1 — Google Maps Link</label>
+      <div class="loc-row">
+        <input type="text" class="fc" id="eLoc1" placeholder="Paste Google Maps share link...">
+        <button onclick="extractAdminLoc(1)" style="padding:9px 13px;background:var(--g);color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;">Extract</button>
+      </div>
+      <div class="loc-result" id="eLocRes1"></div>
+      <input type="hidden" id="eLat1"><input type="hidden" id="eLng1">
+    </div>
+    <div class="fg"><label class="fl">Secondary Address</label><input type="text" class="fc" id="eAddr2"></div>
+    <div class="fg"><label class="fl">Location 2 — Google Maps Link</label>
+      <div class="loc-row">
+        <input type="text" class="fc" id="eLoc2" placeholder="Paste Google Maps share link...">
+        <button onclick="extractAdminLoc(2)" style="padding:9px 13px;background:var(--g);color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;">Extract</button>
+      </div>
+      <div class="loc-result" id="eLocRes2"></div>
+      <input type="hidden" id="eLat2"><input type="hidden" id="eLng2">
+    </div>
+    <div class="frow">
+      <div class="fg"><label class="fl">City</label>
+        <select class="fc" id="eCity">
+          <option value="">Select</option>
+          <option>Kozhikode</option><option>Malappuram</option><option>Thrissur</option>
+          <option>Kochi</option><option>Thiruvananthapuram</option><option>Kannur</option>
+          <option>Palakkad</option><option>Kollam</option>
+        </select>
+      </div>
+    </div>
+    <div class="sdiv">Health &amp; Diet</div>
+    <div class="frow">
+      <div class="fg"><label class="fl">Height (cm)</label><input type="number" class="fc" id="eHeight"></div>
+      <div class="fg"><label class="fl">Weight (kg)</label><input type="number" class="fc" id="eWeight"></div>
+    </div>
+    <div class="fg"><label class="fl">Health Conditions</label>
+      <div class="chip-row">
+        <div class="chip" data-h="BP" onclick="this.classList.toggle('on')">BP</div>
+        <div class="chip" data-h="Cholesterol" onclick="this.classList.toggle('on')">Cholesterol</div>
+        <div class="chip" data-h="Diabetes" onclick="this.classList.toggle('on')">Diabetes</div>
+        <div class="chip" data-h="Thyroid" onclick="this.classList.toggle('on')">Thyroid</div>
+        <div class="chip" data-h="None" onclick="this.classList.toggle('on')">None</div>
+      </div>
+    </div>
+    <div class="fg"><label class="fl">Allergy Info</label>
+      <div class="chip-row">
+        <div class="chip" data-a="Gluten" onclick="this.classList.toggle('on')">Gluten</div>
+        <div class="chip" data-a="Dairy" onclick="this.classList.toggle('on')">Dairy</div>
+        <div class="chip" data-a="Nuts" onclick="this.classList.toggle('on')">Nuts</div>
+        <div class="chip" data-a="Shellfish" onclick="this.classList.toggle('on')">Shellfish</div>
+        <div class="chip" data-a="Eggs" onclick="this.classList.toggle('on')">Eggs</div>
+        <div class="chip" data-a="Soy" onclick="this.classList.toggle('on')">Soy</div>
+        <div class="chip" data-a="Sesame" onclick="this.classList.toggle('on')">Sesame</div>
+      </div>
+    </div>
+    <div class="fg"><label class="fl">Diet Preference</label>
+      <select class="fc" id="eDiet">
+        <option value="non_veg">🔴 Non-Veg</option>
+        <option value="pure_veg">🟢 Pure Veg</option>
+        <option value="eggetarian">🥚 Eggetarian</option>
+        <option value="vegan">🌿 Vegan</option>
+      </select>
+    </div>
+    <div class="fg"><label class="fl">Diet Goal</label>
+      <select class="fc" id="eDietGoal">
+        <option value="">Select</option>
+        <option value="weight_loss">Weight Loss</option>
+        <option value="muscle_gain">Muscle Gain</option>
+        <option value="healthy_eating">Healthy Eating</option>
+        <option value="medical">Medical</option>
+        <option value="maintenance">Maintenance</option>
+      </select>
+    </div>
+    <div class="fg"><label class="fl">Delivery Instructions</label>
+      <input type="text" class="fc" id="eInstr" placeholder="e.g. Leave at door, call on arrival">
+    </div>
+    <button class="btn btn-g" style="width:100%;justify-content:center;margin-top:4px;" onclick="saveEdit()">Save Changes</button>
+  </div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = "/api";
+let token = sessionStorage.getItem("aToken");
+let custId = null, data = null;
+let calMonth = new Date().toISOString().slice(0,7);
+
+// Get customer ID from URL param
+const params = new URLSearchParams(location.search);
+custId = params.get("id");
+
+if (!token) { location.href = "/"; }
+else if (!custId) { location.href = "/"; }
+else { load(); }
+
+async function api2(url, opts={}) {
+  opts.headers = {"Content-Type":"application/json","Authorization":"Bearer "+token,...(opts.headers||{})};
+  const r = await fetch(url, opts);
+  return r.json();
+}
+
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 3000);
+}
+function openModal(id) { document.getElementById(id).classList.add("show"); }
+function closeModal(id) { document.getElementById(id).classList.remove("show"); }
+document.addEventListener("click", e => { if(e.target.classList.contains("modal-bg")) e.target.classList.remove("show"); });
+
+async function load() {
+  try {
+    data = await api2(`${API}/admin/customers/${custId}/detail?month=${calMonth}`);
+    if (data.error) { document.getElementById("mainContent").innerHTML = `<div style="padding:40px;text-align:center;color:var(--red);">${data.error}</div>`; return; }
+    document.getElementById("pageTitle").textContent = data.customer.name;
+    render();
+  } catch(e) {
+    document.getElementById("mainContent").innerHTML = '<div style="padding:40px;text-align:center;color:var(--red);">Connection error</div>';
+  }
+}
+
+function subStatus(order) {
+  if (!order) return { label:'No Plan', cls:'sp-inactive' };
+  if (order.order_status === 'active') return { label:'Active', cls:'sp-active' };
+  if (order.order_status === 'paused') return { label:'Paused', cls:'sp-paused' };
+  if (order.order_status === 'completed') return { label:'Finished', cls:'sp-finished' };
+  if (order.order_status === 'cancelled') return { label:'Cancelled', cls:'sp-inactive' };
+  return { label: order.order_status, cls:'sp-inactive' };
+}
+
+function render() {
+  const c = data.customer;
+  const orders = data.orders || [];
+  const activeOrder = orders.find(o => o.order_status === 'active') || orders[0];
+  const st = subStatus(activeOrder);
+  const pending = parseInt(activeOrder?.pending_count || 0);
+  const delivered = parseInt(activeOrder?.delivered_count || 0);
+  const skipped = parseInt(activeOrder?.skipped_count || 0);
+  const total = pending + delivered + skipped;
+  const pct = total ? Math.round(delivered / total * 100) : 0;
+  const dietIcons = {pure_veg:'🟢 Pure Veg',non_veg:'🔴 Non-Veg',eggetarian:'🥚 Eggetarian',vegan:'🌿 Vegan'};
+
+  let html = `<div class="grid2">
+    <div>
+      <!-- PROFILE CARD -->
+      <div class="profile-card" style="margin-bottom:16px;">
+        <div class="pc-header">
+          <div class="pc-av">${c.name.charAt(0).toUpperCase()}</div>
+          <div class="pc-name">${c.name}</div>
+          <div class="pc-phone">📞 ${c.phone||'—'}</div>
+        </div>
+        <div class="pc-body">
+          <div class="pf-row"><span class="pf-label">Status</span><span><span class="status-pill ${st.cls}">${st.label}</span>${pending>0&&pending<3?'<span class="status-pill sp-warning" style="margin-left:5px;">⚠️ '+pending+' left</span>':''}</span></div>
+          <div class="pf-row"><span class="pf-label">Diet</span><span class="pf-val">${dietIcons[c.diet_preference]||c.diet_preference||'—'}</span></div>
+          ${c.alternate_phone?`<div class="pf-row"><span class="pf-label">Alt Phone</span><span class="pf-val">${c.alternate_phone}</span></div>`:''}
+          ${c.email?`<div class="pf-row"><span class="pf-label">Email</span><span class="pf-val" style="font-size:12px;">${c.email}</span></div>`:''}
+          ${c.city?`<div class="pf-row"><span class="pf-label">City</span><span class="pf-val">${c.city}</span></div>`:''}
+          <div class="pf-row"><span class="pf-label">Territory</span><span class="pf-val">${c.territory_name||'—'}</span></div>
+          ${c.delivery_boy_name?`<div class="pf-row"><span class="pf-label">Delivery Boy</span><span class="pf-val">🏍️ ${c.delivery_boy_name}</span></div>`:''}
+          ${c.height?`<div class="pf-row"><span class="pf-label">Height / Weight</span><span class="pf-val">${c.height}cm / ${c.weight||'?'}kg</span></div>`:''}
+          ${c.health_conditions?`<div class="pf-row"><span class="pf-label">Health</span><span class="pf-val" style="font-size:12px;">${c.health_conditions}</span></div>`:''}
+          ${c.allergy_info?`<div class="pf-row"><span class="pf-label">Allergies</span><span class="pf-val" style="font-size:12px;">${c.allergy_info}</span></div>`:''}
+          ${c.delivery_instructions?`<div class="pf-row"><span class="pf-label">Instructions</span><span class="pf-val" style="font-size:12px;">${c.delivery_instructions}</span></div>`:''}
+          ${c.lat_1?`<div class="pf-row"><span class="pf-label">Location 1</span><span class="pf-val"><a href="https://maps.google.com/?q=${c.lat_1},${c.lng_1}" target="_blank" style="color:var(--gd);font-size:12px;">📍 View Map</a></span></div>`:''}
+          ${c.lat_2?`<div class="pf-row"><span class="pf-label">Location 2</span><span class="pf-val"><a href="https://maps.google.com/?q=${c.lat_2},${c.lng_2}" target="_blank" style="color:var(--gd);font-size:12px;">📍 View Map</a></span></div>`:''}
+        </div>
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="sub-block">
+        <h3>Actions</h3>
+        <div class="action-strip">
+          <button class="btn btn-o" onclick="openEditModal()"><i class="fas fa-edit"></i> Edit Profile</button>
+          ${activeOrder?.order_status==='active'?`
+          <button class="btn btn-amber" onclick="openPauseModal(${activeOrder.id})"><i class="fas fa-pause"></i> Pause</button>
+          `:''}
+          ${activeOrder?.order_status==='paused'?`
+          <button class="btn btn-g" onclick="resumeOrder(${activeOrder.id})"><i class="fas fa-play"></i> Resume</button>
+          `:''}
+        </div>
+      </div>
+
+      <!-- SUBSCRIPTION SUMMARY -->
+      ${orders.map(o => {
+        const pend2=parseInt(o.pending_count||0),done2=parseInt(o.delivered_count||0),skip2=parseInt(o.skipped_count||0);
+        const tot2=pend2+done2+skip2;const p2=tot2?Math.round(done2/tot2*100):0;
+        const st2=subStatus(o);
+        return `<div class="sub-block">
+          <h3>${o.plan_name||'Plan'} <span class="status-pill ${st2.cls}" style="font-size:11px;">${st2.label}</span></h3>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">${o.start_date?String(o.start_date).split('T')[0]:''} → ${o.end_date?String(o.end_date).split('T')[0]:''}</div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;"><span style="color:var(--muted)">Progress</span><span style="font-weight:700;">${p2}%</span></div>
+          <div class="prog-track"><div class="prog-fill" style="width:${p2}%"></div></div>
+          ${pend2>0&&pend2<3?`<div class="alert-warn"><i class="fas fa-exclamation-triangle"></i> Only <strong>${pend2} delivery${pend2===1?'':'s'}</strong> remaining — time to renew!</div>`:''}
+          <div class="stat-row">
+            <div class="stat-box"><div class="stat-v" style="color:var(--gd)">${done2}</div><div class="stat-l">Done</div></div>
+            <div class="stat-box"><div class="stat-v" style="color:var(--amber)">${pend2}</div><div class="stat-l">Left</div></div>
+            <div class="stat-box"><div class="stat-v" style="color:var(--red)">${skip2}</div><div class="stat-l">Skipped</div></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <div>
+      <!-- CALENDAR -->
+      <div class="cal-block">
+        <div class="cal-nav">
+          <button onclick="changeMonth(-1)"><i class="fas fa-chevron-left"></i></button>
+          <span class="cal-title" id="calTitle"></span>
+          <button onclick="changeMonth(1)"><i class="fas fa-chevron-right"></i></button>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;font-size:11.5px;font-weight:600;">
+          <span class="del-dot dot-pend" style="display:inline-flex;">Pending</span>
+          <span class="del-dot dot-done" style="display:inline-flex;">Delivered</span>
+          <span class="del-dot dot-skip" style="display:inline-flex;">Skipped</span>
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+  document.getElementById("mainContent").innerHTML = html;
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const [year, month] = calMonth.split('-').map(Number);
+  const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  document.getElementById("calTitle").textContent = `${monthNames[month-1]} ${year}`;
+
+  const firstDay = new Date(year, month-1, 1).getDay(); // 0=Sun
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const today = new Date().toISOString().split('T')[0];
+
+  // Map deliveries by date
+  const delMap = {};
+  (data.calendar || []).forEach(d => {
+    const dt = String(d.delivery_date).split('T')[0];
+    if (!delMap[dt]) delMap[dt] = [];
+    delMap[dt].push(d);
+  });
+
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  let html = days.map(d => `<div class="cal-hd">${d}</div>`).join('');
+
+  // Empty cells before first day
+  for (let i = 0; i < firstDay; i++) html += '<div class="cal-day empty"></div>';
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dt = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const dow = new Date(year, month-1, day).getDay();
+    const isSun = dow === 0;
+    const isToday = dt === today;
+    const dels = delMap[dt] || [];
+
+    let dayHtml = `<div class="cal-day${isSun?' sunday':''}${isToday?' today':''}" ${dels.length&&!isSun?`onclick="showDayDeliveries('${dt}')"`:''}>
+      <div class="day-num">${day}</div>`;
+
+    dels.forEach(d => {
+      const cls = d.status==='delivered'?'dot-done':d.status==='skipped'?'dot-skip':'dot-pend';
+      const icon = d.status==='delivered'?'✓':d.status==='skipped'?'—':'○';
+      dayHtml += `<div class="del-dot ${cls}">${icon} ${d.meal_type?.charAt(0).toUpperCase()||'L'}</div>`;
+    });
+
+    dayHtml += '</div>';
+    html += dayHtml;
+  }
+
+  document.getElementById("calGrid").innerHTML = html;
+}
+
+function showDayDeliveries(dt) {
+  const dels = (data.calendar||[]).filter(d => String(d.delivery_date).split('T')[0] === dt);
+  if (!dels.length) return;
+
+  let info = dels.map(d => {
+    const stBadge = d.status==='delivered'?'<span class="badge bg">✓ Delivered</span>':d.status==='skipped'?'<span class="badge bgr">Skipped</span>':'<span class="badge ba">Pending</span>';
+    const canSkip = d.status==='pending' && dt >= new Date().toISOString().split('T')[0];
+    return `<div style="background:var(--bg);border-radius:9px;padding:12px 14px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <strong>${d.meal_type?.toUpperCase()||'LUNCH'}</strong>${stBadge}
+      </div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:3px;">${d.meal_item_name||'Not assigned'}</div>
+      ${d.calories?`<div style="font-size:11.5px;color:var(--muted);">${d.calories} kcal</div>`:''}
+      ${d.delivery_boy_name?`<div style="font-size:11.5px;color:var(--muted);">🏍️ ${d.delivery_boy_name}</div>`:''}
+      ${canSkip?`<button class="btn btn-r btn-sm" style="margin-top:8px;" onclick="adminSkip(${d.id})"><i class="fas fa-times"></i> Skip this delivery</button>`:''}
+    </div>`;
+  }).join('');
+
+  // Show in a simple alert-style overlay
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-bg show';
+  overlay.innerHTML = `<div class="modal-box">
+    <div class="modal-hd"><span class="modal-title">${dt}</span><button class="modal-close" onclick="this.closest('.modal-bg').remove()">&times;</button></div>
+    <div class="modal-body">${info}</div>
+  </div>`;
+  overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+}
+
+async function adminSkip(deliveryId) {
+  if (!confirm('Skip this delivery on behalf of the customer? Subscription will be extended 1 day.')) return;
+  const reason = prompt('Reason (or press OK for default):', 'Admin skip on customer request') || 'Admin skip';
+  const d = await api2(`${API}/admin/deliveries/${deliveryId}/skip`, { method:'POST', body:JSON.stringify({reason}) });
+  if (d.error) { toast('❌ '+d.error); return; }
+  toast('✅ Delivery skipped. Subscription extended 1 day.');
+  document.querySelectorAll('.modal-bg').forEach(el=>el.remove());
+  await load();
+}
+
+async function changeMonth(dir) {
+  const [y, m] = calMonth.split('-').map(Number);
+  const d = new Date(y, m-1+dir, 1);
+  calMonth = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  // Reload calendar data for new month
+  try {
+    const newData = await api2(`${API}/admin/customers/${custId}/detail?month=${calMonth}`);
+    if (!newData.error) { data.calendar = newData.calendar; renderCalendar(); }
+  } catch(e) {}
+}
+
+function openPauseModal(orderId) {
+  document.getElementById('pauseOrderId').value = orderId;
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('pauseStart').value = today;
+  document.getElementById('pauseEnd').value = '';
+  document.getElementById('pauseReason').value = '';
+  openModal('pauseModal');
+}
+
+async function doPause() {
+  const orderId = document.getElementById('pauseOrderId').value;
+  const start = document.getElementById('pauseStart').value;
+  const end = document.getElementById('pauseEnd').value;
+  const reason = document.getElementById('pauseReason').value || 'Admin pause on customer request';
+  if (!start||!end) { toast('Select both dates'); return; }
+  if (end < start) { toast('End date must be after start'); return; }
+  const d = await api2(`${API}/admin/orders/${orderId}/pause`, { method:'POST', body:JSON.stringify({pause_start:start,pause_end:end,reason}) });
+  if (d.error) { toast('❌ '+d.error); return; }
+  toast('✅ '+d.message);
+  closeModal('pauseModal');
+  await load();
+}
+
+async function resumeOrder(orderId) {
+  if (!confirm('Resume this subscription?')) return;
+  const d = await api2(`${API}/admin/orders/${orderId}/status`, { method:'PUT', body:JSON.stringify({order_status:'active'}) });
+  if (d.error) { toast('❌ '+d.error); return; }
+  toast('✅ Subscription resumed');
+  await load();
+}
+
+function openEditModal() {
+  const c = data.customer;
+  document.getElementById('editId').value = c.id;
+  const sv = (id,v) => { const el=document.getElementById(id); if(el&&v!=null) el.value=v; };
+  sv('eName',c.name); sv('ePhone',c.phone); sv('eAlt',c.alternate_phone);
+  sv('eEmail',c.email); sv('eAddr',c.address); sv('eAddr2',c.address_2);
+  sv('eCity',c.city); sv('eHeight',c.height); sv('eWeight',c.weight);
+  sv('eInstr',c.delivery_instructions); sv('eDiet',c.diet_preference||'non_veg');
+  sv('eDietGoal',c.diet_goal);
+  sv('eLoc1',c.google_location_1); sv('eLoc2',c.google_location_2);
+  sv('eLat1',c.lat_1); sv('eLng1',c.lng_1);
+  sv('eLat2',c.lat_2); sv('eLng2',c.lng_2);
+  if(c.lat_1) showLocRes(1,c.lat_1,c.lng_1);
+  if(c.lat_2) showLocRes(2,c.lat_2,c.lng_2);
+  const hcs = (c.health_conditions||'').split(',');
+  document.querySelectorAll('[data-h]').forEach(ch => ch.classList.toggle('on', hcs.includes(ch.dataset.h)));
+  const algs = (c.allergy_info||'').split(',');
+  document.querySelectorAll('[data-a]').forEach(ch => ch.classList.toggle('on', algs.includes(ch.dataset.a)));
+  openModal('editModal');
+}
+
+function showLocRes(num,lat,lng) {
+  const r=document.getElementById(`eLocRes${num}`);
+  r.style.display='block';
+  r.innerHTML=`📍 ${parseFloat(lat).toFixed(6)}, ${parseFloat(lng).toFixed(6)} <a href="https://maps.google.com/?q=${lat},${lng}" target="_blank" style="color:var(--gd);margin-left:6px;">View ↗</a>`;
+}
+
+async function extractAdminLoc(num) {
+  const url = document.getElementById(`eLoc${num}`).value.trim();
+  if (!url) { toast('Paste a Google Maps link first'); return; }
+  try {
+    const r = await fetch(`${API}/util/extract-location?url=${encodeURIComponent(url)}`);
+    const d = await r.json();
+    if (d.error) { toast('❌ '+d.error); return; }
+    document.getElementById(`eLat${num}`).value = d.lat;
+    document.getElementById(`eLng${num}`).value = d.lng;
+    showLocRes(num, d.lat, d.lng);
+    toast('✅ Location extracted!');
+  } catch(e) { toast('Connection error'); }
+}
+
+async function saveEdit() {
+  const id = document.getElementById('editId').value;
+  const hcs = Array.from(document.querySelectorAll('[data-h].on')).map(c=>c.dataset.h).join(',');
+  const algs = Array.from(document.querySelectorAll('[data-a].on')).map(c=>c.dataset.a).join(',');
+  const body = {
+    name:document.getElementById('eName').value,
+    phone:document.getElementById('ePhone').value,
+    alternate_phone:document.getElementById('eAlt').value||null,
+    email:document.getElementById('eEmail').value||null,
+    address:document.getElementById('eAddr').value||null,
+    address_2:document.getElementById('eAddr2').value||null,
+    city:document.getElementById('eCity').value||null,
+    height:document.getElementById('eHeight').value||null,
+    weight:document.getElementById('eWeight').value||null,
+    health_conditions:hcs||null,
+    allergy_info:algs||null,
+    diet_preference:document.getElementById('eDiet').value,
+    diet_goal:document.getElementById('eDietGoal').value||null,
+    delivery_instructions:document.getElementById('eInstr').value||null,
+    lat_1:document.getElementById('eLat1').value||null,
+    lng_1:document.getElementById('eLng1').value||null,
+    lat_2:document.getElementById('eLat2').value||null,
+    lng_2:document.getElementById('eLng2').value||null,
+    google_location_1:document.getElementById('eLoc1').value||null,
+    google_location_2:document.getElementById('eLoc2').value||null,
+  };
+  const d = await api2(`${API}/admin/customers/${id}`, { method:'PUT', body:JSON.stringify(body) });
+  if (d.error) { toast('❌ '+d.error); return; }
+
+  // Also save location separately
+  if (body.lat_1||body.lat_2) {
+    await api2(`${API}/admin/customers/${id}/location`, { method:'PUT', body:JSON.stringify({
+      lat_1:body.lat_1, lng_1:body.lng_1, lat_2:body.lat_2, lng_2:body.lng_2,
+      google_location_1:body.google_location_1, google_location_2:body.google_location_2
+    })});
+  }
+
+  toast('✅ Customer profile updated!');
+  closeModal('editModal');
+  await load();
+}
+</script>
+</body>
+</html>

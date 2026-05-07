@@ -1,0 +1,1592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SalesTrack Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#060810">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SalesTrack">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%235b8def'/><text y='.9em' font-size='65' x='12'>ST</text></svg>">
+<meta name="mobile-web-app-capable" content="yes">
+<style>
+:root{
+  --bg:#060810;--s1:#0b0f1a;--s2:#111827;--s3:#162035;
+  --b1:#1c2540;--b2:#243060;
+  --accent:#5b8def;--a2:#f0c040;--a3:#34d98a;--a4:#f06060;--a5:#a078f0;--a6:#40c8f0;
+  --text:#e0e8ff;--m1:#7080a8;--m2:#9aa8cc;
+  --grad:linear-gradient(135deg,#5b8def22,#34d98a11);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{font-size:14px;}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--b1);border-radius:2px;}
+
+/* SCREENS */
+.scr{display:none;min-height:100vh;}
+.scr.on{display:flex;}
+
+/* ========= LOGIN ========= */
+#ls{align-items:stretch;background:var(--bg);}
+.l-left{flex:1;display:flex;align-items:center;justify-content:center;padding:48px;position:relative;overflow:hidden;}
+.l-left-bg{position:absolute;inset:0;
+  background:radial-gradient(circle at 30% 40%,rgba(91,141,239,.12) 0%,transparent 60%),
+  radial-gradient(circle at 70% 70%,rgba(52,217,138,.08) 0%,transparent 50%);
+}
+.l-dots{position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,.04) 1px,transparent 1px);background-size:28px 28px;}
+.l-form-wrap{position:relative;z-index:1;width:100%;max-width:400px;}
+.l-brand{margin-bottom:40px;}
+.l-mark{width:52px;height:52px;background:linear-gradient(135deg,var(--accent),var(--a6));border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.3rem;color:#fff;margin-bottom:16px;box-shadow:0 0 32px rgba(91,141,239,.4);}
+.l-h1{font-size:1.9rem;font-weight:800;letter-spacing:-.5px;line-height:1.1;}
+.l-sub{color:var(--m1);margin-top:6px;font-size:.9rem;}
+.l-card{background:var(--s1);border:1px solid var(--b1);border-radius:18px;padding:28px;}
+.lf{margin-bottom:16px;}
+.lf label{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--m2);margin-bottom:7px;}
+.lf-wrap{position:relative;}
+.lf-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:.95rem;pointer-events:none;}
+.li{width:100%;background:var(--s2);border:1.5px solid var(--b1);color:var(--text);padding:11px 13px 11px 40px;border-radius:10px;font-family:'Outfit',sans-serif;font-size:.95rem;transition:border-color .2s,box-shadow .2s;}
+.li:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(91,141,239,.12);}
+.li::placeholder{color:var(--m1);}
+.l-btn{width:100%;padding:13px;background:linear-gradient(135deg,var(--accent),var(--a6));border:none;border-radius:10px;color:#fff;font-family:'Outfit',sans-serif;font-weight:700;font-size:.95rem;cursor:pointer;margin-top:6px;transition:opacity .2s,transform .1s;letter-spacing:.02em;}
+.l-btn:hover{opacity:.88;}
+.l-btn:active{transform:scale(.98);}
+.l-err{min-height:18px;color:var(--a4);font-size:.8rem;text-align:center;margin-top:10px;}
+.l-demo{margin-top:20px;background:var(--s2);border:1px solid var(--b1);border-radius:12px;padding:14px;}
+.l-demo-title{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--m1);margin-bottom:10px;}
+.l-demo-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--b1);font-size:.78rem;}
+.l-demo-row:last-child{border-bottom:none;}
+.l-demo-role{color:var(--m2);}
+.l-demo-creds{font-family:'JetBrains Mono',monospace;color:var(--a2);font-size:.72rem;}
+.l-right{width:420px;background:var(--s1);border-left:1px solid var(--b1);display:flex;flex-direction:column;justify-content:center;padding:48px 40px;position:relative;overflow:hidden;}
+.l-right-bg{position:absolute;inset:0;background:radial-gradient(circle at 80% 20%,rgba(160,120,240,.06),transparent 60%);}
+.l-feature{position:relative;z-index:1;margin-bottom:28px;}
+.l-feature-icon{font-size:1.5rem;margin-bottom:8px;}
+.l-feature-title{font-size:.92rem;font-weight:700;margin-bottom:4px;}
+.l-feature-desc{font-size:.8rem;color:var(--m1);line-height:1.5;}
+.l-roles{position:relative;z-index:1;margin-top:8px;}
+.l-roles-title{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--m1);margin-bottom:12px;}
+.role-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:.72rem;font-weight:600;margin:3px;border:1px solid;}
+@media(max-width:768px){.l-right{display:none;}.l-left{padding:28px;}}
+
+/* ========= APP SHELL ========= */
+#as{flex-direction:row;}
+.sidebar{width:220px;background:var(--s1);border-right:1px solid var(--b1);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;flex-shrink:0;}
+.sb-top{padding:20px 16px 16px;border-bottom:1px solid var(--b1);}
+.sb-logo{font-size:1.1rem;font-weight:800;letter-spacing:-.3px;}
+.sb-logo span{color:var(--accent);}
+.sb-user{margin-top:12px;display:flex;align-items:center;gap:10px;}
+.sb-av{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.75rem;flex-shrink:0;}
+.sb-name{font-size:.82rem;font-weight:600;line-height:1.2;}
+.sb-role{font-size:.68rem;color:var(--m1);}
+.sb-nav{flex:1;padding:12px 8px;overflow-y:auto;}
+.sb-section{font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--m1);padding:10px 8px 5px;margin-top:4px;}
+.sb-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;cursor:pointer;font-size:.83rem;font-weight:500;color:var(--m2);transition:all .18s;border:none;background:none;width:100%;text-align:left;}
+.sb-item:hover{background:var(--s2);color:var(--text);}
+.sb-item.active{background:rgba(91,141,239,.15);color:var(--accent);font-weight:600;}
+.sb-item .ic{font-size:1rem;width:18px;text-align:center;}
+.sb-bottom{padding:12px 8px;border-top:1px solid var(--b1);}
+.sb-logout{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:9px;cursor:pointer;font-size:.83rem;color:var(--a4);background:none;border:none;width:100%;}
+.sb-logout:hover{background:rgba(240,96,96,.1);}
+
+.main-area{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.topbar{height:54px;background:var(--s1);border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;}
+.tb-title{font-size:1rem;font-weight:700;}
+.tb-right{display:flex;align-items:center;gap:10px;}
+.date-tag{font-size:.76rem;color:var(--m1);background:var(--s2);border:1px solid var(--b1);padding:4px 10px;border-radius:6px;}
+
+.page{flex:1;overflow-y:auto;padding:22px 24px;}
+
+/* VIEWS */
+.view{display:none;animation:fadeUp .22s ease;}
+.view.on{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* BUTTONS */
+.btn{padding:7px 15px;border-radius:8px;border:none;cursor:pointer;font-family:'Outfit',sans-serif;font-weight:600;font-size:.78rem;transition:all .18s;letter-spacing:.01em;}
+.btn-p{background:var(--accent);color:#fff;}
+.btn-p:hover{background:#6f9ef5;}
+.btn-g{background:var(--s2);border:1px solid var(--b1);color:var(--text);}
+.btn-g:hover{border-color:var(--accent);}
+.btn-s{background:rgba(52,217,138,.12);border:1px solid rgba(52,217,138,.25);color:var(--a3);}
+.btn-s:hover{background:rgba(52,217,138,.2);}
+.btn-d{background:rgba(240,96,96,.1);border:1px solid rgba(240,96,96,.25);color:var(--a4);}
+.btn-d:hover{background:rgba(240,96,96,.18);}
+.btn-xs{padding:4px 10px;font-size:.72rem;}
+.btn-sm{padding:6px 12px;font-size:.76rem;}
+
+/* FILTERS */
+.fbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:18px;}
+.fsel{background:var(--s1);border:1px solid var(--b1);color:var(--text);padding:6px 11px;border-radius:7px;font-family:'Outfit',sans-serif;font-size:.78rem;cursor:pointer;}
+.fsel:focus{outline:none;border-color:var(--accent);}
+.srch-wrap{position:relative;}
+.srch-wrap::before{content:'🔍';position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:.7rem;pointer-events:none;}
+.srch{background:var(--s1);border:1px solid var(--b1);color:var(--text);padding:6px 11px 6px 30px;border-radius:7px;font-family:'Outfit',sans-serif;font-size:.78rem;width:180px;}
+.srch:focus{outline:none;border-color:var(--accent);}
+
+/* METRICS */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px;}
+.mc{background:var(--s1);border:1px solid var(--b1);border-radius:13px;padding:16px 18px;position:relative;overflow:hidden;transition:border-color .2s,transform .2s;}
+.mc:hover{border-color:var(--b2);transform:translateY(-1px);}
+.mc-bar{position:absolute;top:0;left:0;right:0;height:2px;}
+.mc-lbl{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--m1);margin-bottom:9px;}
+.mc-val{font-size:1.55rem;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;}
+.mc-sub{font-size:.72rem;color:var(--m2);margin-top:5px;}
+.up{color:var(--a3);} .dn{color:var(--a4);}
+
+/* PANELS */
+.panel{background:var(--s1);border:1px solid var(--b1);border-radius:13px;padding:18px;margin-bottom:16px;}
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.pt{font-size:.85rem;font-weight:700;display:flex;align-items:center;gap:7px;}
+.dot{width:6px;height:6px;border-radius:50%;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px;}
+.grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:14px;}
+@media(max-width:900px){.grid2,.grid3{grid-template-columns:1fr;}}
+
+/* TABLE */
+.tw{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:.8rem;}
+th{text-align:left;padding:8px 11px;color:var(--m1);font-size:.67rem;text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--b1);font-weight:600;white-space:nowrap;}
+td{padding:10px 11px;border-bottom:1px solid var(--b1);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:var(--s2);}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:.67rem;font-weight:700;white-space:nowrap;letter-spacing:.02em;}
+.bp{background:rgba(91,141,239,.15);color:var(--accent);}
+.by{background:rgba(240,192,64,.15);color:var(--a2);}
+.bg{background:rgba(52,217,138,.13);color:var(--a3);}
+.br{background:rgba(240,96,96,.13);color:var(--a4);}
+.bv{background:rgba(160,120,240,.13);color:var(--a5);}
+.bc{background:rgba(64,200,240,.13);color:var(--a6);}
+.bq{background:rgba(90,100,130,.13);color:var(--m2);}
+
+/* AVATAR */
+.av{display:flex;align-items:center;justify-content:center;border-radius:7px;font-weight:700;font-family:'Outfit',sans-serif;flex-shrink:0;}
+.av-p{background:rgba(91,141,239,.18);color:var(--accent);}
+.av-y{background:rgba(240,192,64,.18);color:var(--a2);}
+.av-g{background:rgba(52,217,138,.18);color:var(--a3);}
+.av-r{background:rgba(240,96,96,.18);color:var(--a4);}
+.av-v{background:rgba(160,120,240,.18);color:var(--a5);}
+.av-c{background:rgba(64,200,240,.18);color:var(--a6);}
+
+/* BAR CHART */
+.bc-chart{display:flex;flex-direction:column;gap:8px;}
+.bc-row{display:flex;align-items:center;gap:9px;}
+.bc-lbl{width:110px;font-size:.74rem;color:var(--m2);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bc-track{flex:1;background:var(--s2);border-radius:4px;height:8px;overflow:hidden;}
+.bc-fill{height:100%;border-radius:4px;transition:width .7s cubic-bezier(.4,0,.2,1);}
+.bc-val{width:76px;font-size:.72rem;text-align:right;font-variant-numeric:tabular-nums;}
+
+/* PROGRESS */
+.pg-wrap{display:flex;align-items:center;gap:7px;}
+.pg-track{flex:1;background:var(--s2);border-radius:3px;height:5px;overflow:hidden;min-width:50px;}
+.pg-fill{height:100%;border-radius:3px;}
+.pg-pct{font-size:.7rem;color:var(--m2);min-width:32px;text-align:right;}
+
+/* CARD LIST */
+.cl{display:flex;flex-direction:column;gap:7px;max-height:340px;overflow-y:auto;}
+.ci{background:var(--s2);border:1px solid var(--b1);border-radius:9px;padding:11px 13px;display:flex;align-items:center;gap:11px;transition:border-color .15s;cursor:pointer;}
+.ci:hover{border-color:var(--accent);}
+.ci-info{flex:1;min-width:0;}
+.ci-name{font-size:.82rem;font-weight:600;}
+.ci-meta{font-size:.7rem;color:var(--m2);margin-top:1px;}
+.ci-r{text-align:right;flex-shrink:0;}
+.ci-amt{font-size:.86rem;font-weight:800;}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,8,.78);z-index:900;align-items:center;justify-content:center;backdrop-filter:blur(6px);}
+.overlay.on{display:flex;}
+.modal{background:var(--s1);border:1px solid var(--b2);border-radius:18px;padding:26px;width:100%;max-width:560px;max-height:92vh;overflow-y:auto;animation:mIn .2s ease;}
+.modal-sm{max-width:420px;}
+@keyframes mIn{from{transform:translateY(18px) scale(.97);opacity:0}to{transform:none;opacity:1}}
+.m-title{font-size:1rem;font-weight:800;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;}
+.m-close{background:none;border:none;color:var(--m1);cursor:pointer;font-size:1.2rem;line-height:1;padding:2px;}
+.m-close:hover{color:var(--text);}
+.fg{margin-bottom:13px;}
+.flbl{display:block;font-size:.67rem;text-transform:uppercase;letter-spacing:.07em;color:var(--m2);margin-bottom:5px;}
+.fi,.fse,.fta{width:100%;background:var(--bg);border:1.5px solid var(--b1);color:var(--text);padding:9px 12px;border-radius:8px;font-family:'Outfit',sans-serif;font-size:.85rem;transition:border-color .2s;}
+.fi:focus,.fse:focus,.fta:focus{outline:none;border-color:var(--accent);}
+.fi::placeholder{color:var(--m1);}
+.fta{resize:vertical;min-height:64px;}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+.m-actions{display:flex;gap:9px;justify-content:flex-end;margin-top:18px;padding-top:14px;border-top:1px solid var(--b1);}
+
+/* DEAL DETAIL */
+.dd-sec{margin-bottom:14px;}
+.dd-sec-t{font-size:.66rem;text-transform:uppercase;letter-spacing:.08em;color:var(--m1);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--b1);}
+.kv-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.kv{background:var(--s2);border-radius:7px;padding:9px 11px;}
+.kv-k{font-size:.67rem;color:var(--m2);margin-bottom:2px;}
+.kv-v{font-size:.83rem;font-weight:600;}
+.pay-hist{display:flex;flex-direction:column;gap:5px;}
+.ph-row{display:flex;align-items:flex-start;justify-content:space-between;background:var(--s2);border-radius:7px;padding:9px 11px;gap:10px;}
+.pend-sched{display:flex;flex-direction:column;gap:5px;}
+.ps-row{display:flex;align-items:flex-start;justify-content:space-between;background:rgba(240,192,64,.04);border:1px solid rgba(240,192,64,.14);border-radius:7px;padding:9px 11px;gap:10px;}
+
+/* ADMIN TABS */
+.atabs{display:flex;gap:2px;margin-bottom:18px;background:var(--s1);border:1px solid var(--b1);border-radius:10px;padding:4px;width:fit-content;}
+.atab{padding:7px 16px;border-radius:7px;font-size:.78rem;cursor:pointer;color:var(--m2);background:none;border:none;font-family:'Outfit',sans-serif;font-weight:600;transition:all .18s;}
+.atab.active{background:var(--accent);color:#fff;}
+
+/* ORG TREE */
+.oc{background:var(--s1);border:1px solid var(--b1);border-radius:11px;margin-bottom:11px;overflow:hidden;}
+.oh{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;cursor:pointer;transition:background .15s;}
+.oh:hover{background:var(--s2);}
+.oa{transition:transform .2s;color:var(--m1);font-size:1.1rem;}
+.oa.open{transform:rotate(90deg);}
+.ob{display:none;border-top:1px solid var(--b1);padding:10px 16px;}
+.ob.open{display:block;}
+.bc-chip{display:flex;align-items:center;justify-content:space-between;padding:8px 11px;background:var(--s2);border-radius:7px;margin-bottom:5px;font-size:.8rem;}
+
+/* LEADERBOARD */
+.lb-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--s2);border-radius:9px;margin-bottom:6px;}
+.lb-rank{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;flex-shrink:0;}
+.lb-info{flex:1;min-width:0;}
+.lb-name{font-size:.82rem;font-weight:600;}
+.lb-sub{font-size:.7rem;color:var(--m2);}
+.lb-amt{font-size:.86rem;font-weight:800;text-align:right;}
+
+/* ROLE COLORS */
+.role-ceo{background:rgba(240,192,64,.12);color:var(--a2);border-color:rgba(240,192,64,.25);}
+.role-admin{background:rgba(240,96,96,.12);color:var(--a4);border-color:rgba(240,96,96,.25);}
+.role-orghead{background:rgba(160,120,240,.12);color:var(--a5);border-color:rgba(160,120,240,.25);}
+.role-rsm{background:rgba(64,200,240,.12);color:var(--a6);border-color:rgba(64,200,240,.25);}
+.role-exec{background:rgba(91,141,239,.12);color:var(--accent);border-color:rgba(91,141,239,.25);}
+
+/* TOAST */
+.toast{position:fixed;bottom:22px;right:22px;background:var(--s1);border:1px solid var(--b2);border-radius:11px;padding:11px 18px;font-size:.82rem;z-index:9999;transform:translateY(60px);opacity:0;transition:all .28s;box-shadow:0 8px 30px rgba(0,0,0,.5);}
+.toast.on{transform:none;opacity:1;}
+.toast.ok{border-color:rgba(52,217,138,.35);}
+.toast.err{border-color:rgba(240,96,96,.35);}
+.empty{text-align:center;padding:32px;color:var(--m1);font-size:.82rem;}
+.divider{height:1px;background:var(--b1);margin:14px 0;}
+.sec-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.sec-h h2{font-size:.95rem;font-weight:800;}
+.mono{font-family:'JetBrains Mono',monospace;}
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<div id="ls" class="scr on">
+  <div class="l-left">
+    <div class="l-left-bg"></div>
+    <div class="l-dots"></div>
+    <div class="l-form-wrap">
+      <div class="l-brand">
+        <div class="l-mark">ST</div>
+        <div class="l-h1">Sales<span style="color:var(--accent)">Track</span> Pro</div>
+        <div class="l-sub">Commitment & Revenue Intelligence Platform</div>
+      </div>
+      <div class="l-card">
+        <div class="lf">
+          <label>Mobile Number</label>
+          <div class="lf-wrap">
+            <span class="lf-icon">📱</span>
+            <input class="li" id="lm" type="tel" placeholder="Enter mobile number"/>
+          </div>
+        </div>
+        <div class="lf">
+          <label>Password</label>
+          <div class="lf-wrap">
+            <span class="lf-icon">🔐</span>
+            <input class="li" id="lp" type="password" placeholder="Enter password" onkeydown="if(event.key==='Enter')login()"/>
+          </div>
+        </div>
+        <button class="l-btn" onclick="login()">Sign In →</button>
+        <div class="l-err" id="lerr"></div>
+      </div>
+      <div class="l-demo">
+        <div class="l-demo-title">First time setup</div>
+        <div style="font-size:.72rem;color:var(--m1);margin-top:4px;line-height:1.6">Login as Super Admin → go to <strong style="color:var(--m2)">Admin Panel</strong> to add your organisations, branches, users, products &amp; bank accounts.</div>
+      </div>
+    </div>
+  </div>
+  <div class="l-right">
+    <div class="l-right-bg"></div>
+    <div class="l-feature">
+      <div class="l-feature-icon">📊</div>
+      <div class="l-feature-title">Role-Based Dashboards</div>
+      <div class="l-feature-desc">Every role sees exactly what they need — from Group CEO down to Sales Executive.</div>
+    </div>
+    <div class="l-feature">
+      <div class="l-feature-icon">🎯</div>
+      <div class="l-feature-title">Commitment Tracking</div>
+      <div class="l-feature-desc">Track every payment promise with committed dates, never lose track of what was said.</div>
+    </div>
+    <div class="l-feature">
+      <div class="l-feature-icon">💳</div>
+      <div class="l-feature-title">Payment Management</div>
+      <div class="l-feature-desc">Mark partial or full payments against specific bank accounts with full audit trail.</div>
+    </div>
+    <div class="divider"></div>
+    <div class="l-roles">
+      <div class="l-roles-title">Role Hierarchy</div>
+      <span class="role-chip role-admin" style="border:1px solid">Super Admin</span>
+      <span class="role-chip role-ceo" style="border:1px solid">Group CEO</span>
+      <span class="role-chip role-orghead" style="border:1px solid">Org Head</span>
+      <span class="role-chip role-rsm" style="border:1px solid">Regional Mgr</span>
+      <span class="role-chip role-exec" style="border:1px solid">Sales Executive</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="as" class="scr">
+  <div class="sidebar">
+    <div class="sb-top">
+      <div class="sb-logo">Sales<span>Track</span></div>
+      <div class="sb-user">
+        <div class="sb-av" id="sb-av"></div>
+        <div>
+          <div class="sb-name" id="sb-name"></div>
+          <div class="sb-role" id="sb-role"></div>
+        </div>
+      </div>
+    </div>
+    <nav class="sb-nav" id="sb-nav"></nav>
+    <div class="sb-bottom">
+      <button class="sb-logout" onclick="logout()">🚪 Sign Out</button>
+    </div>
+  </div>
+  <div class="main-area">
+    <div class="topbar">
+      <div class="tb-title" id="tb-title">Dashboard</div>
+      <div class="tb-right">
+        <div class="date-tag" id="date-tag"></div>
+        <button class="btn btn-p btn-sm" id="tb-add-btn" onclick="openAddDeal()" style="display:none">+ Add Deal</button>
+      </div>
+    </div>
+    <div class="page" id="page"></div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="overlay" id="m-deal"><div class="modal" id="m-deal-body"></div></div>
+<div class="overlay" id="m-add"><div class="modal" id="m-add-body"></div></div>
+<div class="overlay" id="m-pay"><div class="modal modal-sm" id="m-pay-body"></div></div>
+<div class="overlay" id="m-admin"><div class="modal modal-sm" id="m-admin-body"></div></div>
+<div class="overlay" id="m-slot"><div class="modal modal-sm" id="m-slot-body"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// =====================================================================
+// STATE & DATA  — loaded from localStorage, falls back to clean defaults
+// =====================================================================
+const DEFAULTS={
+  orgs:[],
+  branches:[],
+  products:[],
+  banks:[],
+  users:[
+    {id:'u0',name:'Super Admin',mobile:'8921564165',pw:'3Slmedi@',role:'superadmin',orgId:null,branchIds:null}
+  ],
+  deals:[]
+};
+
+function loadState(){
+  try{
+    const saved=localStorage.getItem('st_data');
+    if(saved){
+      const d=JSON.parse(saved);
+      S.orgs=d.orgs||DEFAULTS.orgs;
+      S.branches=d.branches||DEFAULTS.branches;
+      S.products=d.products||DEFAULTS.products;
+      S.banks=d.banks||DEFAULTS.banks;
+      // Always ensure superadmin exists with correct credentials
+      S.users=d.users||DEFAULTS.users;
+      const sa=S.users.find(u=>u.role==='superadmin');
+      if(sa){sa.mobile='8921564165';sa.pw='3Slmedi@';}
+      S.deals=d.deals||DEFAULTS.deals;
+    }
+  }catch(e){console.warn('State load failed',e);}
+}
+
+function saveState(){
+  try{
+    localStorage.setItem('st_data',JSON.stringify({
+      orgs:S.orgs,branches:S.branches,products:S.products,
+      banks:S.banks,users:S.users,deals:S.deals
+    }));
+  }catch(e){console.warn('State save failed',e);}
+}
+
+const S={
+  orgs:[...DEFAULTS.orgs],
+  branches:[...DEFAULTS.branches],
+  products:[...DEFAULTS.products],
+  banks:[...DEFAULTS.banks],
+  users:[...DEFAULTS.users],
+  deals:[...DEFAULTS.deals],
+  cur:null,
+  view:'dashboard',
+  adminTab:'products'
+};
+
+// =====================================================================
+// HELPERS
+// =====================================================================
+const $=id=>document.getElementById(id);
+const fmt=n=>'₹'+Number(n||0).toLocaleString('en-IN');
+const fmtD=d=>d?new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'—';
+const td=()=>new Date().toISOString().split('T')[0];
+const addD=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x.toISOString().split('T')[0];};
+const ini=s=>(s||'').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+const avC=s=>['av-p','av-y','av-g','av-r','av-v','av-c'][(s||'').charCodeAt(0)%6];
+const uid=()=>Math.random().toString(36).slice(2,8);
+const getOrg=id=>S.orgs.find(o=>o.id===id)||{name:'—'};
+const getBr=id=>S.branches.find(b=>b.id===id)||{name:'—',city:'—'};
+const getProd=id=>S.products.find(p=>p.id===id)||{name:'—',type:'service'};
+const getBank=id=>S.banks.find(b=>b.id===id)||{name:'—'};
+const getUser=id=>S.users.find(u=>u.id===id)||{name:'—'};
+const isToday=d=>d===td();
+const isTom=d=>d===addD(td(),1);
+const isOD=(d,s)=>s!=='paid'&&d<td();
+const closeAll=()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('on'));
+
+function whenBadge(d,s){
+  if(s==='paid') return '<span class="badge bg">✓ Paid</span>';
+  if(!d) return '<span class="badge bq">No date</span>';
+  if(isOD(d,s)) return '<span class="badge br">Overdue</span>';
+  if(isToday(d)) return '<span class="badge bp">Today</span>';
+  if(isTom(d)) return '<span class="badge by">Tomorrow</span>';
+  return '<span class="badge bq">'+fmtD(d)+'</span>';
+}
+
+function roleBadge(role){
+  const m={superadmin:'role-admin',ceo:'role-ceo',orghead:'role-orghead',rsm:'role-rsm',exec:'role-exec'};
+  const l={superadmin:'Super Admin',ceo:'Group CEO',orghead:'Org Head',rsm:'Regional Mgr',exec:'Sales Executive'};
+  return `<span class="badge ${m[role]||'bq'}">${l[role]||role}</span>`;
+}
+
+function toast(msg,t='ok'){
+  const el=$('toast');el.textContent=msg;el.className='toast on '+(t==='ok'?'ok':'err');
+  setTimeout(()=>el.className='toast',2800);
+}
+
+// SCOPE: which deals can a user see
+function scopeDeals(u){
+  if(!u) return [];
+  if(u.role==='superadmin'||u.role==='ceo') return S.deals;
+  if(u.role==='orghead') return S.deals.filter(d=>d.orgId===u.orgId);
+  if(u.role==='rsm') return S.deals.filter(d=>(u.branchIds||[]).includes(d.branchId));
+  if(u.role==='exec') return S.deals.filter(d=>d.repId===u.id);
+  return [];
+}
+
+function canAddDeal(u){return ['superadmin','rsm','exec'].includes(u?.role);}
+function canMarkPaid(u){return ['superadmin','rsm','exec'].includes(u?.role);}
+function canAdmin(u){return u?.role==='superadmin';}
+
+// =====================================================================
+// AUTH
+// =====================================================================
+function login(){
+  const mob=$('lm').value.trim(), pw=$('lp').value.trim();
+  const u=S.users.find(x=>x.mobile===mob&&x.pw===pw);
+  if(!u){$('lerr').textContent='Invalid mobile or password';return;}
+  $('lerr').textContent='';
+  S.cur=u; launchApp();
+}
+function logout(){S.cur=null;$('ls').classList.add('on');$('as').classList.remove('on');$('lm').value='';$('lp').value='';}
+function launchApp(){
+  $('ls').classList.remove('on'); $('as').classList.add('on');
+  const u=S.cur;
+  $('sb-av').textContent=ini(u.name);
+  $('sb-av').className='sb-av av '+avC(u.name);
+  $('sb-name').textContent=u.name;
+  const roleLabels={superadmin:'Super Admin',ceo:'Group CEO',orghead:'Org Head',rsm:'Regional Sales Mgr',exec:'Sales Executive'};
+  $('sb-role').textContent=roleLabels[u.role]||u.role;
+  $('date-tag').textContent=new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+  buildNav(); go('dashboard');
+}
+
+function buildNav(){
+  const u=S.cur, r=u.role;
+  const secs=[];
+  // Dashboard always
+  secs.push({sec:'',items:[{id:'dashboard',ic:'📊',label:'Dashboard'}]});
+  // Deals
+  if(r==='exec'||r==='rsm') secs.push({sec:'Sales',items:[{id:'mydeals',ic:'🤝',label:'My Deals'},{id:'mycommits',ic:'📅',label:'My Commitments'}]});
+  if(r==='superadmin'||r==='ceo'||r==='orghead'||r==='rsm') secs.push({sec:'Operations',items:[{id:'alldeals',ic:'💼',label:'All Deals'},{id:'commitments',ic:'🎯',label:'Commitments'}]});
+  if(r==='superadmin'||r==='ceo'||r==='orghead') secs.push({sec:'Analytics',items:[{id:'forecast',ic:'📈',label:'Forecast'},{id:'leaderboard',ic:'🏆',label:'Leaderboard'}]});
+  if(r==='superadmin') secs.push({sec:'System',items:[{id:'admin',ic:'⚙️',label:'Admin Panel'}]});
+
+  $('sb-nav').innerHTML=secs.map(s=>`
+    ${s.sec?`<div class="sb-section">${s.sec}</div>`:''}
+    ${s.items.map(i=>`<button class="sb-item" id="nav-${i.id}" onclick="go('${i.id}')"><span class="ic">${i.ic}</span>${i.label}</button>`).join('')}
+  `).join('');
+}
+
+function go(v){
+  S.view=v;
+  document.querySelectorAll('.sb-item').forEach(el=>el.classList.remove('active'));
+  const nav=$('nav-'+v); if(nav) nav.classList.add('active');
+  const titles={dashboard:'Dashboard',mydeals:'My Deals',mycommits:'My Commitments',alldeals:'All Deals',commitments:'Commitments Tracker',forecast:'Revenue Forecast',leaderboard:'Leaderboard',admin:'Admin Panel'};
+  $('tb-title').textContent=titles[v]||v;
+  const showAdd=canAddDeal(S.cur)&&['mydeals','alldeals'].includes(v);
+  $('tb-add-btn').style.display=showAdd?'':'none';
+  $('page').innerHTML='';
+  const fns={dashboard:renderDash,mydeals:renderMyDeals,mycommits:renderMyCommits,alldeals:renderAllDeals,commitments:renderCommitments,forecast:renderForecast,leaderboard:renderLeaderboard,admin:renderAdmin};
+  if(fns[v]) fns[v]();
+}
+
+// =====================================================================
+// DASHBOARD  — adapts per role
+// =====================================================================
+function renderDash(){
+  const u=S.cur, r=u.role;
+  const deals=scopeDeals(u);
+  const t=td();
+  const rcvd=d=>d.payments.filter(p=>p.paid).reduce((s,p)=>s+p.amt,0);
+  const pend=d=>d.total-rcvd(d);
+  const totalPipe=deals.reduce((s,d)=>s+d.total,0);
+  const totalRcvd=deals.reduce((s,d)=>s+rcvd(d),0);
+  const todayComPay=deals.flatMap(d=>d.payments.filter(p=>!p.paid&&p.commit===t));
+  const todayAmt=todayComPay.reduce((s,p)=>s+p.amt,0);
+  const odDeals=deals.filter(d=>d.payments.some(p=>!p.paid&&p.commit&&isOD(p.commit,'pending')));
+  const odAmt=odDeals.reduce((s,d)=>s+d.payments.filter(p=>!p.paid&&p.commit&&isOD(p.commit,'pending')).reduce((a,p)=>a+p.amt,0),0);
+
+  let html=`<div class="metrics">
+    <div class="mc"><div class="mc-bar" style="background:var(--accent)"></div><div class="mc-lbl">Total Pipeline</div><div class="mc-val">${fmt(totalPipe)}</div><div class="mc-sub">${deals.length} deals</div></div>
+    <div class="mc"><div class="mc-bar" style="background:var(--a3)"></div><div class="mc-lbl">Total Received</div><div class="mc-val">${fmt(totalRcvd)}</div><div class="mc-sub"><span class="up">${totalPipe?Math.round(totalRcvd/totalPipe*100):0}% collected</span></div></div>
+    <div class="mc"><div class="mc-bar" style="background:var(--a2)"></div><div class="mc-lbl">Due Today</div><div class="mc-val">${fmt(todayAmt)}</div><div class="mc-sub">${todayComPay.length} payments</div></div>
+    <div class="mc"><div class="mc-bar" style="background:var(--a4)"></div><div class="mc-lbl">Overdue</div><div class="mc-val">${odDeals.length} deals</div><div class="mc-sub"><span class="dn">${fmt(odAmt)} at risk</span></div></div>
+  </div>`;
+
+  // CEO/Admin: org comparison bars
+  if(r==='superadmin'||r==='ceo'){
+    const orgData=S.orgs.map(o=>({
+      name:o.name,
+      total:deals.filter(d=>d.orgId===o.id).reduce((s,d)=>s+d.total,0),
+      rcvd:deals.filter(d=>d.orgId===o.id).reduce((s,d)=>s+rcvd(d),0)
+    })).sort((a,b)=>b.total-a.total);
+    const maxV=Math.max(...orgData.map(o=>o.total),1);
+    const cls=['var(--accent)','var(--a5)','var(--a6)'];
+    html+=`<div class="grid2">
+      <div class="panel"><div class="ph"><div class="pt"><span class="dot" style="background:var(--accent)"></span>Organisation Pipeline</div></div>
+        <div class="bc-chart">${orgData.map((o,i)=>`
+          <div class="bc-row">
+            <div class="bc-lbl">${o.name}</div>
+            <div class="bc-track"><div class="bc-fill" style="width:${Math.max(2,o.total/maxV*100)}%;background:${cls[i%3]}"></div></div>
+            <div class="bc-val">${fmt(o.total)}</div>
+          </div>
+          <div class="bc-row" style="margin-top:-4px">
+            <div class="bc-lbl" style="font-size:.65rem;color:var(--a3)">received</div>
+            <div class="bc-track"><div class="bc-fill" style="width:${Math.max(2,o.total?o.rcvd/o.total*100:0)}%;background:var(--a3);opacity:.7"></div></div>
+            <div class="bc-val" style="color:var(--a3)">${fmt(o.rcvd)}</div>
+          </div>`).join('<div style="margin-bottom:4px"></div>')}</div>
+      </div>
+      <div class="panel"><div class="ph"><div class="pt"><span class="dot" style="background:var(--a2)"></span>Today & Tomorrow Commitments</div></div>
+        <div class="cl" id="dash-today"></div>
+      </div>
+    </div>`;
+  }
+
+  // OrgHead: branch breakdown
+  if(r==='orghead'){
+    const branches=S.branches.filter(b=>b.orgId===u.orgId);
+    const bData=branches.map(b=>({
+      name:b.name,city:b.city,
+      total:deals.filter(d=>d.branchId===b.id).reduce((s,d)=>s+d.total,0),
+      rcvd:deals.filter(d=>d.branchId===b.id).reduce((s,d)=>s+rcvd(d),0)
+    })).sort((a,b)=>b.total-a.total);
+    const maxV=Math.max(...bData.map(b=>b.total),1);
+    html+=`<div class="grid2">
+      <div class="panel"><div class="ph"><div class="pt"><span class="dot" style="background:var(--a5)"></span>Branch Pipeline — ${getOrg(u.orgId).name}</div></div>
+        <div class="bc-chart">${bData.map((b,i)=>`
+          <div class="bc-row">
+            <div class="bc-lbl">${b.name}</div>
+            <div class="bc-track"><div class="bc-fill" style="width:${Math.max(2,b.total/maxV*100)}%;background:var(--a5)"></div></div>
+            <div class="bc-val">${fmt(b.total)}</div>
+          </div>`).join('')}</div>
+      </div>
+      <div class="panel"><div class="ph"><div class="pt"><span class="dot" style="background:var(--a2)"></span>Today & Tomorrow Commitments</div></div>
+        <div class="cl" id="dash-today"></div>
+      </div>
+    </div>`;
+  }
+
+  // RSM: branch deals
+  if(r==='rsm'){
+    const myBranches=(u.branchIds||[]).map(getBr);
+    html+=`<div class="grid2">
+      <div class="panel"><div class="ph"><div class="pt"><span class="dot" style="background:var(--a6)"></span>My Branches Pipeline</div></div>
+        <div class="bc-chart">${myBranches.map(b=>{
+          const bt=deals.filter(d=>d.branchId===b.id).reduce((s,d)=>s+d.total,0);
+          const br2=deals.filter(d=>d.branchId===b.id).reduce((s,d)=>s+rcvd(d),0);
+          const max=Math.max(...myBranches.map(bb=>deals.filter(d=>d.branchId===bb.id).reduce((s,d)=>s+d.total,0)),1);
+          return `<div class="bc-row"><div class="bc-lbl">${b.name}</div><div class="bc-track"><div class="bc-fill" style="width:${Math.max(2,bt/max*100)}%;background:var(--a6)"></div></div><div class="bc-val">${fmt(bt)}</div></div>`;
+        }).join('')}</div>
+      </div>
+      <div class="panel"><div class="ph"><div class="pt"><span class="dot" style="background:var(--a2)"></span>Today & Tomorrow Commitments</div></div>
+        <div class="cl" id="dash-today"></div>
+      </div>
+    </div>`;
+  }
+
+  // Exec: personal summary
+  if(r==='exec'){
+    const totalC=deals.reduce((s,d)=>s+d.total,0);
+    const gotC=deals.reduce((s,d)=>s+rcvd(d),0);
+    html+=`<div class="grid2">
+      <div class="panel"><div class="ph"><div class="pt"><span class="dot" style="background:var(--accent)"></span>My Collection Progress</div></div>
+        <div style="margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:.78rem">
+            <span style="color:var(--m2)">Collected</span><span style="color:var(--a3);font-weight:700">${fmt(gotC)} / ${fmt(totalC)}</span>
+          </div>
+          <div class="pg-track" style="height:10px;border-radius:6px"><div class="pg-fill" style="width:${totalC?Math.round(gotC/totalC*100):0}%;background:linear-gradient(90deg,var(--a3),var(--accent));height:100%;border-radius:6px"></div></div>
+          <div style="font-size:.72rem;color:var(--m2);margin-top:5px">${totalC?Math.round(gotC/totalC*100):0}% of target collected</div>
+        </div>
+        <div class="bc-chart">${[{l:'Paid',v:deals.filter(d=>d.status==='paid').length},{l:'Partial',v:deals.filter(d=>d.status==='partial').length},{l:'Pending',v:deals.filter(d=>d.status==='pending').length}].map(x=>`
+          <div class="bc-row"><div class="bc-lbl">${x.l}</div><div class="bc-track"><div class="bc-fill" style="width:${deals.length?Math.max(4,x.v/deals.length*100):0}%;background:${x.l==='Paid'?'var(--a3)':x.l==='Partial'?'var(--a2)':'var(--m1)'}"></div></div><div class="bc-val">${x.v} deals</div></div>`).join('')}
+        </div>
+      </div>
+      <div class="panel"><div class="ph"><div class="pt"><span class="dot" style="background:var(--a2)"></span>My Today & Tomorrow Commitments</div></div>
+        <div class="cl" id="dash-today"></div>
+      </div>
+    </div>`;
+  }
+
+  // Overdue panel
+  html+=`<div class="grid2">
+    <div class="panel"><div class="ph"><div class="pt"><span class="dot" style="background:var(--a4)"></span>Overdue Payments</div></div><div class="cl" id="dash-od"></div></div>
+    <div class="panel"><div class="ph"><div class="pt"><span class="dot" style="background:var(--a3)"></span>Recent Payments Received</div></div><div class="cl" id="dash-recent"></div></div>
+  </div>`;
+
+  $('page').innerHTML=`<div class="view on">${html}</div>`;
+
+  // today/tomorrow
+  const todayEl=$('dash-today');
+  if(todayEl){
+    const up=deals.flatMap(d=>d.payments.filter(p=>!p.paid&&(isToday(p.commit)||isTom(p.commit))).map(p=>({p,d}))).sort((a,b)=>a.p.commit>b.p.commit?1:-1);
+    if(!up.length) todayEl.innerHTML='<div class="empty">No commitments for today or tomorrow 🎉</div>';
+    else todayEl.innerHTML=up.map(({p,d})=>`<div class="ci" onclick="openDeal('${d.id}')">
+      <div class="av av-${avC(d.client)[3]} ${avC(d.client)}" style="width:32px;height:32px;font-size:.72rem">${ini(d.client)}</div>
+      <div class="ci-info"><div class="ci-name">${d.client}</div><div class="ci-meta">${getUser(d.repId).name} · ${getBr(d.branchId).name}${p.note?` · "${p.note}"`:''}</div></div>
+      <div class="ci-r"><div class="ci-amt" style="color:var(--a2)">${fmt(p.amt)}</div><div style="margin-top:3px">${whenBadge(p.commit,'pending')}</div></div>
+    </div>`).join('');
+  }
+
+  // overdue
+  const odEl=$('dash-od');
+  if(odEl){
+    const odRows=deals.flatMap(d=>d.payments.filter(p=>!p.paid&&p.commit&&isOD(p.commit,'pending')).map(p=>({p,d}))).sort((a,b)=>a.p.commit>b.p.commit?1:-1);
+    if(!odRows.length) odEl.innerHTML='<div class="empty">No overdue payments 🎉</div>';
+    else odEl.innerHTML=odRows.map(({p,d})=>`<div class="ci" onclick="openDeal('${d.id}')">
+      <div class="av ${avC(d.client)}" style="width:32px;height:32px;font-size:.72rem">${ini(d.client)}</div>
+      <div class="ci-info"><div class="ci-name">${d.client}</div><div class="ci-meta">${getUser(d.repId).name} · due ${fmtD(p.commit)}</div></div>
+      <div class="ci-r"><div class="ci-amt" style="color:var(--a4)">${fmt(p.amt)}</div><div style="margin-top:3px"><span class="badge br">Overdue</span></div></div>
+    </div>`).join('');
+  }
+
+  // recent received
+  const recEl=$('dash-recent');
+  if(recEl){
+    const rec=deals.flatMap(d=>d.payments.filter(p=>p.paid).map(p=>({p,d}))).sort((a,b)=>b.p.paid>a.p.paid?1:-1).slice(0,5);
+    if(!rec.length) recEl.innerHTML='<div class="empty">No payments received yet</div>';
+    else recEl.innerHTML=rec.map(({p,d})=>`<div class="ci">
+      <div class="av ${avC(d.client)}" style="width:32px;height:32px;font-size:.72rem">${ini(d.client)}</div>
+      <div class="ci-info"><div class="ci-name">${d.client}</div><div class="ci-meta">${getUser(d.repId).name} · ${fmtD(p.paid)} · ${getBank(p.bank).name}</div></div>
+      <div class="ci-r"><div class="ci-amt" style="color:var(--a3)">${fmt(p.amt)}</div><div style="margin-top:3px"><span class="badge bg">✓ Received</span></div></div>
+    </div>`).join('');
+  }
+}
+
+// =====================================================================
+// ALL DEALS
+// =====================================================================
+function renderAllDeals(){
+  const u=S.cur;
+  const deals=scopeDeals(u);
+  const showRepFilter=u.role!=='exec';
+
+  $('page').innerHTML=`<div class="view on">
+    <div class="fbar">
+      ${u.role==='superadmin'||u.role==='ceo'?`<select class="fsel" id="f-org" onchange="filterDeals()"><option value="all">All Orgs</option>${S.orgs.map(o=>`<option value="${o.id}">${o.name}</option>`).join('')}</select>`:''}
+      <select class="fsel" id="f-branch" onchange="filterDeals()"><option value="all">All Branches</option>${S.branches.filter(b=>u.role==='superadmin'||u.role==='ceo'||b.orgId===u.orgId||(u.branchIds||[]).includes(b.id)).map(b=>`<option value="${b.id}">${b.name}</option>`).join('')}</select>
+      <select class="fsel" id="f-status" onchange="filterDeals()"><option value="all">All Status</option><option value="paid">Paid</option><option value="partial">Partial</option><option value="pending">Pending</option></select>
+      <div class="srch-wrap"><input class="srch" id="f-srch" placeholder="Search client..." oninput="filterDeals()"/></div>
+    </div>
+    <div class="panel"><div class="tw"><table>
+      <thead><tr><th>Client</th><th>Rep</th><th>Branch</th><th>Product</th><th>Total</th><th>Received</th><th>Pending</th><th>Next Commit</th><th>Status</th><th></th></tr></thead>
+      <tbody id="deals-tb"></tbody>
+    </table></div></div>
+  </div>`;
+  filterDeals();
+}
+
+function filterDeals(){
+  const org=(($('f-org')||{}).value)||'all';
+  const branch=(($('f-branch')||{}).value)||'all';
+  const status=(($('f-status')||{}).value)||'all';
+  const srch=((($('f-srch')||{}).value)||'').toLowerCase();
+  let items=scopeDeals(S.cur);
+  if(org!=='all') items=items.filter(d=>d.orgId===org);
+  if(branch!=='all') items=items.filter(d=>d.branchId===branch);
+  if(status!=='all') items=items.filter(d=>d.status===status);
+  if(srch) items=items.filter(d=>d.client.toLowerCase().includes(srch)||d.city.toLowerCase().includes(srch));
+  const tb=$('deals-tb');if(!tb)return;
+  if(!items.length){tb.innerHTML=`<tr><td colspan="10"><div class="empty">No deals found</div></td></tr>`;return;}
+  tb.innerHTML=items.map(d=>{
+    const rc=d.payments.filter(p=>p.paid).reduce((s,p)=>s+p.amt,0);
+    const pe=d.total-rc;
+    const nx=d.payments.filter(p=>!p.paid&&p.commit).sort((a,b)=>a.commit>b.commit?1:-1)[0];
+    const sb=d.status==='paid'?'bg':d.status==='partial'?'by':'bq';
+    return`<tr>
+      <td><div style="display:flex;align-items:center;gap:8px"><div class="av ${avC(d.client)}" style="width:30px;height:30px;font-size:.68rem">${ini(d.client)}</div><div><div style="font-weight:600">${d.client}</div><div style="font-size:.68rem;color:var(--m2)">${d.city} · ${d.phone}</div></div></div></td>
+      <td>${getUser(d.repId).name}</td>
+      <td>${getBr(d.branchId).name}</td>
+      <td><span class="badge ${getProd(d.prodId).type==='service'?'bp':'by'}">${getProd(d.prodId).name}</span></td>
+      <td class="mono" style="font-weight:700">${fmt(d.total)}</td>
+      <td style="color:var(--a3)" class="mono">${fmt(rc)}</td>
+      <td style="color:${pe>0?'var(--a2)':'var(--m2)'}" class="mono">${fmt(pe)}</td>
+      <td>${nx?whenBadge(nx.commit,'pending'):'<span class="badge bg">All cleared</span>'}</td>
+      <td><span class="badge ${sb}">${d.status}</span></td>
+      <td><button class="btn btn-g btn-xs" onclick="openDeal('${d.id}')">View</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// =====================================================================
+// COMMITMENTS VIEW
+// =====================================================================
+function renderCommitments(){
+  $('page').innerHTML=`<div class="view on">
+    <div class="fbar">
+      <select class="fsel" id="cv-when" onchange="filterCommits()"><option value="all">All Dates</option><option value="today">Today</option><option value="tomorrow">Tomorrow</option><option value="week">This Week</option><option value="overdue">Overdue</option></select>
+      ${S.cur.role==='superadmin'||S.cur.role==='ceo'?`<select class="fsel" id="cv-org" onchange="filterCommits()"><option value="all">All Orgs</option>${S.orgs.map(o=>`<option value="${o.id}">${o.name}</option>`).join('')}</select>`:''}
+    </div>
+    <div class="panel"><div class="tw"><table>
+      <thead><tr><th>Client</th><th>Rep</th><th>Branch</th><th>Committed Amount</th><th>Committed Date</th><th>Total Deal</th><th>Note</th><th>Confidence</th><th></th></tr></thead>
+      <tbody id="com-tb"></tbody>
+    </table></div></div>
+  </div>`;
+  filterCommits();
+}
+
+function filterCommits(){
+  const when=(($('cv-when')||{}).value)||'all';
+  const org=(($('cv-org')||{}).value)||'all';
+  const t=td();
+  let rows=[];
+  scopeDeals(S.cur).forEach(d=>{
+    if(org!=='all'&&d.orgId!==org) return;
+    d.payments.filter(p=>!p.paid&&p.commit).forEach(p=>{
+      if(when==='today'&&!isToday(p.commit)) return;
+      if(when==='tomorrow'&&!isTom(p.commit)) return;
+      if(when==='week'&&!(p.commit>=t&&p.commit<=addD(t,7))) return;
+      if(when==='overdue'&&!isOD(p.commit,'pending')) return;
+      rows.push({p,d});
+    });
+  });
+  rows.sort((a,b)=>a.p.commit>b.p.commit?1:-1);
+  const tb=$('com-tb');if(!tb)return;
+  if(!rows.length){tb.innerHTML=`<tr><td colspan="9"><div class="empty">No commitments</div></td></tr>`;return;}
+  tb.innerHTML=rows.map(({p,d})=>`<tr>
+    <td><div style="display:flex;align-items:center;gap:8px"><div class="av ${avC(d.client)}" style="width:28px;height:28px;font-size:.66rem">${ini(d.client)}</div>${d.client}</div></td>
+    <td>${getUser(d.repId).name}</td>
+    <td>${getBr(d.branchId).name}</td>
+    <td class="mono" style="font-weight:800;color:var(--a2)">${fmt(p.amt)}</td>
+    <td>${whenBadge(p.commit,'pending')}</td>
+    <td class="mono">${fmt(d.total)}</td>
+    <td style="font-size:.72rem;color:var(--m2);max-width:150px">${p.note||'—'}</td>
+    <td><span class="badge b${d.conf==='high'?'g':d.conf==='medium'?'y':'r'}">${d.conf}</span></td>
+    <td>${canMarkPaid(S.cur)?`<button class="btn btn-s btn-xs" onclick="openMarkPaid('${d.id}','${p.id}')">Mark Paid</button>`:''}</td>
+  </tr>`).join('');
+}
+
+// =====================================================================
+// FORECAST
+// =====================================================================
+function renderForecast(){
+  $('page').innerHTML=`<div class="view on">
+    <div class="fbar">
+      ${S.cur.role==='superadmin'||S.cur.role==='ceo'?`<select class="fsel" id="fc-org" onchange="buildFc()"><option value="all">All Orgs</option>${S.orgs.map(o=>`<option value="${o.id}">${o.name}</option>`).join('')}</select>`:''}
+      <select class="fsel" id="fc-type" onchange="buildFc()"><option value="all">All Types</option><option value="service">Services</option><option value="project">Projects</option></select>
+    </div>
+    <div class="grid2">
+      <div class="panel"><div class="ph"><div class="pt"><span class="dot" style="background:var(--accent)"></span>Next 7 Days</div></div><div class="bc-chart" id="fc-wk"></div></div>
+      <div class="panel"><div class="ph"><div class="pt"><span class="dot" style="background:var(--a5)"></span>Next 4 Months</div></div><div class="bc-chart" id="fc-mo"></div></div>
+    </div>
+    <div class="panel"><div class="ph"><div class="pt"><span class="dot" style="background:var(--a2)"></span>Pending Payments Pipeline</div></div>
+      <div class="tw"><table><thead><tr><th>Client</th><th>Rep</th><th>Amount</th><th>Committed Date</th><th>Bank Account</th><th>Confidence</th></tr></thead><tbody id="fc-tb"></tbody></table></div>
+    </div>
+  </div>`;
+  buildFc();
+}
+
+function buildFc(){
+  const org=(($('fc-org')||{}).value)||'all';
+  const type=(($('fc-type')||{}).value)||'all';
+  let deals=scopeDeals(S.cur);
+  if(org!=='all') deals=deals.filter(d=>d.orgId===org);
+  if(type!=='all') deals=deals.filter(d=>getProd(d.prodId).type===type);
+  const t=td();
+  // week
+  const wEl=$('fc-wk');
+  if(wEl){
+    const wData=[];
+    for(let i=0;i<7;i++){
+      const d=addD(t,i);
+      const v=deals.flatMap(x=>x.payments.filter(p=>!p.paid&&p.commit===d)).reduce((s,p)=>s+p.amt,0);
+      wData.push({l:i===0?'Today':i===1?'Tmrw':new Date(d).toLocaleDateString('en-IN',{weekday:'short',day:'numeric'}),v});
+    }
+    const mx=Math.max(...wData.map(x=>x.v),1);
+    wEl.innerHTML=wData.map((x,i)=>`<div class="bc-row"><div class="bc-lbl">${x.l}</div><div class="bc-track"><div class="bc-fill" style="width:${Math.max(2,x.v/mx*100)}%;background:${i<2?'var(--a2)':'var(--accent)'}"></div></div><div class="bc-val">${fmt(x.v)}</div></div>`).join('');
+  }
+  // months
+  const mEl=$('fc-mo');
+  if(mEl){
+    const now=new Date(t);
+    const mc=['var(--a3)','var(--accent)','var(--a5)','var(--a6)'];
+    const mData=[];
+    for(let i=0;i<4;i++){
+      const m=new Date(now.getFullYear(),now.getMonth()+i,1);
+      const v=deals.flatMap(d=>d.payments.filter(p=>!p.paid&&p.commit)).filter(p=>{const dd=new Date(p.commit);return dd.getMonth()===m.getMonth()&&dd.getFullYear()===m.getFullYear();}).reduce((s,p)=>s+p.amt,0);
+      mData.push({l:m.toLocaleDateString('en-IN',{month:'short',year:'2-digit'}),v});
+    }
+    const mx=Math.max(...mData.map(x=>x.v),1);
+    mEl.innerHTML=mData.map((x,i)=>`<div class="bc-row"><div class="bc-lbl">${x.l}</div><div class="bc-track"><div class="bc-fill" style="width:${Math.max(2,x.v/mx*100)}%;background:${mc[i]}"></div></div><div class="bc-val">${fmt(x.v)}</div></div>`).join('');
+  }
+  // pipeline table
+  const tb=$('fc-tb');
+  if(tb){
+    const rows=deals.flatMap(d=>d.payments.filter(p=>!p.paid&&p.commit).map(p=>({p,d}))).sort((a,b)=>a.p.commit>b.p.commit?1:-1);
+    if(!rows.length){tb.innerHTML=`<tr><td colspan="6"><div class="empty">No pending payments</div></td></tr>`;return;}
+    tb.innerHTML=rows.map(({p,d})=>`<tr>
+      <td><div style="display:flex;align-items:center;gap:8px"><div class="av ${avC(d.client)}" style="width:28px;height:28px;font-size:.66rem">${ini(d.client)}</div><div><div style="font-weight:600">${d.client}</div><div style="font-size:.68rem;color:var(--m2)">${getBr(d.branchId).name}</div></div></div></td>
+      <td>${getUser(d.repId).name}</td>
+      <td class="mono" style="font-weight:800;color:var(--a2)">${fmt(p.amt)}</td>
+      <td>${whenBadge(p.commit,'pending')}</td>
+      <td style="font-size:.76rem">${getBank(p.bank).name}</td>
+      <td><span class="badge b${d.conf==='high'?'g':d.conf==='medium'?'y':'r'}">${d.conf}</span></td>
+    </tr>`).join('');
+  }
+}
+
+// =====================================================================
+// LEADERBOARD
+// =====================================================================
+function renderLeaderboard(){
+  const deals=scopeDeals(S.cur);
+  // by rep
+  const repData=S.users.filter(u=>u.role==='exec').map(u=>{
+    const ud=deals.filter(d=>d.repId===u.id);
+    const total=ud.reduce((s,d)=>s+d.total,0);
+    const rcvd=ud.reduce((s,d)=>s+d.payments.filter(p=>p.paid).reduce((a,p)=>a+p.amt,0),0);
+    return{...u,total,rcvd,deals:ud.length};
+  }).filter(u=>u.total>0).sort((a,b)=>b.rcvd-a.rcvd);
+
+  const rankColors=['var(--a2)','var(--m2)','var(--a4)'];
+  const rankIcons=['🥇','🥈','🥉'];
+
+  $('page').innerHTML=`<div class="view on">
+    <div class="grid2">
+      <div class="panel">
+        <div class="ph"><div class="pt"><span class="dot" style="background:var(--a2)"></span>Top Sales Executives — Collection</div></div>
+        ${repData.length?repData.map((u,i)=>`
+          <div class="lb-row">
+            <div class="lb-rank" style="background:${i<3?rankColors[i]+'22':'var(--s2)'};color:${i<3?rankColors[i]:'var(--m2)'}">${i<3?rankIcons[i]:i+1}</div>
+            <div class="av ${avC(u.name)}" style="width:30px;height:30px;font-size:.68rem">${ini(u.name)}</div>
+            <div class="lb-info"><div class="lb-name">${u.name}</div><div class="lb-sub">${getBr((u.branchIds||[])[0]).name} · ${u.deals} deals</div></div>
+            <div>
+              <div class="lb-amt" style="color:var(--a3)">${fmt(u.rcvd)}</div>
+              <div style="font-size:.68rem;color:var(--m2)">of ${fmt(u.total)}</div>
+              <div class="pg-wrap" style="margin-top:4px"><div class="pg-track"><div class="pg-fill" style="width:${u.total?Math.round(u.rcvd/u.total*100):0}%;background:var(--a3)"></div></div><div class="pg-pct">${u.total?Math.round(u.rcvd/u.total*100):0}%</div></div>
+            </div>
+          </div>`).join(''):'<div class="empty">No data</div>'}
+      </div>
+      <div class="panel">
+        <div class="ph"><div class="pt"><span class="dot" style="background:var(--a5)"></span>Organisation Performance</div></div>
+        ${S.orgs.filter(o=>S.cur.role==='superadmin'||S.cur.role==='ceo'||o.id===S.cur.orgId).map(o=>{
+          const od=deals.filter(d=>d.orgId===o.id);
+          const tot=od.reduce((s,d)=>s+d.total,0);
+          const rc=od.reduce((s,d)=>s+d.payments.filter(p=>p.paid).reduce((a,p)=>a+p.amt,0),0);
+          const pct=tot?Math.round(rc/tot*100):0;
+          return`<div style="margin-bottom:14px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:.8rem">
+              <span style="font-weight:700">${o.name}</span>
+              <span style="color:var(--a3)">${fmt(rc)} / ${fmt(tot)}</span>
+            </div>
+            <div class="pg-wrap"><div class="pg-track" style="height:8px"><div class="pg-fill" style="width:${pct}%;background:var(--a5);height:100%"></div></div><div class="pg-pct">${pct}%</div></div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+// =====================================================================
+// MY DEALS (exec)
+// =====================================================================
+function renderMyDeals(){
+  const deals=scopeDeals(S.cur);
+  $('page').innerHTML=`<div class="view on">
+    <div class="panel"><div class="tw"><table>
+      <thead><tr><th>Client</th><th>Product</th><th>Total</th><th>Received</th><th>Pending</th><th>Next Commit</th><th>Status</th><th></th></tr></thead>
+      <tbody id="md-tb"></tbody>
+    </table></div></div>
+  </div>`;
+  const tb=$('md-tb');
+  if(!deals.length){tb.innerHTML=`<tr><td colspan="8"><div class="empty">No deals yet. Click "+ Add Deal" to start.</div></td></tr>`;return;}
+  tb.innerHTML=deals.map(d=>{
+    const rc=d.payments.filter(p=>p.paid).reduce((s,p)=>s+p.amt,0);
+    const pe=d.total-rc;
+    const nx=d.payments.filter(p=>!p.paid&&p.commit).sort((a,b)=>a.commit>b.commit?1:-1)[0];
+    const sb=d.status==='paid'?'bg':d.status==='partial'?'by':'bq';
+    return`<tr>
+      <td><div style="display:flex;align-items:center;gap:8px"><div class="av ${avC(d.client)}" style="width:30px;height:30px;font-size:.68rem">${ini(d.client)}</div><div><div style="font-weight:600">${d.client}</div><div style="font-size:.68rem;color:var(--m2)">${d.city} · ${d.phone}</div></div></div></td>
+      <td><span class="badge ${getProd(d.prodId).type==='service'?'bp':'by'}">${getProd(d.prodId).name}</span></td>
+      <td class="mono" style="font-weight:700">${fmt(d.total)}</td>
+      <td style="color:var(--a3)" class="mono">${fmt(rc)}</td>
+      <td style="color:${pe>0?'var(--a2)':'var(--m2)'}" class="mono">${fmt(pe)}</td>
+      <td>${nx?whenBadge(nx.commit,'pending'):'<span class="badge bg">Done</span>'}</td>
+      <td><span class="badge ${sb}">${d.status}</span></td>
+      <td><button class="btn btn-g btn-xs" onclick="openDeal('${d.id}')">View</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// =====================================================================
+// MY COMMITS (exec)
+// =====================================================================
+function renderMyCommits(){
+  const deals=scopeDeals(S.cur);
+  const t=td();
+  const rows=deals.flatMap(d=>d.payments.filter(p=>!p.paid&&p.commit).map(p=>({p,d}))).sort((a,b)=>a.p.commit>b.p.commit?1:-1);
+  const todAmt=rows.filter(r=>isToday(r.p.commit)).reduce((s,r)=>s+r.p.amt,0);
+  const tomAmt=rows.filter(r=>isTom(r.p.commit)).reduce((s,r)=>s+r.p.amt,0);
+  const odAmt=rows.filter(r=>isOD(r.p.commit,'pending')).reduce((s,r)=>s+r.p.amt,0);
+
+  $('page').innerHTML=`<div class="view on">
+    <div class="metrics">
+      <div class="mc"><div class="mc-bar" style="background:var(--accent)"></div><div class="mc-lbl">Due Today</div><div class="mc-val">${fmt(todAmt)}</div><div class="mc-sub">${rows.filter(r=>isToday(r.p.commit)).length} payments</div></div>
+      <div class="mc"><div class="mc-bar" style="background:var(--a2)"></div><div class="mc-lbl">Due Tomorrow</div><div class="mc-val">${fmt(tomAmt)}</div></div>
+      <div class="mc"><div class="mc-bar" style="background:var(--a4)"></div><div class="mc-lbl">Overdue</div><div class="mc-val">${fmt(odAmt)}</div><div class="mc-sub"><span class="dn">${rows.filter(r=>isOD(r.p.commit,'pending')).length} payments overdue</span></div></div>
+    </div>
+    <div class="panel"><div class="tw"><table>
+      <thead><tr><th>Client</th><th>Committed Amount</th><th>Committed Date</th><th>Bank Account</th><th>Note / What client said</th><th>Total Deal</th></tr></thead>
+      <tbody id="mc-tb"></tbody>
+    </table></div></div>
+  </div>`;
+  const tb=$('mc-tb');
+  if(!rows.length){tb.innerHTML=`<tr><td colspan="6"><div class="empty">No pending commitments! 🎉</div></td></tr>`;return;}
+  tb.innerHTML=rows.map(({p,d})=>`<tr>
+    <td><div style="display:flex;align-items:center;gap:8px"><div class="av ${avC(d.client)}" style="width:28px;height:28px;font-size:.66rem">${ini(d.client)}</div><div><div style="font-weight:600">${d.client}</div><div style="font-size:.68rem;color:var(--m2)">${d.city}</div></div></div></td>
+    <td class="mono" style="font-weight:800;color:var(--a2)">${fmt(p.amt)}</td>
+    <td>${whenBadge(p.commit,'pending')}</td>
+    <td style="font-size:.76rem">${getBank(p.bank).name}</td>
+    <td style="font-size:.72rem;color:var(--m2);max-width:180px;font-style:italic">${p.note||'—'}</td>
+    <td class="mono">${fmt(d.total)}</td>
+  </tr>`).join('');
+}
+
+// =====================================================================
+// DEAL DETAIL MODAL
+// =====================================================================
+function openDeal(id){
+  const d=S.deals.find(x=>x.id===id);if(!d)return;
+  const rc=d.payments.filter(p=>p.paid).reduce((s,p)=>s+p.amt,0);
+  const pe=d.total-rc;
+  const u=S.cur;
+  const canPay=canMarkPaid(u);
+  $('m-deal-body').innerHTML=`
+  <div class="m-title">${d.client} <button class="m-close" onclick="closeAll()">✕</button></div>
+  <div class="dd-sec">
+    <div class="dd-sec-t">Client & Deal Info</div>
+    <div class="kv-grid">
+      <div class="kv"><div class="kv-k">Client</div><div class="kv-v">${d.client}</div></div>
+      <div class="kv"><div class="kv-k">Phone</div><div class="kv-v">${d.phone}</div></div>
+      <div class="kv"><div class="kv-k">City</div><div class="kv-v">${d.city}</div></div>
+      <div class="kv"><div class="kv-k">Branch</div><div class="kv-v">${getBr(d.branchId).name}</div></div>
+      <div class="kv"><div class="kv-k">Product</div><div class="kv-v">${getProd(d.prodId).name}</div></div>
+      <div class="kv"><div class="kv-k">Sales Rep</div><div class="kv-v">${getUser(d.repId).name}</div></div>
+    </div>
+  </div>
+  <div class="dd-sec">
+    <div class="dd-sec-t">Financials</div>
+    <div class="kv-grid">
+      <div class="kv"><div class="kv-k">Total Value</div><div class="kv-v mono" style="font-size:1.1rem;font-weight:800">${fmt(d.total)}</div></div>
+      <div class="kv"><div class="kv-k">Received</div><div class="kv-v" style="color:var(--a3)">${fmt(rc)}</div></div>
+      <div class="kv"><div class="kv-k">Pending</div><div class="kv-v" style="color:${pe>0?'var(--a2)':'var(--m2)'}">${fmt(pe)}</div></div>
+      <div class="kv"><div class="kv-k">Confidence</div><div class="kv-v"><span class="badge b${d.conf==='high'?'g':d.conf==='medium'?'y':'r'}">${d.conf}</span></div></div>
+    </div>
+    ${pe>0?`<div class="pg-wrap" style="margin-top:10px"><div class="pg-track" style="height:7px"><div class="pg-fill" style="width:${Math.round(rc/d.total*100)}%;background:linear-gradient(90deg,var(--a3),var(--accent));height:100%"></div></div><div class="pg-pct">${Math.round(rc/d.total*100)}%</div></div>`:''}
+  </div>
+  <div class="dd-sec">
+    <div class="dd-sec-t">Payments Received</div>
+    <div class="pay-hist">${d.payments.filter(p=>p.paid).map(p=>`
+      <div class="ph-row">
+        <div><span style="color:var(--a3);font-weight:700">${fmt(p.amt)}</span> <span style="font-size:.7rem;color:var(--m2)">on ${fmtD(p.paid)}</span>${p.note?`<div style="font-size:.7rem;color:var(--m2);margin-top:2px">${p.note}</div>`:''}</div>
+        <div style="text-align:right;font-size:.72rem"><div>${getBank(p.bank).name}</div>${p.method?`<div style="color:var(--m1)">${p.method}</div>`:''}</div>
+      </div>`).join('')||'<div style="color:var(--m1);font-size:.8rem">No payments received yet</div>'}
+    </div>
+  </div>
+  ${d.payments.filter(p=>!p.paid&&p.commit).length?`
+  <div class="dd-sec">
+    <div class="dd-sec-t">Pending Committed Payments</div>
+    <div class="pend-sched">${d.payments.filter(p=>!p.paid&&p.commit).sort((a,b)=>a.commit>b.commit?1:-1).map(p=>`
+      <div class="ps-row">
+        <div>
+          <span class="mono" style="font-weight:800;color:var(--a2)">${fmt(p.amt)}</span>
+          <span style="margin-left:8px">${whenBadge(p.commit,'pending')}</span>
+          <div style="font-size:.7rem;color:var(--m2);margin-top:3px">${getBank(p.bank).name}${p.note?` · "${p.note}"`:''}</div>
+        </div>
+        ${canPay?`<button class="btn btn-s btn-xs" onclick="openMarkPaid('${d.id}','${p.id}')">Mark Paid</button>`:''}
+      </div>`).join('')}
+    </div>
+  </div>`:''}
+  ${d.notes?`<div class="dd-sec"><div class="dd-sec-t">Notes</div><div style="font-size:.8rem;color:var(--m2);font-style:italic">${d.notes}</div></div>`:''}
+  <div class="m-actions">
+    ${canPay?`<button class="btn btn-p btn-sm" onclick="openAddSlot('${d.id}')">+ Add Payment Slot</button>`:''}
+    <button class="btn btn-g" onclick="closeAll()">Close</button>
+  </div>`;
+  $('m-deal').classList.add('on');
+}
+
+// =====================================================================
+// ADD DEAL
+// =====================================================================
+function openAddDeal(){
+  const u=S.cur;
+  const orgOpts=u.role==='superadmin'?S.orgs:S.orgs.filter(o=>o.id===u.orgId);
+  const firstOrg=orgOpts[0]?.id||'';
+  const branchOpts=S.branches.filter(b=>{
+    if(u.role==='exec') return (u.branchIds||[]).includes(b.id);
+    if(u.role==='rsm') return (u.branchIds||[]).includes(b.id);
+    return b.orgId===firstOrg;
+  });
+  $('m-add-body').innerHTML=`
+  <div class="m-title">Add New Deal <button class="m-close" onclick="closeAll()">✕</button></div>
+  <div class="frow">
+    <div class="fg"><label class="flbl">Client Name *</label><input class="fi" id="nd-cl" placeholder="ABC Corp"/></div>
+    <div class="fg"><label class="flbl">Contact Number *</label><input class="fi" id="nd-ph" type="tel" placeholder="9876543210"/></div>
+  </div>
+  <div class="frow">
+    <div class="fg"><label class="flbl">City *</label><input class="fi" id="nd-cy" placeholder="Mumbai"/></div>
+    <div class="fg"><label class="flbl">Product / Service *</label><select class="fse" id="nd-pr"><option value="">Select...</option>${S.products.map(p=>`<option value="${p.id}">${p.name}</option>`).join('')}</select></div>
+  </div>
+  <div class="frow">
+    <div class="fg"><label class="flbl">Organisation</label><select class="fse" id="nd-og" onchange="updNdBr()">${orgOpts.map(o=>`<option value="${o.id}">${o.name}</option>`).join('')}</select></div>
+    <div class="fg"><label class="flbl">Branch</label><select class="fse" id="nd-br">${branchOpts.map(b=>`<option value="${b.id}">${b.name}</option>`).join('')}</select></div>
+  </div>
+  <div class="frow">
+    <div class="fg"><label class="flbl">Total Deal Amount (₹) *</label><input class="fi" id="nd-tot" type="number" placeholder="0"/></div>
+    <div class="fg"><label class="flbl">Confidence</label><select class="fse" id="nd-cf"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div>
+  </div>
+  <div style="background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:14px;margin-bottom:12px">
+    <div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--m1);margin-bottom:10px">First Payment Commitment</div>
+    <div class="frow">
+      <div class="fg"><label class="flbl">Amount (₹)</label><input class="fi" id="nd-pa" type="number" placeholder="0"/></div>
+      <div class="fg"><label class="flbl">Committed Date</label><input class="fi" id="nd-pd" type="date" value="${td()}"/></div>
+    </div>
+    <div class="fg"><label class="flbl">Bank Account</label><select class="fse" id="nd-pb"><option value="">Select bank...</option>${S.banks.map(b=>`<option value="${b.id}">${b.name}</option>`).join('')}</select></div>
+    <div class="fg"><label class="flbl">Note (what client said)</label><textarea class="fta" id="nd-pn" style="min-height:52px" placeholder="Client confirmed payment by EOD..."></textarea></div>
+  </div>
+  <div class="fg"><label class="flbl">Deal Notes</label><textarea class="fta" id="nd-nt" placeholder="Any notes..."></textarea></div>
+  <div class="m-actions">
+    <button class="btn btn-g" onclick="closeAll()">Cancel</button>
+    <button class="btn btn-p" onclick="saveDeal()">Save Deal</button>
+  </div>`;
+  $('m-add').classList.add('on');
+}
+
+function updNdBr(){
+  const orgId=($('nd-og')||{value:''}).value;
+  const sel=$('nd-br');if(!sel)return;
+  const u=S.cur;
+  const brs=S.branches.filter(b=>{
+    if(u.role==='exec'||(u.role==='rsm'&&!(S.cur.role==='superadmin'))) return (u.branchIds||[]).includes(b.id)&&b.orgId===orgId;
+    return b.orgId===orgId;
+  });
+  sel.innerHTML=brs.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+}
+
+function saveDeal(){
+  const u=S.cur;
+  const cl=($('nd-cl')||{value:''}).value.trim();
+  const ph=($('nd-ph')||{value:''}).value.trim();
+  const cy=($('nd-cy')||{value:''}).value.trim();
+  const pr=($('nd-pr')||{value:''}).value;
+  const og=($('nd-og')||{value:u.orgId}).value||u.orgId;
+  const br=($('nd-br')||{value:(u.branchIds||[])[0]}).value||(u.branchIds||[])[0];
+  const tot=parseFloat(($('nd-tot')||{value:0}).value)||0;
+  const cf=($('nd-cf')||{value:'medium'}).value;
+  const nt=($('nd-nt')||{value:''}).value.trim();
+  const pa=parseFloat(($('nd-pa')||{value:0}).value)||0;
+  const pd=($('nd-pd')||{value:td()}).value;
+  const pb=($('nd-pb')||{value:''}).value;
+  const pn=($('nd-pn')||{value:''}).value.trim();
+  if(!cl||!ph||!cy||!pr||!og||!br||!tot){toast('Fill all required fields','err');return;}
+  const payments=[];
+  if(pa&&pd&&pb) payments.push({id:'y'+uid(),amt:pa,paid:null,commit:pd,bank:pb,note:pn,method:''});
+  const deal={id:'d'+uid(),repId:u.id,orgId:og,branchId:br,client:cl,phone:ph,city:cy,prodId:pr,total:tot,payments,status:'pending',conf:cf,notes:nt,createdAt:td()};
+  updStatus(deal); S.deals.unshift(deal);
+  saveState();
+  closeAll(); toast('Deal added!'); go(S.view);
+}
+
+// =====================================================================
+// ADD SLOT / MARK PAID
+// =====================================================================
+function openAddSlot(dealId){
+  closeAll();
+  $('m-slot-body').innerHTML=`
+  <div class="m-title">Add Payment Slot <button class="m-close" onclick="closeAll()">✕</button></div>
+  <div class="fg"><label class="flbl">Amount (₹)</label><input class="fi" id="sl-a" type="number" placeholder="0"/></div>
+  <div class="fg"><label class="flbl">Committed Date</label><input class="fi" id="sl-d" type="date" value="${td()}"/></div>
+  <div class="fg"><label class="flbl">Bank Account</label><select class="fse" id="sl-b"><option value="">Select...</option>${S.banks.map(b=>`<option value="${b.id}">${b.name}</option>`).join('')}</select></div>
+  <div class="fg"><label class="flbl">Note</label><textarea class="fta" id="sl-n" placeholder="What client said..." style="min-height:52px"></textarea></div>
+  <div class="m-actions">
+    <button class="btn btn-g" onclick="closeAll()">Cancel</button>
+    <button class="btn btn-p" onclick="saveSlot('${dealId}')">Add Slot</button>
+  </div>`;
+  $('m-slot').classList.add('on');
+}
+
+function saveSlot(dealId){
+  const a=parseFloat($('sl-a').value)||0,d=$('sl-d').value,b=$('sl-b').value,n=($('sl-n').value||'').trim();
+  if(!a||!d||!b){toast('Fill all fields','err');return;}
+  const deal=S.deals.find(x=>x.id===dealId);
+  deal.payments.push({id:'y'+uid(),amt:a,paid:null,commit:d,bank:b,note:n,method:''});
+  updStatus(deal); closeAll(); toast('Payment slot added');
+  saveState();
+  setTimeout(()=>openDeal(dealId),100);
+}
+
+function openMarkPaid(dealId,payId){
+  closeAll();
+  const d=S.deals.find(x=>x.id===dealId),p=d.payments.find(x=>x.id===payId);
+  $('m-pay-body').innerHTML=`
+  <div class="m-title">Mark Payment Received <button class="m-close" onclick="closeAll()">✕</button></div>
+  <div style="background:var(--s2);border:1px solid var(--b1);border-radius:9px;padding:12px;margin-bottom:14px">
+    <div style="font-size:.68rem;color:var(--m2);margin-bottom:4px">Payment</div>
+    <div style="font-size:1.1rem;font-weight:800;color:var(--a2)">${fmt(p.amt)}</div>
+    <div style="font-size:.76rem;color:var(--m2);margin-top:2px">${d.client} · ${getBr(d.branchId).name}</div>
+  </div>
+  <div class="fg"><label class="flbl">Date Received</label><input class="fi" id="mp-d" type="date" value="${td()}"/></div>
+  <div class="fg"><label class="flbl">Bank Account (received in)</label><select class="fse" id="mp-b">${S.banks.map(b=>`<option value="${b.id}" ${b.id===p.bank?'selected':''}>${b.name}</option>`).join('')}</select></div>
+  <div class="fg"><label class="flbl">Payment Method</label><select class="fse" id="mp-m"><option>NEFT</option><option>RTGS</option><option>UPI</option><option>Cheque</option><option>Cash</option><option>IMPS</option></select></div>
+  <div class="fg"><label class="flbl">Reference / Note</label><input class="fi" id="mp-n" placeholder="UTR / Cheque no. / note"/></div>
+  <div class="m-actions">
+    <button class="btn btn-g" onclick="closeAll()">Cancel</button>
+    <button class="btn btn-s" onclick="saveMarkPaid('${dealId}','${payId}')">✓ Confirm Received</button>
+  </div>`;
+  $('m-pay').classList.add('on');
+}
+
+function saveMarkPaid(dealId,payId){
+  const d=new Date($('mp-d').value);if(isNaN(d)){toast('Invalid date','err');return;}
+  const b=$('mp-b').value,m=$('mp-m').value,n=($('mp-n').value||'').trim();
+  if(!b){toast('Select bank','err');return;}
+  const deal=S.deals.find(x=>x.id===dealId),pay=deal.payments.find(x=>x.id===payId);
+  pay.paid=$('mp-d').value; pay.bank=b; pay.method=m; pay.note=n;
+  updStatus(deal); closeAll(); toast('Payment marked as received ✓');
+  saveState();
+  go(S.view);
+}
+
+function updStatus(d){
+  const rc=d.payments.filter(p=>p.paid).reduce((s,p)=>s+p.amt,0);
+  d.status=rc>=d.total?'paid':rc>0?'partial':'pending';
+}
+
+// =====================================================================
+// ADMIN PANEL
+// =====================================================================
+function renderAdmin(){
+  $('page').innerHTML=`<div class="view on">
+    <div class="atabs">
+      <button class="atab ${S.adminTab==='products'?'active':''}" onclick="swAT('products')">Products</button>
+      <button class="atab ${S.adminTab==='banks'?'active':''}" onclick="swAT('banks')">Bank Accounts</button>
+      <button class="atab ${S.adminTab==='users'?'active':''}" onclick="swAT('users')">Users & Roles</button>
+      <button class="atab ${S.adminTab==='orgs'?'active':''}" onclick="swAT('orgs')">Orgs & Branches</button>
+    </div>
+    <div id="at-content"></div>
+  </div>`;
+  renderAT();
+}
+
+function swAT(t){S.adminTab=t;renderAdmin();}
+
+function renderAT(){
+  const t=S.adminTab,el=$('at-content');
+  if(t==='products'){
+    el.innerHTML=`<div class="panel"><div class="ph"><div class="pt"><span class="dot" style="background:var(--accent)"></span>Products & Services</div><button class="btn btn-p btn-sm" onclick="oAM('product')">+ Add</button></div>
+    <div class="tw"><table><thead><tr><th>Name</th><th>Type</th><th>Deals</th><th style="text-align:right">Actions</th></tr></thead>
+    <tbody>${S.products.map(p=>`<tr>
+      <td style="font-weight:600">${p.name}</td>
+      <td><span class="badge ${p.type==='service'?'bp':'by'}">${p.type}</span></td>
+      <td>${S.deals.filter(d=>d.prodId===p.id).length}</td>
+      <td style="text-align:right"><div style="display:flex;gap:5px;justify-content:flex-end">
+        <button class="btn btn-g btn-xs" onclick="oEdit('product','${p.id}')">✏ Edit</button>
+        <button class="btn btn-d btn-xs" onclick="delP('${p.id}')">✕ Remove</button>
+      </div></td>
+    </tr>`).join('')}</tbody>
+    </table></div></div>`;
+  } else if(t==='banks'){
+    el.innerHTML=`<div class="panel"><div class="ph"><div class="pt"><span class="dot" style="background:var(--a3)"></span>Bank Accounts</div><button class="btn btn-p btn-sm" onclick="oAM('bank')">+ Add</button></div>
+    <div class="tw"><table><thead><tr><th>Account Label</th><th>Bank</th><th>Payments</th><th style="text-align:right">Actions</th></tr></thead>
+    <tbody>${S.banks.map(b=>`<tr>
+      <td style="font-weight:600">${b.name}</td>
+      <td>${b.bank}</td>
+      <td>${S.deals.flatMap(d=>d.payments).filter(p=>p.bank===b.id).length}</td>
+      <td style="text-align:right"><div style="display:flex;gap:5px;justify-content:flex-end">
+        <button class="btn btn-g btn-xs" onclick="oEdit('bank','${b.id}')">✏ Edit</button>
+        <button class="btn btn-d btn-xs" onclick="delB('${b.id}')">✕ Remove</button>
+      </div></td>
+    </tr>`).join('')}</tbody>
+    </table></div></div>`;
+  } else if(t==='users'){
+    const roleOrder={superadmin:0,ceo:1,orghead:2,rsm:3,exec:4};
+    const sorted=[...S.users].sort((a,b)=>(roleOrder[a.role]||9)-(roleOrder[b.role]||9));
+    el.innerHTML=`<div class="panel"><div class="ph"><div class="pt"><span class="dot" style="background:var(--a5)"></span>Users & Role Management</div><button class="btn btn-p btn-sm" onclick="oAM('user')">+ Add User</button></div>
+    <div class="tw"><table><thead><tr><th>Name</th><th>Mobile</th><th>Role</th><th>Org</th><th>Branch(es)</th><th>Deals</th><th style="text-align:right">Actions</th></tr></thead>
+    <tbody>${sorted.map(u=>`<tr>
+      <td><div style="display:flex;align-items:center;gap:7px"><div class="av ${avC(u.name)}" style="width:26px;height:26px;font-size:.62rem">${ini(u.name)}</div>${u.name}</div></td>
+      <td class="mono" style="font-size:.76rem">${u.mobile}</td>
+      <td>${roleBadge(u.role)}</td>
+      <td style="font-size:.78rem">${u.orgId?getOrg(u.orgId).name:'All'}</td>
+      <td style="font-size:.76rem">${(u.branchIds||[]).map(id=>getBr(id).name).join(', ')||'All'}</td>
+      <td>${S.deals.filter(d=>d.repId===u.id).length}</td>
+      <td style="text-align:right">${u.role!=='superadmin'?`<div style="display:flex;gap:5px;justify-content:flex-end">
+        <button class="btn btn-g btn-xs" onclick="oEdit('user','${u.id}')">✏ Edit</button>
+        <button class="btn btn-d btn-xs" onclick="delU('${u.id}')">✕</button>
+      </div>`:'—'}</td>
+    </tr>`).join('')}</tbody>
+    </table></div></div>`;
+  } else if(t==='orgs'){
+    el.innerHTML=`<div style="display:flex;gap:8px;margin-bottom:14px">
+      <button class="btn btn-g" onclick="oAM('org')">+ Organisation</button>
+      <button class="btn btn-p" onclick="oAM('branch')">+ Branch</button>
+    </div>
+    ${S.orgs.map(o=>`<div class="oc">
+      <div class="oh" onclick="togOrg('${o.id}')">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="av av-p" style="width:30px;height:30px;font-size:.68rem">${ini(o.name)}</div>
+          <div><div style="font-weight:700;font-size:.88rem">${o.name}</div><div style="font-size:.7rem;color:var(--m1)">${S.branches.filter(b=>b.orgId===o.id).length} branches · ${S.users.filter(u=>u.orgId===o.id).length} users</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px" onclick="event.stopPropagation()">
+          <button class="btn btn-g btn-xs" onclick="oEdit('org','${o.id}')">✏ Edit</button>
+          <span class="oa" id="oa-${o.id}">›</span>
+        </div>
+      </div>
+      <div class="ob" id="ob-${o.id}">
+        ${S.branches.filter(b=>b.orgId===o.id).map(b=>`<div class="bc-chip">
+          <span>${b.name} <span style="font-size:.68rem;color:var(--m1)">(${b.city})</span></span>
+          <div style="display:flex;gap:5px;align-items:center">
+            <span style="font-size:.7rem;color:var(--m2)">${S.users.filter(u=>(u.branchIds||[]).includes(b.id)).length} users · ${S.deals.filter(d=>d.branchId===b.id).length} deals</span>
+            <button class="btn btn-g btn-xs" onclick="oEdit('branch','${b.id}')">✏</button>
+            <button class="btn btn-d btn-xs" onclick="delBr('${b.id}')">✕</button>
+          </div>
+        </div>`).join('')||'<div style="color:var(--m1);font-size:.78rem;padding:6px">No branches</div>'}
+      </div>
+    </div>`).join('')}`;
+  }
+}
+
+function togOrg(id){$('ob-'+id).classList.toggle('open');$('oa-'+id).classList.toggle('open');}
+
+function oAM(type){
+  let html='';
+  if(type==='product') html=`<div class="m-title">Add Product / Service<button class="m-close" onclick="closeAll()">✕</button></div>
+    <div class="fg"><label class="flbl">Name</label><input class="fi" id="am-n" placeholder="e.g. SaaS Platform License"/></div>
+    <div class="fg"><label class="flbl">Type</label><select class="fse" id="am-t"><option value="service">Service / Subscription</option><option value="project">Project / Contract</option></select></div>
+    <div class="m-actions"><button class="btn btn-g" onclick="closeAll()">Cancel</button><button class="btn btn-p" onclick="sAM('product')">Save</button></div>`;
+  else if(type==='bank') html=`<div class="m-title">Add Bank Account<button class="m-close" onclick="closeAll()">✕</button></div>
+    <div class="fg"><label class="flbl">Account Label</label><input class="fi" id="am-n" placeholder="HDFC Current — 0042"/></div>
+    <div class="fg"><label class="flbl">Bank Name</label><input class="fi" id="am-bk" placeholder="HDFC Bank"/></div>
+    <div class="m-actions"><button class="btn btn-g" onclick="closeAll()">Cancel</button><button class="btn btn-p" onclick="sAM('bank')">Save</button></div>`;
+  else if(type==='user') html=`<div class="m-title">Add User<button class="m-close" onclick="closeAll()">✕</button></div>
+    <div class="frow">
+      <div class="fg"><label class="flbl">Full Name</label><input class="fi" id="am-n" placeholder="Name"/></div>
+      <div class="fg"><label class="flbl">Mobile</label><input class="fi" id="am-mb" type="tel" placeholder="9876543210"/></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label class="flbl">Password</label><input class="fi" id="am-pw" type="password" placeholder="Set password"/></div>
+      <div class="fg"><label class="flbl">Role</label><select class="fse" id="am-r" onchange="updAMFields()"><option value="ceo">Group CEO</option><option value="orghead">Org Head</option><option value="rsm">Regional Sales Mgr</option><option value="exec" selected>Sales Executive</option></select></div>
+    </div>
+    <div id="am-dyn"></div>
+    <div class="m-actions"><button class="btn btn-g" onclick="closeAll()">Cancel</button><button class="btn btn-p" onclick="sAM('user')">Save</button></div>`;
+  else if(type==='org') html=`<div class="m-title">Add Organisation<button class="m-close" onclick="closeAll()">✕</button></div>
+    <div class="fg"><label class="flbl">Name</label><input class="fi" id="am-n" placeholder="North Region"/></div>
+    <div class="fg"><label class="flbl">Region</label><input class="fi" id="am-rg" placeholder="North"/></div>
+    <div class="m-actions"><button class="btn btn-g" onclick="closeAll()">Cancel</button><button class="btn btn-p" onclick="sAM('org')">Save</button></div>`;
+  else if(type==='branch') html=`<div class="m-title">Add Branch<button class="m-close" onclick="closeAll()">✕</button></div>
+    <div class="fg"><label class="flbl">Organisation</label><select class="fse" id="am-og">${S.orgs.map(o=>`<option value="${o.id}">${o.name}</option>`).join('')}</select></div>
+    <div class="frow">
+      <div class="fg"><label class="flbl">Branch Name</label><input class="fi" id="am-n" placeholder="Mumbai HQ"/></div>
+      <div class="fg"><label class="flbl">City</label><input class="fi" id="am-cy" placeholder="Mumbai"/></div>
+    </div>
+    <div class="m-actions"><button class="btn btn-g" onclick="closeAll()">Cancel</button><button class="btn btn-p" onclick="sAM('branch')">Save</button></div>`;
+  $('m-admin-body').innerHTML=html;
+  $('m-admin').classList.add('on');
+  if(type==='user') updAMFields();
+}
+
+function updAMFields(){
+  const role=($('am-r')||{value:'exec'}).value;
+  const dyn=$('am-dyn');if(!dyn)return;
+  if(role==='ceo'||role==='superadmin'){dyn.innerHTML='';return;}
+  if(role==='orghead'){
+    dyn.innerHTML=`<div class="fg"><label class="flbl">Organisation</label><select class="fse" id="am-og">${S.orgs.map(o=>`<option value="${o.id}">${o.name}</option>`).join('')}</select></div>`;
+  } else {
+    dyn.innerHTML=`<div class="fg"><label class="flbl">Organisation</label><select class="fse" id="am-og" onchange="updAMBr()">${S.orgs.map(o=>`<option value="${o.id}">${o.name}</option>`).join('')}</select></div>
+    <div class="fg"><label class="flbl">Branch(es) <span style="color:var(--m1)">(select all that apply)</span></label><select class="fse" id="am-br" multiple style="height:90px">${S.branches.filter(b=>b.orgId===S.orgs[0]?.id).map(b=>`<option value="${b.id}">${b.name}</option>`).join('')}</select></div>`;
+  }
+}
+
+function updAMBr(){
+  const orgId=($('am-og')||{value:''}).value;
+  const sel=$('am-br');if(!sel)return;
+  sel.innerHTML=S.branches.filter(b=>b.orgId===orgId).map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+}
+
+function sAM(type){
+  if(type==='product'){
+    const n=($('am-n')||{value:''}).value.trim(),t2=($('am-t')||{value:'service'}).value;
+    if(!n){toast('Enter name','err');return;}
+    S.products.push({id:'p'+uid(),name:n,type:t2});
+  } else if(type==='bank'){
+    const n=($('am-n')||{value:''}).value.trim(),bk=($('am-bk')||{value:''}).value.trim();
+    if(!n||!bk){toast('Fill all fields','err');return;}
+    S.banks.push({id:'ba'+uid(),name:n,bank:bk});
+  } else if(type==='user'){
+    const n=($('am-n')||{value:''}).value.trim(),mb=($('am-mb')||{value:''}).value.trim();
+    const pw=($('am-pw')||{value:''}).value.trim(),role=($('am-r')||{value:'exec'}).value;
+    const og=($('am-og')||{value:null}).value||null;
+    let brs=null;
+    if(role==='rsm'||role==='exec'){
+      const sel=$('am-br');
+      brs=sel?Array.from(sel.selectedOptions).map(o=>o.value):[];
+      if(!brs.length){toast('Select at least one branch','err');return;}
+    }
+    if(!n||!mb||!pw){toast('Fill all fields','err');return;}
+    if(S.users.find(u=>u.mobile===mb)){toast('Mobile already exists','err');return;}
+    S.users.push({id:'u'+uid(),name:n,mobile:mb,pw,role,orgId:og,branchIds:brs});
+  } else if(type==='org'){
+    const n=($('am-n')||{value:''}).value.trim(),rg=($('am-rg')||{value:''}).value.trim();
+    if(!n){toast('Enter name','err');return;}
+    S.orgs.push({id:'o'+uid(),name:n,region:rg});
+  } else if(type==='branch'){
+    const og=($('am-og')||{value:''}).value,n=($('am-n')||{value:''}).value.trim(),cy=($('am-cy')||{value:''}).value.trim();
+    if(!og||!n||!cy){toast('Fill all fields','err');return;}
+    S.branches.push({id:'b'+uid(),orgId:og,name:n,city:cy});
+  }
+  closeAll(); toast('Saved!'); saveState(); renderAdmin();
+}
+
+// =====================================================================
+// EDIT FUNCTIONS
+// =====================================================================
+function oEdit(type, id) {
+  let html = '';
+  if (type === 'product') {
+    const p = S.products.find(x => x.id === id);
+    html = `<div class="m-title">Edit Product / Service <button class="m-close" onclick="closeAll()">✕</button></div>
+    <div class="fg"><label class="flbl">Name</label><input class="fi" id="ed-n" value="${p.name}"/></div>
+    <div class="fg"><label class="flbl">Type</label><select class="fse" id="ed-t">
+      <option value="service" ${p.type==='service'?'selected':''}>Service / Subscription</option>
+      <option value="project" ${p.type==='project'?'selected':''}>Project / Contract</option>
+    </select></div>
+    <div class="m-actions"><button class="btn btn-g" onclick="closeAll()">Cancel</button><button class="btn btn-p" onclick="sEdit('product','${id}')">Save Changes</button></div>`;
+  } else if (type === 'bank') {
+    const b = S.banks.find(x => x.id === id);
+    html = `<div class="m-title">Edit Bank Account <button class="m-close" onclick="closeAll()">✕</button></div>
+    <div class="fg"><label class="flbl">Account Label</label><input class="fi" id="ed-n" value="${b.name}"/></div>
+    <div class="fg"><label class="flbl">Bank Name</label><input class="fi" id="ed-bk" value="${b.bank}"/></div>
+    <div class="m-actions"><button class="btn btn-g" onclick="closeAll()">Cancel</button><button class="btn btn-p" onclick="sEdit('bank','${id}')">Save Changes</button></div>`;
+  } else if (type === 'user') {
+    const u = S.users.find(x => x.id === id);
+    const orgOpts = S.orgs.map(o => `<option value="${o.id}" ${o.id===u.orgId?'selected':''}>${o.name}</option>`).join('');
+    const roleOpts = ['ceo','orghead','rsm','exec'].map(r =>
+      `<option value="${r}" ${r===u.role?'selected':''}>${{ceo:'Group CEO',orghead:'Org Head',rsm:'Regional Sales Mgr',exec:'Sales Executive'}[r]}</option>`
+    ).join('');
+    // build branch options for current org
+    const brOrgId = u.orgId || S.orgs[0]?.id || '';
+    const brOpts = S.branches.filter(b => b.orgId === brOrgId).map(b =>
+      `<option value="${b.id}" ${(u.branchIds||[]).includes(b.id)?'selected':''}>${b.name}</option>`
+    ).join('');
+    const needsBr = u.role === 'rsm' || u.role === 'exec';
+    const needsOrg = u.role !== 'ceo' && u.role !== 'superadmin';
+    html = `<div class="m-title">Edit User <button class="m-close" onclick="closeAll()">✕</button></div>
+    <div class="frow">
+      <div class="fg"><label class="flbl">Full Name</label><input class="fi" id="ed-n" value="${u.name}"/></div>
+      <div class="fg"><label class="flbl">Mobile</label><input class="fi" id="ed-mb" type="tel" value="${u.mobile}"/></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label class="flbl">New Password <span style="color:var(--m1)">(leave blank to keep)</span></label><input class="fi" id="ed-pw" type="password" placeholder="Leave blank to keep current"/></div>
+      <div class="fg"><label class="flbl">Role</label><select class="fse" id="ed-r" onchange="updEditFields('${id}')">${roleOpts}</select></div>
+    </div>
+    <div id="ed-dyn">
+      ${needsOrg ? `<div class="fg"><label class="flbl">Organisation</label><select class="fse" id="ed-og" onchange="updEditBr()">${orgOpts}</select></div>` : ''}
+      ${needsBr ? `<div class="fg"><label class="flbl">Branch(es) <span style="color:var(--m1)">(hold Ctrl/Cmd for multi)</span></label><select class="fse" id="ed-br" multiple style="height:90px">${brOpts}</select></div>` : ''}
+    </div>
+    <div class="m-actions"><button class="btn btn-g" onclick="closeAll()">Cancel</button><button class="btn btn-p" onclick="sEdit('user','${id}')">Save Changes</button></div>`;
+  } else if (type === 'org') {
+    const o = S.orgs.find(x => x.id === id);
+    html = `<div class="m-title">Edit Organisation <button class="m-close" onclick="closeAll()">✕</button></div>
+    <div class="fg"><label class="flbl">Organisation Name</label><input class="fi" id="ed-n" value="${o.name}"/></div>
+    <div class="fg"><label class="flbl">Region</label><input class="fi" id="ed-rg" value="${o.region||''}"/></div>
+    <div class="m-actions"><button class="btn btn-g" onclick="closeAll()">Cancel</button><button class="btn btn-p" onclick="sEdit('org','${id}')">Save Changes</button></div>`;
+  } else if (type === 'branch') {
+    const b = S.branches.find(x => x.id === id);
+    html = `<div class="m-title">Edit Branch <button class="m-close" onclick="closeAll()">✕</button></div>
+    <div class="fg"><label class="flbl">Organisation</label><select class="fse" id="ed-og">${S.orgs.map(o=>`<option value="${o.id}" ${o.id===b.orgId?'selected':''}>${o.name}</option>`).join('')}</select></div>
+    <div class="frow">
+      <div class="fg"><label class="flbl">Branch Name</label><input class="fi" id="ed-n" value="${b.name}"/></div>
+      <div class="fg"><label class="flbl">City</label><input class="fi" id="ed-cy" value="${b.city}"/></div>
+    </div>
+    <div class="m-actions"><button class="btn btn-g" onclick="closeAll()">Cancel</button><button class="btn btn-p" onclick="sEdit('branch','${id}')">Save Changes</button></div>`;
+  }
+  $('m-admin-body').innerHTML = html;
+  $('m-admin').classList.add('on');
+}
+
+function updEditFields(userId) {
+  const role = ($('ed-r') || {value:'exec'}).value;
+  const u = S.users.find(x => x.id === userId);
+  const dyn = $('ed-dyn'); if (!dyn) return;
+  const orgId = u.orgId || S.orgs[0]?.id || '';
+  const orgOpts = S.orgs.map(o => `<option value="${o.id}" ${o.id===orgId?'selected':''}>${o.name}</option>`).join('');
+  const brOpts = S.branches.filter(b => b.orgId === orgId).map(b =>
+    `<option value="${b.id}" ${(u.branchIds||[]).includes(b.id)?'selected':''}>${b.name}</option>`
+  ).join('');
+  if (role === 'ceo' || role === 'superadmin') { dyn.innerHTML = ''; return; }
+  if (role === 'orghead') {
+    dyn.innerHTML = `<div class="fg"><label class="flbl">Organisation</label><select class="fse" id="ed-og">${orgOpts}</select></div>`;
+  } else {
+    dyn.innerHTML = `<div class="fg"><label class="flbl">Organisation</label><select class="fse" id="ed-og" onchange="updEditBr()">${orgOpts}</select></div>
+    <div class="fg"><label class="flbl">Branch(es) <span style="color:var(--m1)">(hold Ctrl/Cmd for multi)</span></label><select class="fse" id="ed-br" multiple style="height:90px">${brOpts}</select></div>`;
+  }
+}
+
+function updEditBr() {
+  const orgId = ($('ed-og') || {value:''}).value;
+  const sel = $('ed-br'); if (!sel) return;
+  sel.innerHTML = S.branches.filter(b => b.orgId === orgId).map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+}
+
+function sEdit(type, id) {
+  if (type === 'product') {
+    const n = ($('ed-n')||{value:''}).value.trim();
+    const t2 = ($('ed-t')||{value:'service'}).value;
+    if (!n) { toast('Enter name','err'); return; }
+    const p = S.products.find(x => x.id === id);
+    p.name = n; p.type = t2;
+  } else if (type === 'bank') {
+    const n = ($('ed-n')||{value:''}).value.trim();
+    const bk = ($('ed-bk')||{value:''}).value.trim();
+    if (!n || !bk) { toast('Fill all fields','err'); return; }
+    const b = S.banks.find(x => x.id === id);
+    b.name = n; b.bank = bk;
+  } else if (type === 'user') {
+    const n = ($('ed-n')||{value:''}).value.trim();
+    const mb = ($('ed-mb')||{value:''}).value.trim();
+    const pw = ($('ed-pw')||{value:''}).value.trim();
+    const role = ($('ed-r')||{value:'exec'}).value;
+    const og = ($('ed-og')||{value:null}).value || null;
+    if (!n || !mb) { toast('Fill required fields','err'); return; }
+    // check mobile conflict with other users
+    if (S.users.find(u => u.mobile === mb && u.id !== id)) { toast('Mobile already used by another user','err'); return; }
+    let brs = null;
+    if (role === 'rsm' || role === 'exec') {
+      const sel = $('ed-br');
+      brs = sel ? Array.from(sel.selectedOptions).map(o => o.value) : [];
+      if (!brs.length) { toast('Select at least one branch','err'); return; }
+    }
+    const u = S.users.find(x => x.id === id);
+    u.name = n; u.mobile = mb; u.role = role; u.orgId = og; u.branchIds = brs;
+    if (pw) u.pw = pw;
+  } else if (type === 'org') {
+    const n = ($('ed-n')||{value:''}).value.trim();
+    const rg = ($('ed-rg')||{value:''}).value.trim();
+    if (!n) { toast('Enter name','err'); return; }
+    const o = S.orgs.find(x => x.id === id);
+    o.name = n; o.region = rg;
+  } else if (type === 'branch') {
+    const og = ($('ed-og')||{value:''}).value;
+    const n = ($('ed-n')||{value:''}).value.trim();
+    const cy = ($('ed-cy')||{value:''}).value.trim();
+    if (!og || !n || !cy) { toast('Fill all fields','err'); return; }
+    const b = S.branches.find(x => x.id === id);
+    b.orgId = og; b.name = n; b.city = cy;
+  }
+  closeAll(); toast('Updated successfully! ✓'); saveState(); renderAdmin();
+}
+
+function delP(id){if(confirm('Remove product?')){S.products=S.products.filter(p=>p.id!==id);saveState();renderAdmin();}}
+function delB(id){if(confirm('Remove bank?')){S.banks=S.banks.filter(b=>b.id!==id);saveState();renderAdmin();}}
+function delU(id){if(confirm('Remove user?')){S.users=S.users.filter(u=>u.id!==id);saveState();renderAdmin();}}
+function delBr(id){if(confirm('Remove branch?')){S.branches=S.branches.filter(b=>b.id!==id);saveState();renderAdmin();}}
+
+// Close modal on overlay click
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)closeAll();}));
+
+// =====================================================================
+// PWA — Install prompt
+// =====================================================================
+let deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  // Show install banner after a short delay
+  setTimeout(showInstallBanner, 2000);
+});
+
+function showInstallBanner() {
+  if (!deferredInstallPrompt) return;
+  const banner = document.createElement('div');
+  banner.id = 'pwa-banner';
+  banner.style.cssText = `position:fixed;bottom:22px;left:22px;background:#0b0f1a;border:1px solid #243060;border-radius:14px;padding:14px 18px;z-index:9998;display:flex;align-items:center;gap:14px;box-shadow:0 8px 32px rgba(0,0,0,.6);max-width:340px;animation:mIn .3s ease;font-family:'Outfit',sans-serif;`;
+  banner.innerHTML = `
+    <div style="font-size:1.6rem">📲</div>
+    <div style="flex:1">
+      <div style="font-weight:700;font-size:.88rem;color:#e0e8ff">Install SalesTrack Pro</div>
+      <div style="font-size:.74rem;color:#7080a8;margin-top:2px">Add to home screen for quick access</div>
+    </div>
+    <button onclick="installPWA()" style="background:#5b8def;border:none;color:#fff;padding:7px 14px;border-radius:8px;font-family:'Outfit',sans-serif;font-weight:700;font-size:.78rem;cursor:pointer;white-space:nowrap;">Install</button>
+    <button onclick="dismissBanner()" style="background:none;border:none;color:#7080a8;cursor:pointer;font-size:1.1rem;padding:2px;">✕</button>`;
+  document.body.appendChild(banner);
+}
+
+function installPWA() {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.then(choice => {
+    if (choice.outcome === 'accepted') toast('SalesTrack installed! ✓');
+    deferredInstallPrompt = null;
+    dismissBanner();
+  });
+}
+
+function dismissBanner() {
+  const b = document.getElementById('pwa-banner');
+  if (b) b.remove();
+}
+
+window.addEventListener('appinstalled', () => {
+  toast('App installed successfully! ✓');
+  deferredInstallPrompt = null;
+  dismissBanner();
+});
+
+// Register service worker (must be served from sw.js file on same origin)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+
+loadState();
+</script>
+</body>
+</html>
