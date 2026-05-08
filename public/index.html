@@ -1698,10 +1698,13 @@ function renderDetailCalendar() {
       return `<div style="background:${bg};color:${col};font-size:9px;font-weight:700;padding:1px 3px;border-radius:4px;margin-top:2px;">${d.status==='delivered'?'✓':d.status==='skipped'?'—':'○'} ${(d.meal_type||'L').charAt(0).toUpperCase()}</div>`;
     }).join('');
     const clickable = dels.length && !isSun;
-    html += `<div onclick="${clickable?`showDetailDay('${dt}')`:'void(0)'}" style="border-radius:8px;padding:4px 3px;min-height:52px;font-size:11px;${isSun?'opacity:.35;':''}${isToday?'border:1.5px solid var(--g);background:var(--gl);':'border:1px solid transparent;'}${clickable?'cursor:pointer;':''};transition:border-color .15s;" ${clickable?'onmouseover="this.style.borderColor='var(--g)'" onmouseout="this.style.borderColor=''+(isToday?'var(--g)':'transparent')+''"':''}>
-      <div style="font-weight:700;font-size:11.5px;color:var(--mid);margin-bottom:2px;">${day}</div>
-      ${dots}
-    </div>`;
+    const dayonclick = clickable ? "showDetailDay('" + dt + "')" : 'void(0)';
+    const daystyle = 'border-radius:8px;padding:4px 3px;min-height:52px;font-size:11px;' + (isSun?'opacity:.35;':'') + (isToday?'border:1.5px solid var(--g);background:var(--gl);':'border:1px solid transparent;') + (clickable?'cursor:pointer;':'') + ';transition:border-color .15s;';
+    const dayhover = clickable ? 'onmouseover="this.style.borderColor=\'var(--g)\'" onmouseout="this.style.borderColor=\'' + (isToday?'var(--g)':'transparent') + '\'"' : '';
+    html += '<div onclick="' + dayonclick + '" style="' + daystyle + '" ' + dayhover + '>';
+    html += '<div style="font-weight:700;font-size:11.5px;color:var(--mid);margin-bottom:2px;">' + day + '</div>';
+    html += dots;
+    html += '</div>';
   }
   document.getElementById('detailCalGrid').innerHTML = html;
 }
