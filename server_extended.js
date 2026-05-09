@@ -202,42 +202,42 @@ async function initDB() {
     for (const sql of alters) { try { await db.query(sql); } catch(e) {} }
 
     // Seed super admin
-    const sa = await db.oneOrNone(`SELECT id FROM users WHERE email=$1`, ['super@test.com']);
+    const sa = await db.one(`SELECT id FROM users WHERE email=$1`, ['super@test.com']);
     if (!sa) {
         const h = bcrypt.hashSync('password123', 10);
         await db.query(`INSERT INTO users (name,email,password,authority) VALUES ($1,$2,$3,'super_admin')`,
             ['Super Admin', 'super@test.com', h]);
     }
     // Seed kitchen user
-    const ku = await db.oneOrNone(`SELECT id FROM users WHERE email=$1`, ['kitchen@test.com']);
+    const ku = await db.one(`SELECT id FROM users WHERE email=$1`, ['kitchen@test.com']);
     if (!ku) {
         const h = bcrypt.hashSync('kitchen123', 10);
         await db.query(`INSERT INTO users (name,email,password,authority) VALUES ($1,$2,$3,'kitchen_manager')`,
             ['Kitchen Manager', 'kitchen@test.com', h]);
     }
     // Seed sales manager
-    const sm = await db.oneOrNone(`SELECT id FROM users WHERE email=$1`, ['sales@test.com']);
+    const sm = await db.one(`SELECT id FROM users WHERE email=$1`, ['sales@test.com']);
     if (!sm) {
         const h = bcrypt.hashSync('sales123', 10);
         await db.query(`INSERT INTO users (name,email,password,phone,authority) VALUES ($1,$2,$3,$4,'sales_manager')`,
             ['Sales Manager', 'sales@test.com', h, '9000000002']);
     }
     // Seed kitchen manager
-    const km = await db.oneOrNone(`SELECT id FROM users WHERE email=$1`, ['km@test.com']);
+    const km = await db.one(`SELECT id FROM users WHERE email=$1`, ['km@test.com']);
     if (!km) {
         const h = bcrypt.hashSync('km123', 10);
         await db.query(`INSERT INTO users (name,email,password,phone,authority) VALUES ($1,$2,$3,$4,'kitchen_manager')`,
             ['Kitchen Manager', 'km@test.com', h, '9000000003']);
     }
     // Seed demo delivery boy
-    const dbu = await db.oneOrNone(`SELECT id FROM users WHERE email=$1`, ['delivery@test.com']);
+    const dbu = await db.one(`SELECT id FROM users WHERE email=$1`, ['delivery@test.com']);
     if (!dbu) {
         const h = bcrypt.hashSync('delivery123', 10);
         await db.query(`INSERT INTO users (name,email,password,authority) VALUES ($1,$2,$3,'delivery_boy')`,
             ['Demo Delivery Boy', 'delivery@test.com', h]);
     }
     // Seed demo customer
-    const dc = await db.oneOrNone(`SELECT id FROM users WHERE email=$1`, ['customer@test.com']);
+    const dc = await db.one(`SELECT id FROM users WHERE email=$1`, ['customer@test.com']);
     if (!dc) {
         const h = bcrypt.hashSync('customer123', 10);
         const u = await db.one(`INSERT INTO users (name,email,password,phone,authority) VALUES ($1,$2,$3,$4,'customer') RETURNING id`,
@@ -336,7 +336,7 @@ app.post('/api/auth/login', async (req, res) => {
         const { email, password } = req.body;
         if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
         // Support login by phone OR email
-        const user = await db.oneOrNone(`SELECT * FROM users WHERE email=$1 OR phone=$1`, [email]);
+        const user = await db.one(`SELECT * FROM users WHERE email=$1 OR phone=$1`, [email]);
         if (!user || !bcrypt.compareSync(password, user.password))
             return res.status(401).json({ error: 'Invalid credentials' });
         const token = jwt.sign(
@@ -345,13 +345,13 @@ app.post('/api/auth/login', async (req, res) => {
         );
         let customer = null;
         if (user.authority === 'customer')
-            customer = await db.oneOrNone(`SELECT * FROM customers WHERE user_id=$1`, [user.id]);
+            customer = await db.one(`SELECT * FROM customers WHERE user_id=$1`, [user.id]);
 
         // Kitchen staff get their kitchen info
         let kitchenInfo = null;
         if (['kitchen_manager','kitchen_staff'].includes(user.authority)) {
             // Kitchen is linked by user — for now, return all kitchens if super
-            kitchenInfo = await db.oneOrNone(`SELECT k.* FROM kitchens k WHERE k.status='active' LIMIT 1`);
+            kitchenInfo = await db.one(`SELECT k.* FROM kitchens k WHERE k.status='active' LIMIT 1`);
         }
 
         const redirectMap = {
@@ -1928,10 +1928,23 @@ app.use((req, res, next) => {
     if (fs.existsSync(f)) return res.sendFile(f);
     next();
 });
+
+// ── Emergency reseed endpoint ──────────────────────────────────────
+app.get('/api/reseed', async (req, res) => {
+    try {
+        await initDB();
+        // Check what users exist
+        const users = await db.all(`SELECT email, authority FROM users ORDER BY id`);
+        res.json({ ok: true, message: 'Reseed complete', users });
+    } catch(e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
 app.use((err, req, res, next) => { console.error(err); res.status(500).json({ error: err.message }); });
 
 async function start() {
-    try { await initDB(); } catch(e) { console.error('DB init failed:', e.message); }
+    try { await initDB(); } catch(e) { console.error('DB init failed:', e.message, e.stack); }
     app.listen(PORT, () => {
         console.log(`✅ Port ${PORT}`);
         console.log(`📍 Admin:    http://localhost:${PORT}/`);
