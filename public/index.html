@@ -161,10 +161,10 @@ select[multiple].fc{height:120px;}
     <div class="lbrand"><div class="lbrand-ico">&#129795;</div><h1>Salad Caffe</h1></div>
     <p class="lsub">Admin Dashboard</p>
     <div class="lerr" id="loginErr"></div>
-    <input type="email" class="li" id="loginEmail" placeholder="Email" value="super@test.com">
+    <input type="tel" class="li" id="loginEmail" placeholder="Mobile Number" value="9000000001">
     <input type="password" class="li" id="loginPwd" placeholder="Password" value="password123">
     <button class="lbtn" onclick="doLogin()">Sign In</button>
-    <div class="ldemo"><strong>Demo:</strong> super@test.com / password123</div>
+    <div class="ldemo"><strong>Admin:</strong> 9000000001 / password123</div>
   </div>
 </div>
 <div id="app">
@@ -632,7 +632,7 @@ window.addEventListener("load",()=>{const t=sessionStorage.getItem("aToken");if(
 async function doLogin(){
   const email=document.getElementById("loginEmail").value,pwd=document.getElementById("loginPwd").value,err=document.getElementById("loginErr");
   err.style.display="none";
-  if(!email||!pwd){err.textContent="Fill all fields";err.style.display="block";return;}
+  if(!email||!pwd){err.textContent="Enter mobile number and password";err.style.display="block";return;}
   try{
     const r=await fetch(`${API}/auth/login`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,password:pwd})});
     const d=await r.json();

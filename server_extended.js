@@ -205,15 +205,19 @@ async function initDB() {
     const sa = await db.one(`SELECT id FROM users WHERE email=$1`, ['super@test.com']);
     if (!sa) {
         const h = bcrypt.hashSync('password123', 10);
-        await db.query(`INSERT INTO users (name,email,password,authority) VALUES ($1,$2,$3,'super_admin')`,
-            ['Super Admin', 'super@test.com', h]);
+        await db.query(`INSERT INTO users (name,email,password,phone,authority) VALUES ($1,$2,$3,$4,'super_admin')`,
+            ['Super Admin', 'super@test.com', h, '9000000001']);
+    } else if (!sa.phone) {
+        await db.query(`UPDATE users SET phone=$1 WHERE email=$2`, ['9000000001', 'super@test.com']);
     }
     // Seed kitchen user
     const ku = await db.one(`SELECT id FROM users WHERE email=$1`, ['kitchen@test.com']);
     if (!ku) {
         const h = bcrypt.hashSync('kitchen123', 10);
-        await db.query(`INSERT INTO users (name,email,password,authority) VALUES ($1,$2,$3,'kitchen_manager')`,
-            ['Kitchen Manager', 'kitchen@test.com', h]);
+        await db.query(`INSERT INTO users (name,email,password,phone,authority) VALUES ($1,$2,$3,$4,'kitchen_manager')`,
+            ['Kitchen Manager', 'kitchen@test.com', h, '9000000004']);
+    } else if (!ku.phone) {
+        await db.query(`UPDATE users SET phone=$1 WHERE email=$2`, ['9000000004', 'kitchen@test.com']);
     }
     // Seed sales manager
     const sm = await db.one(`SELECT id FROM users WHERE email=$1`, ['sales@test.com']);
@@ -233,8 +237,10 @@ async function initDB() {
     const dbu = await db.one(`SELECT id FROM users WHERE email=$1`, ['delivery@test.com']);
     if (!dbu) {
         const h = bcrypt.hashSync('delivery123', 10);
-        await db.query(`INSERT INTO users (name,email,password,authority) VALUES ($1,$2,$3,'delivery_boy')`,
-            ['Demo Delivery Boy', 'delivery@test.com', h]);
+        await db.query(`INSERT INTO users (name,email,password,phone,authority) VALUES ($1,$2,$3,$4,'delivery_boy')`,
+            ['Demo Delivery Boy', 'delivery@test.com', h, '9000000005']);
+    } else if (!dbu.phone) {
+        await db.query(`UPDATE users SET phone=$1 WHERE email=$2`, ['9000000005', 'delivery@test.com']);
     }
     // Seed demo customer
     const dc = await db.one(`SELECT id FROM users WHERE email=$1`, ['customer@test.com']);
