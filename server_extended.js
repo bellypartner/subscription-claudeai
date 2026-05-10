@@ -471,19 +471,25 @@ app.get('/api/customer/calendar', verifyToken, reqCust, async (req, res) => {
 app.get('/api/customer/upcoming-meals', verifyToken, reqCust, async (req, res) => {
     try {
         const c = await db.one(`SELECT * FROM customers WHERE user_id=$1`, [req.user.id]);
-        // Only today and tomorrow as requested
+        // Include full item details for customer view + show up to 3 days ahead (handles extended last day)
         res.json(await db.all(`
-            SELECT d.*, mi.name as meal_item_name, mi.calories, mi.veg_tag, mi.non_veg_tag,
-                mc.name as category_name, p.name as plan_name, k.name as kitchen_name
+            SELECT d.*, 
+                mi.name as meal_item_name, mi.calories, mi.veg_tag, mi.non_veg_tag,
+                mi.image_base64, mi.ingredients, mi.allergy_info, mi.description,
+                mi.proteins, mi.carbs, mi.fiber,
+                mc.name as category_name, p.name as plan_name, k.name as kitchen_name,
+                CASE WHEN c.diet_preference IN ('pure_veg','vegan','eggetarian') THEN 1 ELSE 0 END as is_veg_customer
             FROM deliveries d
             LEFT JOIN meal_items mi ON d.meal_item_id=mi.id
             LEFT JOIN meal_categories mc ON mi.category_id=mc.id
             LEFT JOIN orders o ON d.order_id=o.id
             LEFT JOIN subscription_plans p ON o.plan_id=p.id
             LEFT JOIN kitchens k ON d.kitchen_id=k.id
+            LEFT JOIN customers c ON d.customer_id=c.id
             WHERE d.customer_id=$1 AND d.is_sunday_skip=0
               AND d.delivery_date >= CURRENT_DATE
-              AND d.delivery_date <= CURRENT_DATE + INTERVAL '1 day'
+              AND d.delivery_date <= CURRENT_DATE + INTERVAL '2 days'
+              AND d.status != 'skipped'
             ORDER BY d.delivery_date ASC,
                 CASE d.meal_type WHEN 'breakfast' THEN 1 WHEN 'lunch' THEN 2 WHEN 'dinner' THEN 3 ELSE 4 END
         `, [c.id]));
@@ -1937,6 +1943,105 @@ app.use((req, res, next) => {
     next();
 });
 
+
+// ==================== SYSTEM SETTINGS ====================
+app.get('/api/admin/settings', verifyToken, async (req, res) => {
+    try {
+        await db.query(`CREATE TABLE IF NOT EXISTS system_settings (
+            key TEXT PRIMARY KEY, value TEXT, updated_at TIMESTAMPTZ DEFAULT NOW()
+        )`);
+        const rows = await db.all(`SELECT key, value FROM system_settings`);
+        const s = {};
+        rows.forEach(r => s[r.key] = r.value);
+        res.json({
+            breakfast_time: s.breakfast_time || '07:00',
+            lunch_time: s.lunch_time || '12:00',
+            dinner_time: s.dinner_time || '19:00',
+            breakfast_deadline: s.breakfast_deadline || '07:00',
+            lunch_deadline: s.lunch_deadline || '10:00',
+            dinner_deadline: s.dinner_deadline || '15:00',
+        });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/admin/settings', verifyToken, async (req, res) => {
+    try {
+        await db.query(`CREATE TABLE IF NOT EXISTS system_settings (
+            key TEXT PRIMARY KEY, value TEXT, updated_at TIMESTAMPTZ DEFAULT NOW()
+        )`);
+        const fields = ['breakfast_time','lunch_time','dinner_time','breakfast_deadline','lunch_deadline','dinner_deadline'];
+        for (const key of fields) {
+            if (req.body[key] !== undefined) {
+                await db.query(`INSERT INTO system_settings (key, value) VALUES ($1, $2)
+                    ON CONFLICT (key) DO UPDATE SET value=$2, updated_at=NOW()`, [key, req.body[key]]);
+            }
+        }
+        res.json({ message: 'Settings saved' });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ==================== FIND USER (for password reset) ====================
+app.get('/api/admin/find-user', verifyToken, async (req, res) => {
+    try {
+        const q = req.query.q;
+        if (!q) return res.status(400).json({ error: 'Query required' });
+        const user = await db.one(`SELECT id, name, email, phone, authority FROM users WHERE email=$1 OR phone::text=$1`, [q.trim()]);
+        if (!user) return res.json({ error: 'Not found' });
+        res.json(user);
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ==================== RESET PASSWORD ====================
+app.post('/api/admin/reset-password', verifyToken, async (req, res) => {
+    try {
+        if (!['super_admin','admin'].includes(req.user.authority))
+            return res.status(403).json({ error: 'Not authorized' });
+        const { user_id, password } = req.body;
+        if (!user_id || !password || password.length < 6)
+            return res.status(400).json({ error: 'user_id and password (min 6 chars) required' });
+        const hash = bcrypt.hashSync(password, 10);
+        await db.query(`UPDATE users SET password=$1 WHERE id=$2`, [hash, user_id]);
+        res.json({ message: 'Password reset successfully' });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ==================== EDIT DELIVERY BOY ====================
+app.put('/api/admin/delivery-boys/:id', verifyToken, async (req, res) => {
+    try {
+        const { name, phone, kitchen_id, territory_id, vehicle_type } = req.body;
+        await db.query(`UPDATE delivery_boys SET 
+            name=COALESCE($1,name), phone=COALESCE($2,phone),
+            kitchen_id=COALESCE($3,kitchen_id), territory_id=COALESCE($4,territory_id),
+            vehicle_type=COALESCE($5,vehicle_type)
+            WHERE id=$6`,
+            [name||null, phone||null, kitchen_id||null, territory_id||null, vehicle_type||null, req.params.id]);
+        // Also update user name if linked
+        const boy = await db.one(`SELECT user_id FROM delivery_boys WHERE id=$1`, [req.params.id]);
+        if (boy && boy.user_id && name) {
+            await db.query(`UPDATE users SET name=$1${phone?', phone=$2':''}  WHERE id=${phone?'$3':'$2'}`,
+                phone ? [name, phone, boy.user_id] : [name, boy.user_id]);
+        }
+        res.json({ message: 'Updated' });
+    } catch(e) { res.status(400).json({ error: e.message }); }
+});
+
+// ==================== PUBLIC SETTINGS (for customer skip deadlines) ====================
+app.get('/api/settings', async (req, res) => {
+    try {
+        const rows = await db.all(`SELECT key, value FROM system_settings`).catch(()=>[]);
+        const s = {};
+        rows.forEach(r => s[r.key] = r.value);
+        res.json({
+            breakfast_deadline: s.breakfast_deadline || '07:00',
+            lunch_deadline: s.lunch_deadline || '10:00',
+            dinner_deadline: s.dinner_deadline || '15:00',
+            breakfast_time: s.breakfast_time || '07:00',
+            lunch_time: s.lunch_time || '12:00',
+            dinner_time: s.dinner_time || '19:00',
+        });
+    } catch(e) { res.json({ breakfast_deadline:'07:00', lunch_deadline:'10:00', dinner_deadline:'15:00' }); }
+});
+
 // ── Emergency reseed endpoint ──────────────────────────────────────
 app.get('/api/reseed', async (req, res) => {
     try {
@@ -2185,19 +2290,25 @@ app.get('/api/customer/calendar', verifyToken, reqCust, async (req, res) => {
 app.get('/api/customer/upcoming-meals', verifyToken, reqCust, async (req, res) => {
     try {
         const c = await db.one(`SELECT * FROM customers WHERE user_id=$1`, [req.user.id]);
-        // Only today and tomorrow as requested
+        // Include full item details for customer view + show up to 3 days ahead (handles extended last day)
         res.json(await db.all(`
-            SELECT d.*, mi.name as meal_item_name, mi.calories, mi.veg_tag, mi.non_veg_tag,
-                mc.name as category_name, p.name as plan_name, k.name as kitchen_name
+            SELECT d.*, 
+                mi.name as meal_item_name, mi.calories, mi.veg_tag, mi.non_veg_tag,
+                mi.image_base64, mi.ingredients, mi.allergy_info, mi.description,
+                mi.proteins, mi.carbs, mi.fiber,
+                mc.name as category_name, p.name as plan_name, k.name as kitchen_name,
+                CASE WHEN c.diet_preference IN ('pure_veg','vegan','eggetarian') THEN 1 ELSE 0 END as is_veg_customer
             FROM deliveries d
             LEFT JOIN meal_items mi ON d.meal_item_id=mi.id
             LEFT JOIN meal_categories mc ON mi.category_id=mc.id
             LEFT JOIN orders o ON d.order_id=o.id
             LEFT JOIN subscription_plans p ON o.plan_id=p.id
             LEFT JOIN kitchens k ON d.kitchen_id=k.id
+            LEFT JOIN customers c ON d.customer_id=c.id
             WHERE d.customer_id=$1 AND d.is_sunday_skip=0
               AND d.delivery_date >= CURRENT_DATE
-              AND d.delivery_date <= CURRENT_DATE + INTERVAL '1 day'
+              AND d.delivery_date <= CURRENT_DATE + INTERVAL '2 days'
+              AND d.status != 'skipped'
             ORDER BY d.delivery_date ASC,
                 CASE d.meal_type WHEN 'breakfast' THEN 1 WHEN 'lunch' THEN 2 WHEN 'dinner' THEN 3 ELSE 4 END
         `, [c.id]));

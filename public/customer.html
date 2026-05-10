@@ -192,6 +192,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--dk);font-
   <div class="content">
     <!-- HOME -->
     <div id="tp-home" class="tp active">
+      <div id="skipDeadlineBanner" style="display:none;background:var(--al);border:1px solid var(--amber);border-radius:10px;padding:10px 14px;margin-bottom:10px;font-size:13px;"></div>
       <div class="sec-lbl">Today &amp; Tomorrow</div>
       <div class="today-grid" id="todayCards"><div class="loading"><span class="spinner"></span></div></div>
       <div class="sec-lbl">Your Delivery Boy Today</div>
@@ -503,15 +504,53 @@ async function saveProfile(){
 }
 
 // ===== HOME =====
+let sysSettings = {};
 async function loadHome(){
+  try{
+    sysSettings = await fetch('/api/settings').then(r=>r.json()).catch(()=>({}));
+  }catch(e){}
   try{
     const d=await api(`${API}/customer/upcoming-meals`);
     renderToday(d||[]);
+    showSkipDeadlineBanner(d||[]);
   }catch(e){document.getElementById("todayCards").innerHTML="<div style='color:var(--muted);font-size:13px;'>No upcoming meals</div>";}
   try{
     const d=await api(`${API}/customer/my-delivery-boy`);
     renderDB(d);
   }catch(e){}
+}
+
+function showSkipDeadlineBanner(meals) {
+  const banner = document.getElementById('skipDeadlineBanner');
+  if (!banner) return;
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
+  const deadlines = {
+    breakfast: sysSettings.breakfast_deadline || '07:00',
+    lunch: sysSettings.lunch_deadline || '10:00',
+    dinner: sysSettings.dinner_deadline || '15:00',
+  };
+  const warnings = [];
+  meals.forEach(m => {
+    if (m.status !== 'pending') return;
+    const mDate = m.delivery_date?.toString().split('T')[0];
+    if (mDate !== today) return;
+    const dl = deadlines[m.meal_type] || '10:00';
+    const [dh, dm] = dl.split(':').map(Number);
+    const deadline = new Date(); deadline.setHours(dh, dm, 0, 0);
+    const minsLeft = Math.round((deadline - now) / 60000);
+    if (minsLeft > 0 && minsLeft <= 60) {
+      warnings.push(`⚠️ <strong>${(m.meal_type||'lunch').toUpperCase()}</strong> skip deadline in <strong>${minsLeft} min</strong> (${dl})`);
+    } else if (minsLeft <= 0) {
+      warnings.push(`🔒 <strong>${(m.meal_type||'lunch').toUpperCase()}</strong> skip window closed (deadline was ${dl})`);
+    }
+  });
+  if (warnings.length) {
+    banner.innerHTML = warnings.join('<br>');
+    banner.style.display = 'block';
+  } else {
+    banner.style.display = 'none';
+  }
 }
 
 function renderToday(meals){

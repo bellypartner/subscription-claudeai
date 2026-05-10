@@ -187,6 +187,7 @@ select[multiple].fc{height:120px;}
       <button class="sb-item" onclick="showPage('territories',this)"><i class="fas fa-map-marker-alt"></i> Territories</button>
       <button class="sb-item" onclick="showPage('kitchens',this)"><i class="fas fa-store"></i> Kitchens</button>
       <button class="sb-item" onclick="showPage('deliveryboys',this)"><i class="fas fa-motorcycle"></i> Delivery Boys</button>
+      <button class="sb-item" onclick="showPage('settings',this)"><i class="fas fa-cog"></i> Settings</button>
     </nav>
     <div class="sb-footer">
       <div class="sb-user"><div class="sb-av" id="sbAv">S</div><div><div class="sb-uname" id="sbName">Admin</div><div class="sb-urole" id="sbRole">super_admin</div></div></div>
@@ -375,10 +376,78 @@ select[multiple].fc{height:120px;}
         </table></div></div>
       </div>
 
+      <div id="page-settings" class="page">
+        <div class="sec-hd"><span class="sec-title">Settings</span></div>
+        <div class="alert as" id="settOk"></div><div class="alert ae" id="settErr"></div>
+
+        <div class="card" style="margin-bottom:16px;">
+          <div style="font-weight:700;font-size:15px;margin-bottom:14px;">⏰ Skip Deadlines & Delivery Times</div>
+          <div class="frow">
+            <div class="fg"><label class="fl">Breakfast Delivery Time</label><input type="time" class="fc" id="settBreakfastTime" value="07:00"></div>
+            <div class="fg"><label class="fl">Lunch Delivery Time</label><input type="time" class="fc" id="settLunchTime" value="12:00"></div>
+            <div class="fg"><label class="fl">Dinner Delivery Time</label><input type="time" class="fc" id="settDinnerTime" value="19:00"></div>
+          </div>
+          <div class="frow">
+            <div class="fg"><label class="fl">Breakfast Skip Deadline</label><input type="time" class="fc" id="settBreakfastDeadline" value="07:00"></div>
+            <div class="fg"><label class="fl">Lunch Skip Deadline</label><input type="time" class="fc" id="settLunchDeadline" value="10:00"></div>
+            <div class="fg"><label class="fl">Dinner Skip Deadline</label><input type="time" class="fc" id="settDinnerDeadline" value="15:00"></div>
+          </div>
+          <button class="btn btn-g" onclick="saveSettings()">Save Meal Times</button>
+        </div>
+
+        <div class="card">
+          <div style="font-weight:700;font-size:15px;margin-bottom:14px;">🔑 Reset User Password</div>
+          <div class="frow">
+            <div class="fg"><label class="fl">Search User (phone or email)</label>
+              <input type="text" class="fc" id="resetSearchQ" placeholder="Enter phone or email">
+            </div>
+            <div class="fg" style="flex:0 0 140px;"><label class="fl">&nbsp;</label>
+              <button class="btn btn-o" style="width:100%;" onclick="searchUserForReset()">Find User</button>
+            </div>
+          </div>
+          <div id="resetUserResult" style="margin:10px 0;"></div>
+          <div id="resetPwdRow" style="display:none;">
+            <div class="frow">
+              <div class="fg"><label class="fl">New Password</label><input type="password" class="fc" id="resetNewPwd" placeholder="Enter new password"></div>
+              <div class="fg" style="flex:0 0 160px;"><label class="fl">&nbsp;</label>
+                <button class="btn btn-g" style="width:100%;" onclick="doResetPassword()">Reset Password</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
 <!-- MODALS -->
+
+<!-- EDIT DELIVERY BOY MODAL -->
+<div class="modal-bg" id="editDbModal"><div class="modal-box">
+  <div class="modal-hd"><span class="modal-title">Edit Delivery Boy</span><button class="modal-close" onclick="closeModal('editDbModal')">&times;</button></div>
+  <div class="modal-body">
+    <input type="hidden" id="editDbId">
+    <input type="hidden" id="editDbUserId">
+    <div class="frow">
+      <div class="fg"><label class="fl">Name *</label><input type="text" class="fc" id="editDbName"></div>
+      <div class="fg"><label class="fl">Phone</label><input type="text" class="fc" id="editDbPhone"></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label class="fl">Kitchen</label><select class="fc" id="editDbKitchen"><option value="">Select Kitchen</option></select></div>
+      <div class="fg"><label class="fl">Territory</label><select class="fc" id="editDbTerritory"><option value="">Select Territory</option></select></div>
+    </div>
+    <div class="fg"><label class="fl">Vehicle</label>
+      <select class="fc" id="editDbVehicle">
+        <option value="bike">🏍️ Bike</option>
+        <option value="cycle">🚴 Cycle</option>
+        <option value="auto">🛺 Auto</option>
+        <option value="walk">🚶 Walk</option>
+      </select>
+    </div>
+    <button class="btn btn-g" style="width:100%;justify-content:center;" onclick="saveEditDeliveryBoy()">Save Changes</button>
+  </div>
+</div></div>
+
 <div class="modal-bg" id="catModal"><div class="modal-box">
   <div class="modal-hd"><span class="modal-title">Add Category</span><button class="modal-close" onclick="closeModal('catModal')">&times;</button></div>
   <div class="modal-body">
@@ -651,12 +720,12 @@ function showApp(){
   document.getElementById("sbName").textContent=user.name||"Admin";
   document.getElementById("sbRole").textContent=user.authority||"admin";
 }
-const pageMeta={dashboard:["Dashboard","Overview"],categories:["Categories","Meal categories"],meals:["Meal Items","Menu management"],planmenu:["Plan Menu Generator","Auto-create schedules"],plans:["Subscription Plans","Plan catalogue"],territories:["Territories","Delivery zones"],kitchens:["Kitchens","Kitchen management"],customers:["Customers","Customer base"],orders:["Orders","Subscription orders"],deliveries:["Deliveries","Daily deliveries"]};
+const pageMeta={dashboard:["Dashboard","Overview"],categories:["Categories","Meal categories"],meals:["Meal Items","Menu management"],planmenu:["Plan Menu Generator","Auto-create schedules"],plans:["Subscription Plans","Plan catalogue"],territories:["Territories","Delivery zones"],kitchens:["Kitchens","Kitchen management"],customers:["Customers","Customer base"],orders:["Orders","Subscription orders"],deliveries:["Deliveries","Daily deliveries"],settings:["Settings","System configuration"]};
 function showPage(name,btn){
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));document.getElementById("page-"+name)?.classList.add("active");
   document.querySelectorAll(".sb-item").forEach(b=>b.classList.remove("active"));btn?.classList.add("active");
   const m=pageMeta[name]||[name,""];document.getElementById("pgTitle").textContent=m[0];document.getElementById("pgSub").textContent=m[1];
-  if(name==="orders")loadOrders();if(name==="deliveries")loadDeliveries();if(name==="planmenu"){initCatPicker();loadSavedMenus();}if(name==="deliveryboys")loadDeliveryBoys();if(name==="map"){initMap();loadMapTerritories();}
+  if(name==="orders")loadOrders();if(name==="deliveries")loadDeliveries();if(name==="planmenu"){initCatPicker();loadSavedMenus();}if(name==="deliveryboys")loadDeliveryBoys();if(name==="map"){initMap();loadMapTerritories();}if(name==="settings")loadSettings();
   if(name==="plans")loadSavedMenusForPlan();
 }
 function openModal(id){
@@ -1209,7 +1278,10 @@ async function loadDeliveryBoys() {
         <td>${d.territory_name||"—"}</td>
         <td>${vIcon} ${d.vehicle_type||"bike"}</td>
         <td><span class="badge bb">${d.customer_count||0}</span></td>
-        <td><button class="btn btn-r btn-sm" onclick="deleteDeliveryBoy(${d.id})"><i class="fas fa-trash"></i></button></td>
+        <td style="display:flex;gap:6px;">
+          <button class="btn btn-o btn-sm" onclick="openEditDeliveryBoy(${d.id},'${d.name}','${d.phone||''}','${d.vehicle_type||'bike'}',${d.kitchen_id||'null'},${d.territory_id||'null'},${d.user_id||'null'})"><i class="fas fa-edit"></i></button>
+          <button class="btn btn-r btn-sm" onclick="deleteDeliveryBoy(${d.id})"><i class="fas fa-trash"></i></button>
+        </td>
       </tr>`;
     }).join("");
   } catch(e) { showErr2("dbErr","Error loading — check server"); }
@@ -1259,6 +1331,116 @@ async function deleteDeliveryBoy(id) {
   await loadDeliveryBoys();
 }
 // ===== END DELIVERY BOYS =====
+
+// ===== EDIT DELIVERY BOY =====
+let editDbId = null;
+function openEditDeliveryBoy(id, name, phone, vehicle, kitchen_id, territory_id, user_id) {
+  editDbId = id;
+  document.getElementById('editDbId').value = id;
+  document.getElementById('editDbName').value = name || '';
+  document.getElementById('editDbPhone').value = phone || '';
+  document.getElementById('editDbVehicle').value = vehicle || 'bike';
+  document.getElementById('editDbUserId').value = user_id || '';
+  const ks = document.getElementById('editDbKitchen');
+  const ts = document.getElementById('editDbTerritory');
+  Array.from(ks.options).forEach(o => o.selected = (o.value == kitchen_id));
+  Array.from(ts.options).forEach(o => o.selected = (o.value == territory_id));
+  // Populate kitchens
+  const ks2 = document.getElementById('editDbKitchen');
+  ks2.innerHTML = '<option value="">Select Kitchen</option>' + kitchens.map(k=>`<option value="${k.id}" ${k.id==kitchen_id?'selected':''}>${k.name}</option>`).join('');
+  // Populate territories
+  const ts2 = document.getElementById('editDbTerritory');
+  ts2.innerHTML = '<option value="">Select Territory</option>' + territories.map(t=>`<option value="${t.id}" ${t.id==territory_id?'selected':''}>${t.name}</option>`).join('');
+  openModal('editDbModal');
+}
+async function saveEditDeliveryBoy() {
+  const id = document.getElementById('editDbId').value;
+  const body = {
+    name: document.getElementById('editDbName').value.trim(),
+    phone: document.getElementById('editDbPhone').value.trim(),
+    vehicle_type: document.getElementById('editDbVehicle').value,
+    kitchen_id: document.getElementById('editDbKitchen').value || null,
+    territory_id: document.getElementById('editDbTerritory').value || null,
+  };
+  const d = await api(`${API}/admin/delivery-boys/${id}`, {method:'PUT', body:JSON.stringify(body)});
+  if (d.error) { showErr2('dbErr', d.error); return; }
+  showOk('dbOk', '✅ Delivery boy updated!');
+  closeModal('editDbModal');
+  await loadDeliveryBoys();
+}
+
+// ===== SETTINGS - MEAL TIMES =====
+async function loadSettings() {
+  try {
+    const s = await api(`${API}/admin/settings`);
+    if (s.breakfast_time) document.getElementById('settBreakfastTime').value = s.breakfast_time;
+    if (s.lunch_time) document.getElementById('settLunchTime').value = s.lunch_time;
+    if (s.dinner_time) document.getElementById('settDinnerTime').value = s.dinner_time;
+    if (s.breakfast_deadline) document.getElementById('settBreakfastDeadline').value = s.breakfast_deadline;
+    if (s.lunch_deadline) document.getElementById('settLunchDeadline').value = s.lunch_deadline;
+    if (s.dinner_deadline) document.getElementById('settDinnerDeadline').value = s.dinner_deadline;
+  } catch(e) {}
+}
+async function saveSettings() {
+  const body = {
+    breakfast_time: document.getElementById('settBreakfastTime').value,
+    lunch_time: document.getElementById('settLunchTime').value,
+    dinner_time: document.getElementById('settDinnerTime').value,
+    breakfast_deadline: document.getElementById('settBreakfastDeadline').value,
+    lunch_deadline: document.getElementById('settLunchDeadline').value,
+    dinner_deadline: document.getElementById('settDinnerDeadline').value,
+  };
+  const d = await api(`${API}/admin/settings`, {method:'POST', body:JSON.stringify(body)});
+  if (d.error) { showErr2('settErr', d.error); return; }
+  showOk('settOk', '✅ Settings saved!');
+}
+
+// ===== SETTINGS - PASSWORD RESET =====
+let resetUserId = null;
+async function searchUserForReset() {
+  const q = document.getElementById('resetSearchQ').value.trim();
+  if (!q) return;
+  const res = document.getElementById('resetUserResult');
+  res.innerHTML = '<span style="color:var(--muted)">Searching...</span>';
+  const d = await api(`${API}/admin/find-user?q=${encodeURIComponent(q)}`);
+  if (!d || d.error || !d.id) {
+    res.innerHTML = '<span style="color:var(--red)">No user found.</span>';
+    document.getElementById('resetPwdRow').style.display = 'none';
+    return;
+  }
+  resetUserId = d.id;
+  res.innerHTML = `<div style="background:var(--gl);padding:10px;border-radius:8px;font-size:13px;">
+    Found: <strong>${d.name}</strong> — ${d.phone || d.email} — <span class="badge bb">${d.authority}</span>
+  </div>`;
+  document.getElementById('resetPwdRow').style.display = 'block';
+}
+async function doResetPassword() {
+  if (!resetUserId) return;
+  const pwd = document.getElementById('resetNewPwd').value;
+  if (!pwd || pwd.length < 6) { showErr2('settErr', 'Password must be at least 6 characters'); return; }
+  const d = await api(`${API}/admin/reset-password`, {method:'POST', body:JSON.stringify({user_id: resetUserId, password: pwd})});
+  if (d.error) { showErr2('settErr', d.error); return; }
+  showOk('settOk', '✅ Password reset successfully!');
+  document.getElementById('resetNewPwd').value = '';
+  document.getElementById('resetPwdRow').style.display = 'none';
+  document.getElementById('resetUserResult').innerHTML = '';
+  document.getElementById('resetSearchQ').value = '';
+  resetUserId = null;
+}
+
+// ===== EDIT MEAL IMAGE HANDLER =====
+function handleEditMealImg(input) {
+  const file = input.files[0]; if (!file) return;
+  if (file.size > 3*1024*1024) { alert('Max 3MB'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('editMealImgB64').value = e.target.result;
+    const p = document.getElementById('editMealImgPreview');
+    p.src = e.target.result; p.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
 
 // ==================== MAP ====================
 let mapInstance = null, mapMarkers = [], currentMapType = 'customers';
@@ -1396,6 +1578,12 @@ function openEditMeal(id) {
     document.getElementById('editMealVeg').checked=!!m.veg_tag;
     document.getElementById('editMealNonVeg').checked=!!m.non_veg_tag;
     document.getElementById('editMealEgg').checked=!!m.eggetarian_tag;
+    document.getElementById('editMealProtein').value=m.proteins||'';
+    document.getElementById('editMealCarbs').value=m.carbs||'';
+    document.getElementById('editMealFiber').value=m.fiber||'';
+    document.getElementById('editMealImgB64').value='';
+    const imp=document.getElementById('editMealImgPreview');
+    if(m.image_base64){imp.src=m.image_base64;imp.style.display='block';}else{imp.style.display='none';}
     // Populate category dropdown
     const sel=document.getElementById('editMealCat');
     sel.innerHTML=cats.map(c=>`<option value="${c.id}"${c.id===m.category_id?' selected':''}>${c.name}</option>`).join('');
@@ -1404,6 +1592,7 @@ function openEditMeal(id) {
 }
 async function saveEditMeal() {
   const id=document.getElementById('editMealId').value;
+  const imgB64=document.getElementById('editMealImgB64').value;
   const body={
     name:document.getElementById('editMealName').value,
     category_id:document.getElementById('editMealCat').value,
@@ -1414,7 +1603,11 @@ async function saveEditMeal() {
     calories:document.getElementById('editMealCal').value||0,
     ingredients:document.getElementById('editMealIng').value,
     allergy_info:document.getElementById('editMealAllergy').value,
+    proteins:document.getElementById('editMealProtein').value||null,
+    carbs:document.getElementById('editMealCarbs').value||null,
+    fiber:document.getElementById('editMealFiber').value||null,
   };
+  if(imgB64) body.image_base64=imgB64;
   const d=await api(`${API}/admin/meal-items/${id}`,{method:'PUT',body:JSON.stringify(body)});
   if(d.error){showErr2('mealErr',d.error);return;}
   showOk('mealOk','✅ Meal updated!');closeModal('editMealModal');await loadMeals();
@@ -1884,6 +2077,18 @@ function openDetailEditModal() {
     </div>
     <div class="fg"><label class="fl">Ingredients</label><textarea class="fc" id="editMealIng" rows="2"></textarea></div>
     <div class="fg"><label class="fl">Allergy Info</label><input type="text" class="fc" id="editMealAllergy"></div>
+    <div class="fg"><label class="fl">Nutrition</label>
+      <div class="frow">
+        <div class="fg"><label class="fl" style="font-size:11px">Protein (g)</label><input type="number" class="fc" id="editMealProtein" step="0.1"></div>
+        <div class="fg"><label class="fl" style="font-size:11px">Carbs (g)</label><input type="number" class="fc" id="editMealCarbs" step="0.1"></div>
+        <div class="fg"><label class="fl" style="font-size:11px">Fiber (g)</label><input type="number" class="fc" id="editMealFiber" step="0.1"></div>
+      </div>
+    </div>
+    <div class="fg"><label class="fl">Item Image</label>
+      <input type="file" accept="image/*" onchange="handleEditMealImg(this)" style="margin-bottom:6px;">
+      <img id="editMealImgPreview" style="max-width:120px;max-height:120px;border-radius:8px;display:none;object-fit:cover;">
+      <input type="hidden" id="editMealImgB64">
+    </div>
     <button class="btn btn-g" style="width:100%;justify-content:center;" onclick="saveEditMeal()">Save Changes</button>
   </div>
 </div></div>
