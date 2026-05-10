@@ -341,10 +341,12 @@ app.post('/api/auth/login', async (req, res) => {
     try {
         const { email, password } = req.body;
         if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
-        // Support login by phone OR email
-        const user = await db.one(`SELECT * FROM users WHERE email=$1 OR phone=$1`, [email]);
-        if (!user || !bcrypt.compareSync(password, user.password))
-            return res.status(401).json({ error: 'Invalid credentials' });
+        // Support login by phone OR email (cast phone to text for comparison)
+        const user = await db.one(`SELECT * FROM users WHERE email=$1 OR phone::text=$1`, [email.toString().trim()]);
+        if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+        const passOk = bcrypt.compareSync(password, user.password);
+        console.log('Login attempt:', email, '| user found:', !!user, '| pass ok:', passOk);
+        if (!passOk) return res.status(401).json({ error: 'Invalid credentials' });
         const token = jwt.sign(
             { id: user.id, email: user.email, authority: user.authority, name: user.name },
             JWT_SECRET, { expiresIn: '7d' }
