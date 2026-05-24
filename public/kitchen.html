@@ -308,10 +308,19 @@ function refreshAll() {
 }
 
 // ===== PREPARE TAB =====
+let kitchenShowTimes = { breakfast:'05:00', lunch:'07:00', dinner:'13:00' };
+
 async function loadPrepare() {
   const date = getDate();
   const area = document.getElementById("prepareArea");
   if (!kitchenId) { area.innerHTML = '<div class="empty"><i class="fas fa-store"></i><p>Select a kitchen</p></div>'; return; }
+  // Load show times from settings
+  try {
+    const s = await fetch('/api/settings').then(r=>r.json());
+    if (s.breakfast_show) kitchenShowTimes.breakfast = s.breakfast_show;
+    if (s.lunch_show) kitchenShowTimes.lunch = s.lunch_show;
+    if (s.dinner_show) kitchenShowTimes.dinner = s.dinner_show;
+  } catch(e) {}
   try {
     const r = await fetch(`${API}/kitchen/daily-summary?date=${date}&kitchen_id=${kitchenId}`, {headers:{"Authorization":"Bearer "+token}});
     const d = await r.json();
@@ -321,13 +330,37 @@ async function loadPrepare() {
   } catch(e) { area.innerHTML = '<div class="empty"><i class="fas fa-wifi"></i><p>Connection error</p></div>'; }
 }
 
+function isMealVisible(mealType) {
+  // Check if current time is past the show time for this meal
+  const now = new Date();
+  const showTime = kitchenShowTimes[mealType] || '00:00';
+  const [h, m] = showTime.split(':').map(Number);
+  const showDate = new Date();
+  showDate.setHours(h, m, 0, 0);
+  return now >= showDate;
+}
+
 function renderPrepare(data) {
   const area = document.getElementById("prepareArea");
   const { summary } = data;
-  const mts = Object.keys(summary);
-  if (!mts.length) { area.innerHTML = '<div class="empty"><i class="fas fa-check-circle" style="color:var(--g)"></i><p style="font-size:15px;font-weight:700;color:var(--gd)">No deliveries for this date</p></div>'; return; }
+  const allMts = Object.keys(summary);
+  // Filter meals by show time — only show if current time is past show time
+  const mts = allMts.filter(mt => isMealVisible(mt));
+  const hiddenMts = allMts.filter(mt => !isMealVisible(mt));
+  if (!allMts.length) { area.innerHTML = '<div class="empty"><i class="fas fa-check-circle" style="color:var(--g)"></i><p style="font-size:15px;font-weight:700;color:var(--gd)">No deliveries for this date</p></div>'; return; }
+  // Show upcoming meal countdown if some are hidden
+  let upcomingHtml = '';
+  if (hiddenMts.length) {
+    upcomingHtml = hiddenMts.map(mt => {
+      const showTime = kitchenShowTimes[mt] || '00:00';
+      return `<div style="background:var(--bg);border:1px dashed var(--border);border-radius:12px;padding:14px;margin-bottom:12px;text-align:center;color:var(--muted);font-size:13px;">
+        ${{breakfast:'🌅',lunch:'☀️',dinner:'🌙'}[mt]||'🍽️'} <strong>${mt.charAt(0).toUpperCase()+mt.slice(1)}</strong> list will appear after <strong>${showTime}</strong>
+      </div>`;
+    }).join('');
+  }
+  if (!mts.length) { area.innerHTML = upcomingHtml || '<div class="empty"><i class="fas fa-clock"></i><p>Meal lists will appear at their scheduled times</p></div>'; return; }
   const icons = {breakfast:"🌅",lunch:"☀️",dinner:"🌙"};
-  area.innerHTML = mts.map(mt => {
+  area.innerHTML = upcomingHtml + mts.map(mt => {
     const s = summary[mt];
     return `<div class="summary-card">
       <div class="sc-hd">
@@ -389,12 +422,13 @@ function renderPrepare(data) {
             <td>${c.status==='delivered'?'<span class="badge bg">Done</span>':c.status==='skipped'?'<span class="badge bgr">Skip</span>':'<span class="badge ba">Pending</span>'}</td>
           </tr>`).join('')}</tbody></table>
         </div>
-      <button onclick="markFoodReady('${mt}','${getDate()}')" 
-        style="width:100%;padding:12px;margin-top:14px;background:var(--g);color:white;
-        border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;
-        display:flex;align-items:center;justify-content:center;gap:8px;">
-        ✅ Mark ${mt.charAt(0).toUpperCase()+mt.slice(1)} as Ready for Delivery
-      </button>
+      <div style="display:flex;justify-content:flex-end;margin-top:12px;">
+        <button onclick="markFoodReady('${mt}','${getDate()}')" id="readyBtn-${mt}"
+          style="padding:9px 18px;background:var(--g);color:white;border:none;border-radius:8px;
+          font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;">
+          ✅ Mark ${mt.charAt(0).toUpperCase()+mt.slice(1)} Ready
+        </button>
+      </div>
     </div>`;
   }).join("");
 }
@@ -477,7 +511,7 @@ async function loadBrand() {
   } catch(e) { console.warn('Brand load failed', e); }
 }
 loadBrand();
-</script>
+<\/script>
 </body></html>`;
 
   const w = window.open('','_blank','width=400,height=600');

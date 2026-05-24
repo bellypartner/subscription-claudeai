@@ -393,6 +393,14 @@ select[multiple].fc{height:120px;}
             <div class="fg"><label class="fl">Lunch Skip Deadline</label><input type="time" class="fc" id="settLunchDeadline" value="10:00"></div>
             <div class="fg"><label class="fl">Dinner Skip Deadline</label><input type="time" class="fc" id="settDinnerDeadline" value="15:00"></div>
           </div>
+          <div style="border-top:1px solid var(--border);margin:14px 0;"></div>
+          <div style="font-weight:700;font-size:13px;margin-bottom:10px;color:var(--muted);">⏱️ Kitchen Display — Show meal list after:</div>
+          <div class="frow">
+            <div class="fg"><label class="fl">Show Breakfast list from</label><input type="time" class="fc" id="settBreakfastShow" value="05:00"></div>
+            <div class="fg"><label class="fl">Show Lunch list from</label><input type="time" class="fc" id="settLunchShow" value="07:00"></div>
+            <div class="fg"><label class="fl">Show Dinner list from</label><input type="time" class="fc" id="settDinnerShow" value="13:00"></div>
+          </div>
+          <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px;">Kitchen will only see that meal's list after this time. Before this time it's hidden.</div>
           <button class="btn btn-g" onclick="saveSettings()">Save Meal Times</button>
         </div>
 
@@ -1545,6 +1553,9 @@ async function loadSettings() {
     if (s.breakfast_deadline) document.getElementById('settBreakfastDeadline').value = s.breakfast_deadline;
     if (s.lunch_deadline) document.getElementById('settLunchDeadline').value = s.lunch_deadline;
     if (s.dinner_deadline) document.getElementById('settDinnerDeadline').value = s.dinner_deadline;
+    if (s.breakfast_show) document.getElementById('settBreakfastShow').value = s.breakfast_show;
+    if (s.lunch_show) document.getElementById('settLunchShow').value = s.lunch_show;
+    if (s.dinner_show) document.getElementById('settDinnerShow').value = s.dinner_show;
   } catch(e) {}
   // Load brand settings
   try {
@@ -1625,6 +1636,9 @@ async function saveSettings() {
     breakfast_deadline: document.getElementById('settBreakfastDeadline').value,
     lunch_deadline: document.getElementById('settLunchDeadline').value,
     dinner_deadline: document.getElementById('settDinnerDeadline').value,
+    breakfast_show: document.getElementById('settBreakfastShow').value,
+    lunch_show: document.getElementById('settLunchShow').value,
+    dinner_show: document.getElementById('settDinnerShow').value,
   };
   const d = await api(`${API}/admin/settings`, {method:'POST', body:JSON.stringify(body)});
   if (d.error) { showErr2('settErr', d.error); return; }

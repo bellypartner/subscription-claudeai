@@ -2154,6 +2154,9 @@ app.get('/api/admin/settings', verifyToken, async (req, res) => {
             breakfast_deadline: s.breakfast_deadline || '07:00',
             lunch_deadline: s.lunch_deadline || '10:00',
             dinner_deadline: s.dinner_deadline || '15:00',
+            breakfast_show: s.breakfast_show || '05:00',
+            lunch_show: s.lunch_show || '07:00',
+            dinner_show: s.dinner_show || '13:00',
         });
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
@@ -2163,7 +2166,7 @@ app.post('/api/admin/settings', verifyToken, async (req, res) => {
         await db.query(`CREATE TABLE IF NOT EXISTS system_settings (
             key TEXT PRIMARY KEY, value TEXT, updated_at TIMESTAMPTZ DEFAULT NOW()
         )`);
-        const fields = ['breakfast_time','lunch_time','dinner_time','breakfast_deadline','lunch_deadline','dinner_deadline'];
+        const fields = ['breakfast_time','lunch_time','dinner_time','breakfast_deadline','lunch_deadline','dinner_deadline','breakfast_show','lunch_show','dinner_show'];
         for (const key of fields) {
             if (req.body[key] !== undefined) {
                 await db.query(`INSERT INTO system_settings (key, value) VALUES ($1, $2)
@@ -2234,6 +2237,42 @@ app.get('/api/settings', async (req, res) => {
             dinner_time: s.dinner_time || '19:00',
         });
     } catch(e) { res.json({ breakfast_deadline:'07:00', lunch_deadline:'10:00', dinner_deadline:'15:00' }); }
+});
+
+// ==================== DELIVERY FEEDBACK ====================
+app.post('/api/customer/feedback', verifyToken, reqCust, async (req, res) => {
+    try {
+        await db.query(`CREATE TABLE IF NOT EXISTS delivery_feedback (
+            id SERIAL PRIMARY KEY,
+            delivery_id INTEGER REFERENCES deliveries(id) UNIQUE,
+            customer_id INTEGER REFERENCES customers(id),
+            rating INTEGER CHECK(rating BETWEEN 1 AND 5),
+            feedback TEXT,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        )`);
+        const { delivery_id, rating, feedback } = req.body;
+        if (!delivery_id || !rating) return res.status(400).json({ error: 'delivery_id and rating required' });
+        // Check delivery belongs to this customer
+        const c = await db.one(`SELECT id FROM customers WHERE user_id=$1`, [req.user.id]);
+        const del = await db.one(`SELECT id,status FROM deliveries WHERE id=$1 AND customer_id=$2`, [delivery_id, c.id]);
+        if (!del) return res.status(403).json({ error: 'Delivery not found' });
+        if (del.status !== 'delivered') return res.status(400).json({ error: 'Can only rate delivered meals' });
+        // Upsert feedback
+        await db.query(`INSERT INTO delivery_feedback (delivery_id,customer_id,rating,feedback)
+            VALUES ($1,$2,$3,$4)
+            ON CONFLICT (delivery_id) DO UPDATE SET rating=$3,feedback=$4,created_at=NOW()`,
+            [delivery_id, c.id, rating, feedback || null]);
+        res.json({ message: 'Feedback saved' });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/customer/feedback/:deliveryId', verifyToken, reqCust, async (req, res) => {
+    try {
+        const c = await db.one(`SELECT id FROM customers WHERE user_id=$1`, [req.user.id]);
+        const f = await db.one(`SELECT * FROM delivery_feedback WHERE delivery_id=$1 AND customer_id=$2`,
+            [req.params.deliveryId, c.id]);
+        res.json(f || {});
+    } catch(e) { res.json({}); }
 });
 
 // ── Emergency reseed endpoint ──────────────────────────────────────
