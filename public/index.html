@@ -396,6 +396,71 @@ select[multiple].fc{height:120px;}
           <button class="btn btn-g" onclick="saveSettings()">Save Meal Times</button>
         </div>
 
+        <!-- BRAND SETTINGS CARD -->
+        <div class="card" style="margin-bottom:16px;">
+          <div style="font-weight:700;font-size:15px;margin-bottom:6px;">🎨 Brand & Appearance</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Changes take effect immediately for all users</div>
+
+          <div class="frow">
+            <div class="fg">
+              <label class="fl">Business Name</label>
+              <input type="text" class="fc" id="brandName" placeholder="e.g. Salad Caffe">
+            </div>
+            <div class="fg">
+              <label class="fl">Tagline</label>
+              <input type="text" class="fc" id="brandTagline" placeholder="e.g. Helping to live healthily">
+            </div>
+          </div>
+
+          <div class="frow">
+            <div class="fg">
+              <label class="fl">Support Phone</label>
+              <input type="tel" class="fc" id="brandPhone" placeholder="e.g. 9000000001">
+            </div>
+            <div class="fg">
+              <label class="fl">Brand Color</label>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <input type="color" id="brandColorPicker" style="width:48px;height:38px;border-radius:8px;border:1px solid var(--border);cursor:pointer;padding:2px;" oninput="document.getElementById('brandColor').value=this.value;previewBrandColor(this.value)">
+                <input type="text" class="fc" id="brandColor" placeholder="#065f46" style="flex:1;" oninput="syncColorPicker(this.value)">
+              </div>
+            </div>
+          </div>
+
+          <!-- Logo Upload -->
+          <div class="fg" style="margin-bottom:14px;">
+            <label class="fl">Logo</label>
+            <div style="display:flex;gap:12px;align-items:flex-start;">
+              <div id="brandLogoPreview" style="width:80px;height:80px;border-radius:12px;border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;font-size:28px;background:var(--bg);overflow:hidden;flex-shrink:0;">🍱</div>
+              <div style="flex:1;">
+                <input type="file" accept="image/*" onchange="handleBrandLogo(this)" style="margin-bottom:6px;font-size:12px;">
+                <div style="font-size:11px;color:var(--muted);">Recommended: square image, min 200×200px. Max 2MB.</div>
+                <input type="hidden" id="brandLogoB64">
+              </div>
+            </div>
+          </div>
+
+          <!-- Live Preview -->
+          <div style="background:var(--bg);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--border);">
+            <div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-weight:600;">LIVE PREVIEW</div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <img id="previewLogo" style="width:36px;height:36px;border-radius:8px;object-fit:contain;display:none;">
+              <div id="previewLogoFallback" style="width:36px;height:36px;border-radius:8px;background:var(--g);display:flex;align-items:center;justify-content:center;font-size:18px;">🍱</div>
+              <div>
+                <div id="previewName" style="font-weight:700;font-size:15px;">Salad Caffe</div>
+                <div id="previewTagline" style="font-size:11px;color:var(--muted);">Helping to live healthily</div>
+              </div>
+            </div>
+            <div style="margin-top:10px;display:flex;gap:8px;">
+              <div id="previewBtn" style="background:var(--g);color:white;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;">Sample Button</div>
+              <div id="previewBadge" style="background:var(--gl);color:var(--gd);padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;">Active</div>
+            </div>
+          </div>
+
+          <button class="btn btn-g" onclick="saveBrandSettings()">
+            <i class="fas fa-save"></i> Save Brand Settings
+          </button>
+        </div>
+
         <div class="card">
           <div style="font-weight:700;font-size:15px;margin-bottom:14px;">🔑 Reset User Password</div>
           <div class="frow">
@@ -1481,7 +1546,77 @@ async function loadSettings() {
     if (s.lunch_deadline) document.getElementById('settLunchDeadline').value = s.lunch_deadline;
     if (s.dinner_deadline) document.getElementById('settDinnerDeadline').value = s.dinner_deadline;
   } catch(e) {}
+  // Load brand settings
+  try {
+    const b = await fetch('/api/brand').then(r=>r.json());
+    document.getElementById('brandName').value = b.name || '';
+    document.getElementById('brandTagline').value = b.tagline || '';
+    document.getElementById('brandPhone').value = b.supportPhone || '';
+    document.getElementById('brandColor').value = b.color || '#065f46';
+    document.getElementById('brandColorPicker').value = b.color || '#065f46';
+    // Update preview
+    document.getElementById('previewName').textContent = b.name || 'Your Brand';
+    document.getElementById('previewTagline').textContent = b.tagline || 'Your tagline';
+    if (b.color) previewBrandColor(b.color);
+    if (b.logoUrl) {
+      const img = document.getElementById('previewLogo');
+      img.src = b.logoUrl; img.style.display = 'block';
+      document.getElementById('previewLogoFallback').style.display = 'none';
+      document.getElementById('brandLogoPreview').innerHTML = `<img src="${b.logoUrl}" style="width:100%;height:100%;object-fit:contain;">`;
+    }
+  } catch(e) {}
 }
+// ===== BRAND SETTINGS =====
+function previewBrandColor(color) {
+  try {
+    document.getElementById('previewBtn').style.background = color;
+    document.getElementById('previewBadge').style.color = color;
+    document.getElementById('previewBadge').style.background = color + '22';
+  } catch(e) {}
+}
+function syncColorPicker(val) {
+  if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+    document.getElementById('brandColorPicker').value = val;
+    previewBrandColor(val);
+  }
+}
+document.addEventListener('input', e => {
+  if (e.target.id === 'brandName') document.getElementById('previewName').textContent = e.target.value || 'Your Brand';
+  if (e.target.id === 'brandTagline') document.getElementById('previewTagline').textContent = e.target.value || 'Your tagline';
+});
+function handleBrandLogo(input) {
+  const file = input.files[0]; if (!file) return;
+  if (file.size > 2*1024*1024) { alert('Max 2MB'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const src = e.target.result;
+    document.getElementById('brandLogoB64').value = src;
+    document.getElementById('brandLogoPreview').innerHTML = `<img src="${src}" style="width:100%;height:100%;object-fit:contain;">`;
+    const img = document.getElementById('previewLogo');
+    img.src = src; img.style.display = 'block';
+    document.getElementById('previewLogoFallback').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+async function saveBrandSettings() {
+  const name = document.getElementById('brandName').value.trim();
+  const color = document.getElementById('brandColor').value.trim();
+  if (!name) { showErr2('settErr', 'Business name is required'); return; }
+  if (color && !/^#[0-9a-fA-F]{6}$/.test(color)) { showErr2('settErr', 'Color must be a valid hex code like #065f46'); return; }
+  const body = {
+    brand_name:     name,
+    brand_tagline:  document.getElementById('brandTagline').value.trim(),
+    brand_phone:    document.getElementById('brandPhone').value.trim(),
+    brand_color:    color,
+    brand_logo:     document.getElementById('brandLogoB64').value || null,
+  };
+  const d = await api(`${API}/admin/brand-settings`, {method:'POST', body:JSON.stringify(body)});
+  if (d.error) { showErr2('settErr', d.error); return; }
+  showOk('settOk', '✅ Brand settings saved! Refreshing...');
+  // Apply immediately without full page reload
+  setTimeout(() => { if(window.loadBrand) loadBrand(); }, 800);
+}
+
 async function saveSettings() {
   const body = {
     breakfast_time: document.getElementById('settBreakfastTime').value,

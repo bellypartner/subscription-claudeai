@@ -393,8 +393,53 @@ function reqDelivery(req, res, next) {
 // ================================================================
 //  BRAND + FEATURES — public endpoint for all frontends
 // ================================================================
-app.get('/api/brand', (req, res) => {
-    res.json({ ...BRAND, features: FEATURES });
+app.get('/api/brand', async (req, res) => {
+    try {
+        // Read brand overrides from DB (admin can change via settings page)
+        await db.query(`CREATE TABLE IF NOT EXISTS brand_settings (
+            key TEXT PRIMARY KEY, value TEXT, updated_at TIMESTAMPTZ DEFAULT NOW()
+        )`);
+        const rows = await db.all(`SELECT key, value FROM brand_settings`);
+        const db_brand = {};
+        rows.forEach(r => db_brand[r.key] = r.value);
+        // DB values override env vars
+        res.json({
+            name:         db_brand.brand_name     || BRAND.name,
+            tagline:      db_brand.brand_tagline   || BRAND.tagline,
+            color:        db_brand.brand_color     || BRAND.color,
+            colorLight:   BRAND.colorLight,
+            supportPhone: db_brand.brand_phone     || BRAND.supportPhone,
+            logoUrl:      db_brand.brand_logo      || BRAND.logoUrl,
+            mapsKey:      BRAND.mapsKey,
+            features:     FEATURES,
+        });
+    } catch(e) {
+        res.json({ ...BRAND, features: FEATURES });
+    }
+});
+
+// Save brand settings (admin panel)
+app.post('/api/admin/brand-settings', verifyToken, async (req, res) => {
+    try {
+        if (!['super_admin','admin'].includes(req.user.authority))
+            return res.status(403).json({ error: 'Not authorized' });
+        await db.query(`CREATE TABLE IF NOT EXISTS brand_settings (
+            key TEXT PRIMARY KEY, value TEXT, updated_at TIMESTAMPTZ DEFAULT NOW()
+        )`);
+        const { brand_name, brand_tagline, brand_phone, brand_color, brand_logo } = req.body;
+        const updates = { brand_name, brand_tagline, brand_phone, brand_color };
+        if (brand_logo) updates.brand_logo = brand_logo;
+        for (const [key, value] of Object.entries(updates)) {
+            if (value !== undefined && value !== null && value !== '') {
+                await db.query(
+                    `INSERT INTO brand_settings (key, value) VALUES ($1,$2)
+                     ON CONFLICT (key) DO UPDATE SET value=$2, updated_at=NOW()`,
+                    [key, value]
+                );
+            }
+        }
+        res.json({ message: 'Brand settings saved' });
+    } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 // Dynamic manifest.json
