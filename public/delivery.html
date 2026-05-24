@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Salad Caffe — Delivery</title>
+<title>Delivery</title>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -93,7 +93,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--dk);font-
 <div id="loginPage">
   <div class="lcard">
     <div class="lbrand"><div class="lbrand-ico">🚴</div><h1>Delivery Portal</h1></div>
-    <p class="lsub">Salad Caffe — Your deliveries for today</p>
+    <p class="lsub"><span class="brand-name">Salad Caffe</span> — Your deliveries for today</p>
     <div class="lerr" id="loginErr"></div>
     <input type="email" class="li" id="lEmail" placeholder="Email" autocomplete="email">
     <input type="password" class="li" id="lPass" placeholder="Password" autocomplete="current-password">
@@ -292,6 +292,35 @@ async function markStatus(id, status) {
     renderList(deliveries);
   } catch(e) { alert("Connection error"); if(btn){btn.disabled=false;btn.innerHTML='<i class="fas fa-check"></i> Mark Delivered';} }
 }
+</script>
+<script>
+// ── Load brand config from server ────────────────────────────────
+async function loadBrand() {
+  try {
+    const b = await fetch('/api/brand').then(r=>r.json());
+    // Apply brand name everywhere
+    document.querySelectorAll('.brand-name').forEach(el => el.textContent = b.name);
+    document.querySelectorAll('.brand-tagline').forEach(el => el.textContent = b.tagline);
+    document.title = document.title.replace('Salad Caffe', b.name);
+    // Apply brand color
+    if (b.color) {
+      document.documentElement.style.setProperty('--g', b.color);
+      document.documentElement.style.setProperty('--gd', b.color);
+    }
+    if (b.colorLight) document.documentElement.style.setProperty('--gl', b.colorLight);
+    // Apply logo
+    if (b.logoUrl) {
+      document.querySelectorAll('.brand-logo').forEach(el => {
+        el.src = b.logoUrl;
+        el.style.display = 'block';
+      });
+      document.querySelectorAll('.brand-logo-hidden').forEach(el => el.style.display = 'none');
+    }
+    // Store globally
+    window.BRAND = b;
+  } catch(e) { console.warn('Brand load failed', e); }
+}
+loadBrand();
 </script>
 </body>
 </html>

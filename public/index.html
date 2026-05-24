@@ -2336,5 +2336,39 @@ function openDetailEditModal() {
   </div>
 </div>
 
+<script>
+// ── Load brand + features from server ────────────────────────────
+async function loadBrand() {
+  try {
+    const b = await fetch('/api/brand').then(r => r.json());
+    window.BRAND = b;
+    // Apply brand name
+    document.querySelectorAll('.brand-name').forEach(el => el.textContent = b.name);
+    document.querySelectorAll('.brand-tagline').forEach(el => el.textContent = b.tagline);
+    document.title = document.title.replace(/MealBox|Salad Caffe/g, b.name);
+    // Apply brand colors via CSS variables
+    if (b.color) {
+      document.documentElement.style.setProperty('--g', b.color);
+      document.documentElement.style.setProperty('--gd', b.color);
+    }
+    if (b.colorLight) document.documentElement.style.setProperty('--gl', b.colorLight);
+    // Apply logo
+    if (b.logoUrl) {
+      document.querySelectorAll('.brand-logo').forEach(el => {
+        el.src = b.logoUrl; el.style.display = 'block';
+      });
+      document.querySelectorAll('.brand-logo-hidden').forEach(el => el.style.display = 'none');
+    }
+    // Apply feature flags — hide elements not in plan
+    if (b.features) {
+      document.querySelectorAll('[data-feature]').forEach(el => {
+        const feat = el.getAttribute('data-feature');
+        if (!b.features[feat]) el.style.display = 'none';
+      });
+    }
+  } catch(e) { console.warn('Brand load failed', e); }
+}
+loadBrand();
+</script>
 </body>
 </html>

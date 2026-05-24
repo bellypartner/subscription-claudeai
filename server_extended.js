@@ -8,6 +8,59 @@ const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
 
+// ================================================================
+//  BRAND CONFIG — reads from .env, falls back to safe defaults
+// ================================================================
+const BRAND = {
+    name:         process.env.BRAND_NAME         || 'MealBox',
+    tagline:      process.env.BRAND_TAGLINE       || 'Fresh meals delivered daily',
+    color:        process.env.BRAND_COLOR         || '#065f46',
+    colorLight:   process.env.BRAND_COLOR_LIGHT   || '#d1fae5',
+    supportPhone: process.env.BRAND_SUPPORT_PHONE || '9000000000',
+    logoUrl:      process.env.BRAND_LOGO_URL      || '',
+    mapsKey:      process.env.GOOGLE_MAPS_KEY     || '',
+};
+
+// ================================================================
+//  SEED CONFIG — first admin user per deployment
+// ================================================================
+const SEED = {
+    adminName:     process.env.ADMIN_NAME     || 'Admin',
+    adminPhone:    process.env.ADMIN_PHONE    || '9000000001',
+    adminEmail:    process.env.ADMIN_EMAIL    || 'admin@example.com',
+    adminPassword: process.env.ADMIN_PASSWORD || 'Admin@123',
+};
+
+// ================================================================
+//  FEATURE FLAGS — turn on/off per client via .env
+// ================================================================
+const FEATURES = {
+    // ── Core (always on) ──────────────────────────────────────────
+    multiKitchen:      process.env.FEATURE_MULTI_KITCHEN      !== 'false', // default ON
+    deliveryMap:       process.env.FEATURE_DELIVERY_MAP       !== 'false', // default ON
+    customerApp:       process.env.FEATURE_CUSTOMER_APP       !== 'false', // default ON
+
+    // ── Growth tier ───────────────────────────────────────────────
+    loyaltyPoints:     process.env.FEATURE_LOYALTY_POINTS     === 'true',  // default OFF
+    invoicePdf:        process.env.FEATURE_INVOICE_PDF        === 'true',  // default OFF
+    advancedReports:   process.env.FEATURE_ADVANCED_REPORTS   === 'true',  // default OFF
+    salesApp:          process.env.FEATURE_SALES_APP          === 'true',  // default OFF
+
+    // ── Pro tier ──────────────────────────────────────────────────
+    whatsapp:          process.env.FEATURE_WHATSAPP           === 'true',  // default OFF
+    smsNotifications:  process.env.FEATURE_SMS                === 'true',  // default OFF
+    razorpayOnline:    process.env.FEATURE_ONLINE_PAYMENT     === 'true',  // default OFF
+    apiAccess:         process.env.FEATURE_API_ACCESS         === 'true',  // default OFF
+    customDomain:      process.env.FEATURE_CUSTOM_DOMAIN      === 'true',  // default OFF
+
+    // ── Add-on (any tier, charged separately) ─────────────────────
+    calorieTracking:   process.env.FEATURE_CALORIE_TRACKING   === 'true',  // default OFF
+    allergyAlerts:     process.env.FEATURE_ALLERGY_ALERTS     === 'true',  // default OFF
+    liveTracking:      process.env.FEATURE_LIVE_TRACKING      === 'true',  // default OFF
+    feedbackSystem:    process.env.FEATURE_FEEDBACK           === 'true',  // default OFF
+    referralSystem:    process.env.FEATURE_REFERRAL           === 'true',  // default OFF
+};
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'salad_caffe_secret_key_2026';
@@ -204,14 +257,13 @@ async function initDB() {
     ];
     for (const sql of alters) { try { await db.query(sql); } catch(e) {} }
 
-    // Seed super admin
-    const sa = await db.one(`SELECT id FROM users WHERE email=$1`, ['super@test.com']);
+    // Seed super admin — uses env vars for white-label deployments
+    const sa = await db.one(`SELECT id FROM users WHERE phone::text=$1`, [SEED.adminPhone]);
     if (!sa) {
-        const h = bcrypt.hashSync('password123', 10);
-        await db.query(`INSERT INTO users (name,email,password,phone,authority) VALUES ($1,$2,$3,$4,'super_admin')`,
-            ['Super Admin', 'super@test.com', h, '9000000001']);
-    } else if (!sa.phone) {
-        await db.query(`UPDATE users SET phone=$1 WHERE email=$2`, ['9000000001', 'super@test.com']);
+        const h = bcrypt.hashSync(SEED.adminPassword, 10);
+        await db.query(`INSERT INTO users (name,email,password,phone,authority,status) VALUES ($1,$2,$3,$4,'super_admin','active')`,
+            [SEED.adminName, SEED.adminEmail, h, SEED.adminPhone]);
+        console.log(`✅ Admin seeded: ${SEED.adminPhone}`);
     }
     // Seed kitchen user
     const ku = await db.one(`SELECT id FROM users WHERE email=$1`, ['kitchen@test.com']);
@@ -336,6 +388,44 @@ function reqDelivery(req, res, next) {
     if (!['delivery_boy','kitchen_manager','super_admin','admin'].includes(req.user.authority))
         return res.status(403).json({ error: 'Access denied' });
     next();
+}
+
+// ================================================================
+//  BRAND + FEATURES — public endpoint for all frontends
+// ================================================================
+app.get('/api/brand', (req, res) => {
+    res.json({ ...BRAND, features: FEATURES });
+});
+
+// Dynamic manifest.json
+app.get('/manifest.json', (req, res) => {
+    res.json({
+        name: `${BRAND.name} - Meal Subscription`,
+        short_name: BRAND.name,
+        description: `${BRAND.name} meal subscription management`,
+        scope: '/',
+        start_url: '/customer',
+        display: 'standalone',
+        orientation: 'portrait-primary',
+        background_color: '#ffffff',
+        theme_color: BRAND.color || '#065f46',
+        icons: [{
+            src: BRAND.logoUrl || `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='${encodeURIComponent(BRAND.color||'#065f46')}' width='192' height='192'/><text x='50%' y='55%' font-size='100' fill='white' text-anchor='middle' dominant-baseline='central'>🍱</text></svg>`,
+            sizes: '192x192',
+            type: BRAND.logoUrl ? 'image/jpeg' : 'image/svg+xml',
+            purpose: 'any maskable'
+        }],
+        prefer_related_applications: false
+    });
+});
+
+// Feature guard middleware — use on any feature-flagged route
+function requireFeature(featureKey) {
+    return (req, res, next) => {
+        if (!FEATURES[featureKey])
+            return res.status(404).json({ error: 'Feature not available on your plan' });
+        next();
+    };
 }
 
 // ==================== AUTH ====================
