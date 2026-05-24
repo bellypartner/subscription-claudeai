@@ -199,6 +199,7 @@ async function initDB() {
         `ALTER TABLE customers ADD COLUMN IF NOT EXISTS lng_2 DECIMAL(11,8)`,
         `ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT`,
         `CREATE TABLE IF NOT EXISTS delivery_boys (id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id), kitchen_id INTEGER REFERENCES kitchens(id), territory_id INTEGER REFERENCES territories(id), name TEXT NOT NULL, phone TEXT, email TEXT, photo_base64 TEXT, vehicle_type TEXT DEFAULT 'bike', status TEXT DEFAULT 'active', created_at TIMESTAMPTZ DEFAULT NOW())`,
+        `ALTER TABLE plan_menu_slots ADD COLUMN IF NOT EXISTS dinner_item_id INTEGER REFERENCES meal_items(id)`,
     ];
     for (const sql of alters) { try { await db.query(sql); } catch(e) {} }
 
@@ -804,11 +805,13 @@ app.get('/api/admin/plan-menus', verifyToken, async (req, res) => {
                 SELECT pms.*,
                     mc.name as category_name,
                     pi.name as primary_item_name, pi.veg_tag as primary_veg, pi.non_veg_tag as primary_non_veg, pi.image_base64 as primary_image, pi.calories as primary_calories,
-                    ai.name as alternate_item_name, ai.veg_tag as alt_veg, ai.non_veg_tag as alt_non_veg, ai.calories as alt_calories
+                    ai.name as alternate_item_name, ai.veg_tag as alt_veg, ai.non_veg_tag as alt_non_veg, ai.calories as alt_calories,
+                    di.name as dinner_item_name, di.calories as dinner_calories, di.veg_tag as dinner_veg
                 FROM plan_menu_slots pms
                 LEFT JOIN meal_categories mc ON pms.category_id=mc.id
                 LEFT JOIN meal_items pi ON pms.primary_item_id=pi.id
                 LEFT JOIN meal_items ai ON pms.alternate_item_id=ai.id
+                LEFT JOIN meal_items di ON pms.dinner_item_id=di.id
                 WHERE pms.plan_menu_id=$1 ORDER BY pms.slot_number
             `, [m.id]);
             m.slots = slots;
@@ -839,10 +842,9 @@ app.post('/api/admin/plan-menus', verifyToken, async (req, res) => {
 // Update a single slot (assign primary + alternate items)
 app.put('/api/admin/plan-menus/:menuId/slots/:slotNum', verifyToken, async (req, res) => {
     try {
-        const { primary_item_id, alternate_item_id } = req.body;
-        const { category_id } = req.body;
-        await db.query(`UPDATE plan_menu_slots SET primary_item_id=$1,alternate_item_id=$2,category_id=COALESCE($3,category_id) WHERE plan_menu_id=$4 AND slot_number=$5`,
-            [primary_item_id || null, alternate_item_id || null, category_id || null, req.params.menuId, req.params.slotNum]);
+        const { primary_item_id, alternate_item_id, dinner_item_id, category_id } = req.body;
+        await db.query(`UPDATE plan_menu_slots SET primary_item_id=$1,alternate_item_id=$2,dinner_item_id=$3,category_id=COALESCE($4,category_id) WHERE plan_menu_id=$5 AND slot_number=$6`,
+            [primary_item_id || null, alternate_item_id || null, dinner_item_id || null, category_id || null, req.params.menuId, req.params.slotNum]);
         res.json({ message: 'Slot updated' });
     } catch(e) { res.status(400).json({ error: e.message }); }
 });
@@ -1002,9 +1004,17 @@ app.post('/api/admin/orders', verifyToken, async (req, res) => {
             const slotIdx = (startIdx + i) % (planSlots.length || 1);
             const slot = planSlots.length > 0 ? planSlots[slotIdx] : null;
 
+            const isCombo = mealTypes.includes('lunch') && mealTypes.includes('dinner');
             for (const mt of mealTypes) {
                 let mealItemId = null;
-                if (slot) mealItemId = pickItemForCustomer(slot, customer.diet_preference);
+                if (slot) {
+                    if (mt === 'dinner' && isCombo && slot.dinner_item_id) {
+                        // Combo lunch+dinner customers get a different dinner item
+                        mealItemId = slot.dinner_item_id;
+                    } else {
+                        mealItemId = pickItemForCustomer(slot, customer.diet_preference);
+                    }
+                }
 
                 await db.query(
                     `INSERT INTO deliveries (order_id,customer_id,kitchen_id,delivery_date,meal_type,slot_number,meal_item_id,is_veg_customer,status,is_sunday_skip) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending',0)`,

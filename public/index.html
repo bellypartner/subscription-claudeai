@@ -423,6 +423,39 @@ select[multiple].fc{height:120px;}
 </div>
 <!-- MODALS -->
 
+<!-- SLOT EDIT MODAL -->
+<div class="modal-bg" id="slotEditModal"><div class="modal-box">
+  <div class="modal-hd">
+    <span class="modal-title">✏️ Edit Menu Slot</span>
+    <button class="modal-close" onclick="closeModal('slotEditModal')">&times;</button>
+  </div>
+  <div class="modal-body">
+    <input type="hidden" id="seMenuId">
+    <input type="hidden" id="seSlotNum">
+    <div style="background:var(--gl);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12.5px;color:var(--gd);">
+      <strong>How items work:</strong><br>
+      🟢/🔴 <strong>Primary</strong> = main item for that day type (veg day or non-veg day)<br>
+      ↳ <strong>Alternate</strong> = substitute for opposite diet customers<br>
+      🌙 <strong>Dinner Alt</strong> = different item for combo (lunch+dinner) customers only
+    </div>
+    <div class="fg">
+      <label class="fl">🟢/🔴 Primary Item</label>
+      <select class="fc" id="sePrimary"><option value="">— Select item —</option></select>
+    </div>
+    <div class="fg">
+      <label class="fl">↳ Alternate Item (opposite diet)</label>
+      <select class="fc" id="seAlternate"><option value="">— Select item —</option></select>
+    </div>
+    <div class="fg">
+      <label class="fl">🌙 Dinner Alternate (combo customers only)</label>
+      <select class="fc" id="seDinner"><option value="">— Same as lunch (no separate dinner) —</option></select>
+    </div>
+    <button class="btn btn-g" style="width:100%;justify-content:center;margin-top:6px;" onclick="saveSlotEdit()">
+      <i class="fas fa-save"></i> Save Slot
+    </button>
+  </div>
+</div></div>
+
 <!-- EDIT DELIVERY BOY MODAL -->
 <div class="modal-bg" id="editDbModal"><div class="modal-box">
   <div class="modal-hd"><span class="modal-title">Edit Delivery Boy</span><button class="modal-close" onclick="closeModal('editDbModal')">&times;</button></div>
@@ -783,7 +816,10 @@ function statusBadge(s){const m={active:"<span class='badge bg'>Active</span>",c
 function delBadge(s){const m={delivered:"<span class='badge bg'>Delivered</span>",pending:"<span class='badge ba'>Pending</span>",skipped:"<span class='badge bgr'>Skipped</span>"};return m[s]||`<span class="badge bgr">${s}</span>`;}
 function fmtDate(v){if(!v)return"";return String(v).split("T")[0];}
 function dietLabel(s){const m={pure_veg:"Pure Veg",eggetarian:"Eggetarian",vegan:"Vegan",non_veg:"Non-Veg",mixed:"Mixed"};return m[s]||s||"?";}
-async function loadAll(){await Promise.all([loadStats(),loadCategories(),loadMeals(),loadTerritories(),loadKitchens(),loadPlans(),loadCustomers(),loadDeliveryBoys()]);}
+async function loadAll(){
+  await Promise.all([loadStats(),loadCategories(),loadMeals(),loadTerritories(),loadKitchens(),loadPlans(),loadCustomers(),loadDeliveryBoys()]);
+  try { window.allMealItems = await api(`${API}/admin/meal-items`); } catch(e) {}
+}
 async function loadStats(){
   try{
     const d=await api(`${API}/admin/stats`);
@@ -1175,12 +1211,14 @@ function renderSlotGrid(slots) {
         : "background:#fee2e2;color:#991b1b;";
       const primaryLabel = isVeg ? "🟢 Veg (primary)" : "🔴 Non-Veg (primary)";
       const altLabel = isVeg ? "🔴 Non-Veg (alt)" : "🟢 Veg (alt)";
-      html += `<div class="slot-cell ${isVeg?"veg-day":"nonveg-day"}">
+      const currentMenuIdForSlot = window.currentEditMenuId || null;
+      html += `<div class="slot-cell ${isVeg?"veg-day":"nonveg-day"}" onclick="openSlotEdit(${currentMenuIdForSlot},${slotNum},${slot.primary_item_id||'null'},${slot.alternate_item_id||'null'},${slot.dinner_item_id||'null'})" style="cursor:pointer;" title="Click to edit slot">
         <div class="slot-num">Slot ${slotNum}</div>
         <div class="slot-cat">${slot.category_name||"?"}</div>
         <div class="slot-day-badge" style="${dayBadgeStyle}">${isVeg?"Veg Day":"Non-Veg Day"}</div>
         <div class="slot-item" title="${primaryLabel}">${slot.primary_item_name||'<span style="color:var(--red)">No item</span>'}</div>
         <div class="slot-alt" title="${altLabel}">↳ ${slot.alternate_item_name||'<span style="color:var(--red)">No alt</span>'}</div>
+        <div class="slot-alt" style="color:#2563eb;" title="Combo dinner item">🌙 ${slot.dinner_item_name||'<span style="color:var(--muted)">No dinner alt</span>'}</div>
         ${!slot.primary_item_id||!slot.alternate_item_id?'<div class="slot-warn"><i class="fas fa-exclamation-triangle"></i> Incomplete</div>':""} 
       </div>`;
     }
@@ -1211,6 +1249,7 @@ async function loadSavedMenus() {
   try {
     const data = await api(`${API}/admin/plan-menus`);
     savedMenus = data || [];
+    window.currentEditMenuId = null;
     const body = document.getElementById("savedMenuBody");
     if (!savedMenus.length) {
       body.innerHTML = "<tr><td colspan='6'><div class='empty'><i class='fas fa-calendar'></i><p>No saved menus yet. Generate one above.</p></div></td></tr>";
@@ -1232,10 +1271,60 @@ async function loadSavedMenus() {
         <td style="font-size:11.5px;max-width:250px;">${mapStr}</td>
         <td>${m.slots_filled||0} / 24</td>
         <td style="font-size:11.5px;color:var(--muted);">${fmtDate(m.created_at)}</td>
-        <td><button class="btn btn-r btn-sm" onclick="deleteMenu(${m.id})"><i class="fas fa-trash"></i></button></td>
+        <td style="display:flex;gap:6px;">
+          <button class="btn btn-o btn-sm" onclick="viewMenuSlots(${m.id})" title="View/Edit Slots"><i class="fas fa-calendar-alt"></i></button>
+          <button class="btn btn-r btn-sm" onclick="deleteMenu(${m.id})"><i class="fas fa-trash"></i></button>
+        </td>
       </tr>`;
     }).join("");
   } catch(e) {}
+}
+
+async function viewMenuSlots(menuId) {
+  window.currentEditMenuId = menuId;
+  const menu = savedMenus.find(m => m.id === menuId);
+  if (!menu) return;
+  // Show the menu preview section with this menu's slots
+  document.getElementById('menuPreview').style.display = 'block';
+  document.getElementById('menuSummary').textContent = `${menu.name} — ${menu.slots_filled||0}/24 slots filled`;
+  renderSlotGrid(menu.slots || []);
+  document.getElementById('menuPreview').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function openSlotEdit(menuId, slotNum, primaryId, altId, dinnerId) {
+  if (!menuId) { alert('Please use the 📅 button next to a saved menu to edit its slots'); return; }
+  window.currentEditMenuId = menuId;
+  document.getElementById('seMenuId').value = menuId;
+  document.getElementById('seSlotNum').value = slotNum;
+  const items = window.allMealItems || [];
+  const opts = '<option value="">— None —</option>' +
+    items.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+  ['sePrimary','seAlternate','seDinner'].forEach(id => {
+    document.getElementById(id).innerHTML = opts;
+  });
+  document.getElementById('sePrimary').value = primaryId || '';
+  document.getElementById('seAlternate').value = altId || '';
+  document.getElementById('seDinner').value = dinnerId || '';
+  openModal('slotEditModal');
+}
+
+async function saveSlotEdit() {
+  const menuId = document.getElementById('seMenuId').value;
+  const slotNum = document.getElementById('seSlotNum').value;
+  const d = await api(`${API}/admin/plan-menus/${menuId}/slots/${slotNum}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      primary_item_id: document.getElementById('sePrimary').value || null,
+      alternate_item_id: document.getElementById('seAlternate').value || null,
+      dinner_item_id: document.getElementById('seDinner').value || null,
+    })
+  });
+  if (d.error) { alert('Error: ' + d.error); return; }
+  closeModal('slotEditModal');
+  // Refresh the menus and re-render slots
+  await loadSavedMenus();
+  const fresh = savedMenus.find(m => m.id == menuId);
+  if (fresh) { renderSlotGrid(fresh.slots || []); }
 }
 
 async function deleteMenu(id) {
