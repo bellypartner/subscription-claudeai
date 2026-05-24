@@ -612,9 +612,10 @@ app.get('/api/kitchen/daily-summary', verifyToken, reqKitchen, async (req, res) 
                 d.id, d.meal_type, d.status, d.is_veg_customer,
                 d.meal_item_id, mi.name as meal_item_name,
                 mi.veg_tag, mi.non_veg_tag, mi.eggetarian_tag, mi.vegan_tag,
-                mi.calories, mi.image_base64,
+                mi.calories, mi.image_base64, mi.allergy_info as item_allergy,
                 c.name as customer_name, c.phone as customer_phone,
-                c.address as customer_address, c.diet_preference
+                c.address as customer_address, c.diet_preference,
+                c.allergy_info as customer_allergy, c.delivery_instructions
             FROM deliveries d
             LEFT JOIN meal_items mi ON d.meal_item_id=mi.id
             LEFT JOIN customers c ON d.customer_id=c.id
@@ -684,7 +685,9 @@ app.get('/api/kitchen/daily-summary', verifyToken, reqKitchen, async (req, res) 
                     diet: r.diet_preference,
                     item: r.meal_item_name || 'Not assigned',
                     status: r.status,
-                    is_veg: !!r.is_veg_customer
+                    is_veg: !!r.is_veg_customer,
+                    allergy_info: r.customer_allergy || r.item_allergy || null,
+                    delivery_instructions: r.delivery_instructions || null
                 }))
             };
         }
@@ -1295,8 +1298,11 @@ app.get('/api/delivery/today', verifyToken, reqDelivery, async (req, res) => {
         const deliveries = await db.all(`
             SELECT d.*, c.name as customer_name, c.phone as customer_phone,
                 c.address as customer_address,
+                c.lat_1, c.lng_1, c.google_location_1,
+                c.allergy_info as customer_allergy, c.delivery_instructions,
                 mi.name as meal_item_name, mi.calories,
                 mi.veg_tag, mi.non_veg_tag, mi.image_base64 as item_image,
+                mi.allergy_info as item_allergy,
                 p.name as plan_name
             FROM deliveries d
             LEFT JOIN customers c ON d.customer_id=c.id
@@ -2470,9 +2476,10 @@ app.get('/api/kitchen/daily-summary', verifyToken, reqKitchen, async (req, res) 
                 d.id, d.meal_type, d.status, d.is_veg_customer,
                 d.meal_item_id, mi.name as meal_item_name,
                 mi.veg_tag, mi.non_veg_tag, mi.eggetarian_tag, mi.vegan_tag,
-                mi.calories, mi.image_base64,
+                mi.calories, mi.image_base64, mi.allergy_info as item_allergy,
                 c.name as customer_name, c.phone as customer_phone,
-                c.address as customer_address, c.diet_preference
+                c.address as customer_address, c.diet_preference,
+                c.allergy_info as customer_allergy, c.delivery_instructions
             FROM deliveries d
             LEFT JOIN meal_items mi ON d.meal_item_id=mi.id
             LEFT JOIN customers c ON d.customer_id=c.id
@@ -2542,7 +2549,9 @@ app.get('/api/kitchen/daily-summary', verifyToken, reqKitchen, async (req, res) 
                     diet: r.diet_preference,
                     item: r.meal_item_name || 'Not assigned',
                     status: r.status,
-                    is_veg: !!r.is_veg_customer
+                    is_veg: !!r.is_veg_customer,
+                    allergy_info: r.customer_allergy || r.item_allergy || null,
+                    delivery_instructions: r.delivery_instructions || null
                 }))
             };
         }

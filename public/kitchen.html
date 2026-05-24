@@ -316,6 +316,7 @@ async function loadPrepare() {
     const r = await fetch(`${API}/kitchen/daily-summary?date=${date}&kitchen_id=${kitchenId}`, {headers:{"Authorization":"Bearer "+token}});
     const d = await r.json();
     if (d.error) { area.innerHTML = `<div class="empty"><i class="fas fa-exclamation-circle"></i><p>${d.error}</p></div>`; return; }
+    window.lastKitchenData = d;
     renderPrepare(d);
   } catch(e) { area.innerHTML = '<div class="empty"><i class="fas fa-wifi"></i><p>Connection error</p></div>'; }
 }
@@ -371,14 +372,22 @@ function renderPrepare(data) {
           <i class="fas fa-chevron-right" style="font-size:11px;transition:.2s"></i> Customer List (${s.customer_list.length})
         </div>
         <div class="cust-list">
-          <table><thead><tr><th>#</th><th>Customer</th><th>Phone</th><th>Item</th><th>Address</th><th>Status</th></tr></thead>
+          <div style="margin-bottom:8px;display:flex;gap:8px;justify-content:flex-end;">
+            <button onclick="printKOT('${mt}','${data.date}')" style="background:#1e293b;color:white;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;"><i class="fas fa-print"></i> Print KOT (80mm)</button>
+          </div>
+          <table><thead><tr><th>#</th><th>Customer</th><th>Phone</th><th>Item</th><th>Allergy / Notes</th><th>Status</th></tr></thead>
           <tbody>${s.customer_list.map((c,i)=>`<tr>
             <td style="color:var(--muted)">${i+1}</td>
-            <td><strong>${c.name}</strong></td><td>${c.phone||"—"}</td>
+            <td><strong>${c.name}</strong><br><span style="font-size:10.5px;color:var(--muted)">${c.is_veg?'🟢 Veg':'🔴 Non-Veg'}</span></td>
+            <td>${c.phone||'—'}</td>
             <td>${c.item}</td>
-            <td style="font-size:11.5px;color:var(--muted);max-width:160px">${c.address||"—"}</td>
-            <td>${c.status==="delivered"?'<span class="badge bg">Done</span>':c.status==="skipped"?'<span class="badge bgr">Skip</span>':'<span class="badge ba">Pending</span>'}</td>
-          </tr>`).join("")}</tbody></table>
+            <td style="font-size:11px;max-width:180px;">
+              ${c.allergy_info?`<span style="color:#b45309;background:#fef9c3;padding:1px 6px;border-radius:4px;">⚠️ ${c.allergy_info}</span>`:''}
+              ${c.delivery_instructions?`<div style="color:#1e40af;margin-top:2px;">📝 ${c.delivery_instructions}</div>`:''}
+              ${!c.allergy_info&&!c.delivery_instructions?'—':''}
+            </td>
+            <td>${c.status==='delivered'?'<span class="badge bg">Done</span>':c.status==='skipped'?'<span class="badge bgr">Skip</span>':'<span class="badge ba">Pending</span>'}</td>
+          </tr>`).join('')}</tbody></table>
         </div>
       <button onclick="markFoodReady('${mt}','${getDate()}')" 
         style="width:100%;padding:12px;margin-top:14px;background:var(--g);color:white;
@@ -388,6 +397,65 @@ function renderPrepare(data) {
       </button>
     </div>`;
   }).join("");
+}
+
+// ===== KOT PRINT =====
+function printKOT(mealType, date) {
+  const data = window.lastKitchenData;
+  if (!data || !data.summary || !data.summary[mealType]) { alert('Load the summary first'); return; }
+  const s = data.summary[mealType];
+  const mt = mealType.charAt(0).toUpperCase() + mealType.slice(1);
+  const kitchenName = document.getElementById('kitchenSel')?.options[document.getElementById('kitchenSel')?.selectedIndex]?.text || 'Kitchen';
+
+  let kotHTML = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Courier New',monospace;font-size:12px;width:80mm;padding:4mm;}
+    .center{text-align:center;}
+    .bold{font-weight:bold;}
+    .lg{font-size:14px;}
+    .sm{font-size:10px;}
+    hr{border:none;border-top:1px dashed #000;margin:4px 0;}
+    .item-row{display:flex;justify-content:space-between;padding:2px 0;}
+    .cust-row{padding:2px 0;border-bottom:1px dotted #ccc;}
+    .allergy{background:#000;color:#fff;padding:1px 4px;font-size:10px;}
+    @media print{body{width:80mm;}}
+  </style></head><body>
+  <div class="center bold lg">${kitchenName}</div>
+  <div class="center sm">KOT — Kitchen Order Ticket</div>
+  <div class="center sm">${date} | ${mt}</div>
+  <hr>
+  <div class="bold center">ITEMS TO PREPARE</div>
+  <hr>
+  ${s.items_to_prepare.map(item=>`
+    <div class="item-row bold"><span>${item.meal_item_name}</span><span>× ${item.total}</span></div>
+    <div class="sm" style="padding-left:8px;">🟢 Veg: ${item.veg_count} &nbsp; 🔴 Non-Veg: ${item.non_veg_count}</div>
+  `).join('<hr>')}
+  <hr>
+  <div class="item-row sm"><span>Total Prepare:</span><span>${s.net_to_prepare}</span></div>
+  <div class="item-row sm"><span>🟢 Veg:</span><span>${s.net_veg}</span></div>
+  <div class="item-row sm"><span>🔴 Non-Veg:</span><span>${s.net_non_veg}</span></div>
+  <div class="item-row sm"><span>Skipped:</span><span>${s.skipped_total}</span></div>
+  <hr>
+  <div class="bold">CUSTOMER LIST</div>
+  <hr>
+  ${s.customer_list.filter(c=>c.status!=='skipped').map((c,i)=>`
+    <div class="cust-row">
+      <div>${i+1}. ${c.name} ${c.is_veg?'[V]':'[NV]'}</div>
+      <div class="sm">${c.item}</div>
+      ${c.allergy_info?`<div class="allergy sm">⚠️ ALLERGY: ${c.allergy_info}</div>`:''}
+      ${c.delivery_instructions?`<div class="sm">📝 ${c.delivery_instructions}</div>`:''}
+    </div>
+  `).join('')}
+  <hr>
+  <div class="center sm">Printed: ${new Date().toLocaleTimeString()}</div>
+  </body></html>`;
+
+  const w = window.open('','_blank','width=400,height=600');
+  w.document.write(kotHTML);
+  w.document.close();
+  w.focus();
+  setTimeout(()=>{ w.print(); }, 500);
 }
 
 // ===== ASSIGN TAB =====

@@ -1609,7 +1609,9 @@ function plotMapPoints(data) {
     marker.addListener('click',()=>{if(openIW)openIW.close();iw.open(mapInstance,marker);openIW=iw;});
     marker._iw=iw;mapMarkers.push(marker);
   });
-  if(mapMarkers.length)mapInstance.fitBounds(bounds);
+  if(mapMarkers.length)mapInstance.fitBounds(bounds,{top:60,right:60,bottom:60,left:60});
+  // Don't zoom in too close when few markers
+  google.maps.event.addListenerOnce(mapInstance,'bounds_changed',()=>{ if(mapInstance.getZoom()>13)mapInstance.setZoom(13); });
 }
 
 function initMap() {
@@ -1623,7 +1625,7 @@ function initMap() {
 
 function onGoogleMapsLoaded() {
   const el=document.getElementById('customerMap');if(!el)return;
-  mapInstance=new google.maps.Map(el,{center:{lat:11.0,lng:76.1},zoom:10,mapTypeControl:false,streetViewControl:false,fullscreenControl:true,styles:[{featureType:'poi',elementType:'labels',stylers:[{visibility:'off'}]}]});
+  mapInstance=new google.maps.Map(el,{center:{lat:11.0,lng:76.1},zoom:7,mapTypeControl:false,streetViewControl:false,fullscreenControl:true,styles:[{featureType:'poi',elementType:'labels',stylers:[{visibility:'off'}]}]});
   loadMapData();
 }
 
