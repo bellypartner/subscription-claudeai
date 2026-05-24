@@ -373,7 +373,15 @@ select[multiple].fc{height:120px;}
         <div class="card"><div class="tbl-wrap"><table>
           <thead><tr><th>Photo</th><th>Name</th><th>Phone</th><th>Kitchen</th><th>Territory</th><th>Vehicle</th><th>Customers</th><th></th></tr></thead>
           <tbody id="dbBody"><tr><td colspan="8" class="loading"><span class="spinner"></span></td></tr></tbody>
-        </table></div></div>
+        </table>
+        </div>
+         <button onclick="markFoodReady('${mt}','${getDate()}')" 
+          style="width:100%;padding:12px;margin-top:12px;background:var(--g);color:white;
+          border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;">
+          ✅ Mark ${mt.charAt(0).toUpperCase()+mt.slice(1)} as Ready for Delivery
+        </button>
+        </div>`
+        </div></div>
       </div>
 
       <div id="page-settings" class="page">
@@ -667,7 +675,7 @@ select[multiple].fc{height:120px;}
     <div class="frow">
       <div class="fg"><label class="fl">Plan *</label><select class="fc" id="oPlan" onchange="updateOrderPreview()"><option value="">Select Plan</option></select></div>
       <div class="fg"><label class="fl">Territory</label><select class="fc" id="oTerritory" onchange="cascadeKitchen('oTerritory','oKitchen')"><option value="">Select Territory</option></select></div>
-      <div class="fg"><label class="fl">Kitchen</label><select class="fc" id="oKitchen"><option value="">Select Kitchen</option></select></div>
+      <div class="fg"><label class="fl">Kitchen</label><select class="fc" id="oKitchen" onchange="cascadeDeliveryBoy('oKitchen','oDeliveryBoy')"><option value="">Select Kitchen</option></select></div>
     </div>
     <div class="frow">
       <div class="fg"><label class="fl">Start Date *</label><input type="date" class="fc" id="oStart"></div>
@@ -821,7 +829,10 @@ async function loadMeals(){
       const img=m.image_base64?`<img src="${m.image_base64}" class="meal-thumb" alt="">`:"<div class='meal-thumb' style='display:flex;align-items:center;justify-content:center;font-size:18px;background:var(--bg);'>&#127869;</div>";
       const tags=[];if(m.veg_tag)tags.push("<span class='badge bg'>Veg</span>");if(m.eggetarian_tag)tags.push("<span class='badge' style='background:#fef9c3;color:#92400e'>Egg</span>");if(m.vegan_tag)tags.push("<span class='badge' style='background:#dcfce7;color:#166534'>Vegan</span>");if(m.non_veg_tag)tags.push("<span class='badge br'>Non-Veg</span>");
       const allergy=m.allergy_info?m.allergy_info.split(",").filter(Boolean).map(a=>`<span style="background:#fef9c3;color:#92400e;padding:1px 6px;border-radius:10px;font-size:10px;font-weight:700;">${a.trim()}</span>`).join(" "):"None";
-      return `<tr><td>${img}</td><td><strong>${m.name}</strong>${m.proteins?`<div style="font-size:10.5px;color:var(--muted)">P:${m.proteins}g C:${m.carbs||0}g</div>`:""}</td><td>${m.category_name||"?"}</td><td style="min-width:80px;">${tags.join(" ")||"?"}</td><td>${m.mrp?"Rs "+m.mrp:"?"}</td><td>${m.calories?m.calories+" kcal":"?"}</td><td style="max-width:150px;">${allergy}</td><td><button class="btn btn-r btn-sm" onclick="deleteMeal(${m.id})"><i class="fas fa-trash"></i></button></td></tr>`;
+      return `<tr><td>${img}</td><td><strong>${m.name}</strong>${m.proteins?`<div style="font-size:10.5px;color:var(--muted)">P:${m.proteins}g C:${m.carbs||0}g</div>`:""}</td><td>${m.category_name||"?"}</td><td style="min-width:80px;">${tags.join(" ")||"?"}</td><td>${m.mrp?"Rs "+m.mrp:"?"}</td><td>${m.calories?m.calories+" kcal":"?"}</td><td style="max-width:150px;">${allergy}</td><td style="display:flex;gap:6px;">
+  <button class="btn btn-o btn-sm" onclick="openEditMeal(${m.id})"><i class="fas fa-edit"></i></button>
+  <button class="btn btn-r btn-sm" onclick="deleteMeal(${m.id})"><i class="fas fa-trash"></i></button>
+</td></tr>`;
     }).join("");
   }catch(e){showErr2("mealErr","Error loading - check server connection");}
 }
@@ -1543,7 +1554,21 @@ async function cascadeKitchen(terrSelectId, kitchenSelectId) {
   if(!terrId){kitchens.forEach(k=>{const o=document.createElement('option');o.value=k.id;o.text=k.name;kSel.appendChild(o);});return;}
   try{const ks=await api(`${API}/kitchens-by-territory?territory_id=${terrId}`);(ks||[]).forEach(k=>{const o=document.createElement('option');o.value=k.id;o.text=k.name;kSel.appendChild(o);});}catch(e){}
 }
-
+async function cascadeDeliveryBoy(kitchenSelectId, dbSelectId) {
+  const kitchenId = document.getElementById(kitchenSelectId)?.value;
+  const sel = document.getElementById(dbSelectId);
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Select Delivery Boy</option>';
+  if (!kitchenId) return;
+  try {
+    const dbs = await api(`${API}/admin/delivery-boys-by-kitchen?kitchen_id=${kitchenId}`);
+    (dbs||[]).forEach(d => {
+      const o = document.createElement('option');
+      o.value = d.id; o.text = d.name;
+      sel.appendChild(o);
+    });
+  } catch(e) {}
+}
 // ==================== EDIT FUNCTIONS ====================
 
 // CATEGORIES

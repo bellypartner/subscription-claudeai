@@ -178,6 +178,7 @@ async function initDB() {
         `ALTER TABLE customers ADD COLUMN IF NOT EXISTS delivery_sequence INTEGER DEFAULT 0`,
         `ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS delivery_boy_id INTEGER`,
         `ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS delivery_sequence INTEGER DEFAULT 0`,
+        `ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS food_ready INTEGER DEFAULT 0`,
         `ALTER TABLE users ADD COLUMN IF NOT EXISTS kitchen_id INTEGER`,
         `ALTER TABLE customers ADD COLUMN IF NOT EXISTS alternate_phone TEXT`,
         `ALTER TABLE customers ADD COLUMN IF NOT EXISTS city TEXT`,
@@ -530,6 +531,13 @@ app.post('/api/customer/skip-meal/:id', verifyToken, reqCust, async (req, res) =
         if (order && order.extended_days < 45) {
             const ne = nextWorkDay(toDS(order.end_date));
             await db.query(`UPDATE orders SET end_date=$1,extended_days=extended_days+1 WHERE id=$2`, [ne, order.id]);
+            await db.query(
+    `INSERT INTO deliveries (order_id,customer_id,kitchen_id,delivery_date,meal_type,
+     slot_number,meal_item_id,is_veg_customer,status,is_sunday_skip,delivery_boy_id)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending',0,$9)`,
+    [d.order_id, c.id, d.kitchen_id, ne, d.meal_type,
+     d.slot_number, d.meal_item_id, d.is_veg_customer, d.delivery_boy_id||null]
+);
         }
         res.json({ message: `Meal skipped. Subscription extended by 1 working day. No refund.` });
     } catch(e) { res.status(500).json({ error: e.message }); }
@@ -1286,7 +1294,8 @@ app.get('/api/delivery/today', verifyToken, reqDelivery, async (req, res) => {
             LEFT JOIN orders o ON d.order_id=o.id
             LEFT JOIN subscription_plans p ON o.plan_id=p.id
             WHERE d.delivery_boy_id=$1 AND d.delivery_date=$2
-              AND d.is_sunday_skip=0
+            AND d.is_sunday_skip=0
+            AND d.food_ready=1
             ORDER BY d.delivery_sequence ASC, c.name ASC
         `, [db_row.id, date]);
 
@@ -1313,6 +1322,21 @@ app.put('/api/delivery/mark/:id', verifyToken, reqDelivery, async (req, res) => 
             [status, da, notes||null, req.user.name, req.params.id]);
         res.json({ message: status==='delivered' ? 'Marked as delivered' : 'Marked as skipped' });
     } catch(e) { res.status(400).json({ error: e.message }); }
+});
+
+app.put('/api/kitchen/mark-ready/:date/:mealType', verifyToken, reqKitchen, async (req, res) => {
+    try {
+        const u = await db.one(`SELECT id FROM users WHERE id=$1`, [req.user.id]);
+        const k = await db.one(`SELECT k.id FROM kitchens k 
+            JOIN users u ON u.kitchen_id=k.id WHERE u.id=$1`, [req.user.id]);
+        if (!k) return res.status(404).json({ error: 'Kitchen not found' });
+        await db.query(
+            `UPDATE deliveries SET food_ready=1 
+             WHERE kitchen_id=$1 AND delivery_date=$2 AND meal_type=$3 AND status='pending'`,
+            [k.id, req.params.date, req.params.mealType]
+        );
+        res.json({ message: `${req.params.mealType} marked ready — delivery boys can now see orders` });
+    } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 // KM: get delivery boys in their kitchen
@@ -1829,6 +1853,13 @@ app.post('/api/admin/deliveries/:id/skip', verifyToken, async (req, res) => {
         if (order) {
             const ne = nextWorkDay(toDS(order.end_date));
             await db.query(`UPDATE orders SET end_date=$1,extended_days=extended_days+1 WHERE id=$2`, [ne, order.id]);
+            await db.query(
+    `INSERT INTO deliveries (order_id,customer_id,kitchen_id,delivery_date,meal_type,
+     slot_number,meal_item_id,is_veg_customer,status,is_sunday_skip,delivery_boy_id)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending',0,$9)`,
+    [d.order_id, d.customer_id, d.kitchen_id, ne, d.meal_type,
+     d.slot_number, d.meal_item_id, d.is_veg_customer, d.delivery_boy_id||null]
+);
         }
         res.json({ message: 'Delivery skipped, subscription extended 1 day' });
     } catch(e) { res.status(400).json({ error: e.message }); }
@@ -2349,6 +2380,13 @@ app.post('/api/customer/skip-meal/:id', verifyToken, reqCust, async (req, res) =
         if (order && order.extended_days < 45) {
             const ne = nextWorkDay(toDS(order.end_date));
             await db.query(`UPDATE orders SET end_date=$1,extended_days=extended_days+1 WHERE id=$2`, [ne, order.id]);
+            await db.query(
+    `INSERT INTO deliveries (order_id,customer_id,kitchen_id,delivery_date,meal_type,
+     slot_number,meal_item_id,is_veg_customer,status,is_sunday_skip,delivery_boy_id)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending',0,$9)`,
+    [d.order_id, c.id, d.kitchen_id, ne, d.meal_type,
+     d.slot_number, d.meal_item_id, d.is_veg_customer, d.delivery_boy_id||null]
+);
         }
         res.json({ message: `Meal skipped. Subscription extended by 1 working day. No refund.` });
     } catch(e) { res.status(500).json({ error: e.message }); }

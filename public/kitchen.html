@@ -272,7 +272,15 @@ async function loadKitchens() {
     document.getElementById("tbKitchen").textContent = "— " + ks[0].name;
   }
 }
-
+async function markFoodReady(mealType, date) {
+  if (!confirm(`Mark all ${mealType} as ready for delivery boys?`)) return;
+  const r = await fetch(`${API}/kitchen/mark-ready/${date}/${mealType}`, {
+    method: 'PUT', headers: { 'Authorization': 'Bearer ' + token }
+  });
+  const d = await r.json();
+  alert(d.message || d.error);
+  loadPrepare();
+}
 function onKitchenChange() {
   kitchenId = document.getElementById("kitchenFilter").value;
   const sel = document.getElementById("kitchenFilter");
