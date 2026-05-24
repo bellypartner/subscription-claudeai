@@ -380,7 +380,12 @@ function renderPrepare(data) {
             <td>${c.status==="delivered"?'<span class="badge bg">Done</span>':c.status==="skipped"?'<span class="badge bgr">Skip</span>':'<span class="badge ba">Pending</span>'}</td>
           </tr>`).join("")}</tbody></table>
         </div>
-      </div>
+      <button onclick="markFoodReady('${mt}','${getDate()}')" 
+        style="width:100%;padding:12px;margin-top:14px;background:var(--g);color:white;
+        border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;
+        display:flex;align-items:center;justify-content:center;gap:8px;">
+        ✅ Mark ${mt.charAt(0).toUpperCase()+mt.slice(1)} as Ready for Delivery
+      </button>
     </div>`;
   }).join("");
 }
