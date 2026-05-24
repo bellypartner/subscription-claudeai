@@ -200,6 +200,7 @@ async function initDB() {
         `ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT`,
         `CREATE TABLE IF NOT EXISTS delivery_boys (id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id), kitchen_id INTEGER REFERENCES kitchens(id), territory_id INTEGER REFERENCES territories(id), name TEXT NOT NULL, phone TEXT, email TEXT, photo_base64 TEXT, vehicle_type TEXT DEFAULT 'bike', status TEXT DEFAULT 'active', created_at TIMESTAMPTZ DEFAULT NOW())`,
         `ALTER TABLE plan_menu_slots ADD COLUMN IF NOT EXISTS dinner_item_id INTEGER REFERENCES meal_items(id)`,
+        `ALTER TABLE plan_menu_slots ADD COLUMN IF NOT EXISTS dinner_veg_item_id INTEGER REFERENCES meal_items(id)`,
     ];
     for (const sql of alters) { try { await db.query(sql); } catch(e) {} }
 
@@ -809,12 +810,14 @@ app.get('/api/admin/plan-menus', verifyToken, async (req, res) => {
                     mc.name as category_name,
                     pi.name as primary_item_name, pi.veg_tag as primary_veg, pi.non_veg_tag as primary_non_veg, pi.image_base64 as primary_image, pi.calories as primary_calories,
                     ai.name as alternate_item_name, ai.veg_tag as alt_veg, ai.non_veg_tag as alt_non_veg, ai.calories as alt_calories,
-                    di.name as dinner_item_name, di.calories as dinner_calories, di.veg_tag as dinner_veg
+                    di.name as dinner_item_name, di.calories as dinner_calories, di.veg_tag as dinner_veg,
+                    dvi.name as dinner_veg_item_name, dvi.calories as dinner_veg_calories
                 FROM plan_menu_slots pms
                 LEFT JOIN meal_categories mc ON pms.category_id=mc.id
                 LEFT JOIN meal_items pi ON pms.primary_item_id=pi.id
                 LEFT JOIN meal_items ai ON pms.alternate_item_id=ai.id
                 LEFT JOIN meal_items di ON pms.dinner_item_id=di.id
+                LEFT JOIN meal_items dvi ON pms.dinner_veg_item_id=dvi.id
                 WHERE pms.plan_menu_id=$1 ORDER BY pms.slot_number
             `, [m.id]);
             m.slots = slots;
@@ -845,9 +848,9 @@ app.post('/api/admin/plan-menus', verifyToken, async (req, res) => {
 // Update a single slot (assign primary + alternate items)
 app.put('/api/admin/plan-menus/:menuId/slots/:slotNum', verifyToken, async (req, res) => {
     try {
-        const { primary_item_id, alternate_item_id, dinner_item_id, category_id } = req.body;
-        await db.query(`UPDATE plan_menu_slots SET primary_item_id=$1,alternate_item_id=$2,dinner_item_id=$3,category_id=COALESCE($4,category_id) WHERE plan_menu_id=$5 AND slot_number=$6`,
-            [primary_item_id || null, alternate_item_id || null, dinner_item_id || null, category_id || null, req.params.menuId, req.params.slotNum]);
+        const { primary_item_id, alternate_item_id, dinner_item_id, dinner_veg_item_id, category_id } = req.body;
+        await db.query(`UPDATE plan_menu_slots SET primary_item_id=$1,alternate_item_id=$2,dinner_item_id=$3,dinner_veg_item_id=$4,category_id=COALESCE($5,category_id) WHERE plan_menu_id=$6 AND slot_number=$7`,
+            [primary_item_id || null, alternate_item_id || null, dinner_item_id || null, dinner_veg_item_id || null, category_id || null, req.params.menuId, req.params.slotNum]);
         res.json({ message: 'Slot updated' });
     } catch(e) { res.status(400).json({ error: e.message }); }
 });
@@ -1011,9 +1014,18 @@ app.post('/api/admin/orders', verifyToken, async (req, res) => {
             for (const mt of mealTypes) {
                 let mealItemId = null;
                 if (slot) {
-                    if (mt === 'dinner' && isCombo && slot.dinner_item_id) {
-                        // Combo lunch+dinner customers get a different dinner item
-                        mealItemId = slot.dinner_item_id;
+                    if (mt === 'dinner' && isCombo) {
+                        const isVeg = isVegCustomer(customer.diet_preference);
+                        if (isVeg && slot.dinner_veg_item_id) {
+                            // Veg combo customers get veg dinner alternate
+                            mealItemId = slot.dinner_veg_item_id;
+                        } else if (!isVeg && slot.dinner_item_id) {
+                            // Non-veg combo customers get non-veg dinner alternate
+                            mealItemId = slot.dinner_item_id;
+                        } else {
+                            // Fallback — same as lunch item
+                            mealItemId = pickItemForCustomer(slot, customer.diet_preference);
+                        }
                     } else {
                         mealItemId = pickItemForCustomer(slot, customer.diet_preference);
                     }
