@@ -41,6 +41,32 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--dk);font-
 .sb-uname{color:white;font-size:12.5px;font-weight:500;}
 .sb-urole{color:rgba(255,255,255,.35);font-size:10.5px;}
 .sb-logout{margin-top:7px;width:100%;padding:7px;background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.2);border-radius:6px;cursor:pointer;font-size:11.5px;font-weight:600;font-family:"DM Sans",sans-serif;}
+/* ── Mobile responsive ── */
+.mob-menu-btn{display:none;background:none;border:none;color:white;font-size:22px;cursor:pointer;padding:4px 8px;}
+@media(max-width:768px){
+  #sidebarToggleBtn{display:flex!important;}
+  .sb-menu-btn{display:flex!important;}
+  .sidebar{position:fixed;left:-260px;top:0;height:100vh;z-index:1000;transition:left .25s;box-shadow:4px 0 20px rgba(0,0,0,.3);}
+  .sidebar.open{left:0;}
+  .main{margin-left:0!important;}
+  .page{padding:12px!important;}
+  .sec-hd{flex-wrap:wrap;gap:8px;}
+  .tbl-wrap{overflow-x:auto;}
+  .frow{flex-direction:column!important;}
+  .fg{min-width:0!important;}
+  .modal-box{margin:8px;max-height:96vh;}
+  .card{padding:14px!important;}
+  .slot-grid{grid-template-columns:repeat(3,1fr)!important;}
+  .stat-cards{grid-template-columns:repeat(2,1fr)!important;}
+  .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:999;}
+  .overlay.show{display:block;}
+}
+@media(max-width:420px){
+  .slot-grid{grid-template-columns:repeat(2,1fr)!important;}
+  .stat-cards{grid-template-columns:1fr 1fr!important;}
+  table{font-size:12px;}
+  th,td{padding:8px 6px!important;}
+}
 .main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;}
 .topbar{background:white;border-bottom:1px solid var(--border);padding:0 26px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--sh);}
 .pg-title{font-size:17px;font-weight:700;}
@@ -195,10 +221,12 @@ select[multiple].fc{height:120px;}
     </div>
   </aside>
   <div class="main">
-    <div class="topbar">
-      <div><div class="pg-title" id="pgTitle">Dashboard</div><div class="pg-sub" id="pgSub">Overview</div></div>
+    <div class="topbar" style="display:flex;align-items:center;gap:12px;">
+      <button onclick="toggleSidebar()" style="display:none;background:none;border:1px solid var(--border);border-radius:7px;padding:6px 10px;cursor:pointer;font-size:16px;color:var(--muted);" id="sidebarToggleBtn">☰</button>
+      <div style="flex:1;"><div class="pg-title" id="pgTitle">Dashboard</div><div class="pg-sub" id="pgSub">Overview</div></div>
       <span style="font-size:12px;color:var(--muted);" id="pgDate"></span>
     </div>
+    <div class="overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
     <div class="content">
       <div id="page-dashboard" class="page active">
         <div class="stats-grid">
@@ -235,7 +263,7 @@ select[multiple].fc{height:120px;}
       <div id="page-categories" class="page">
         <div class="sec-hd"><span class="sec-title">Meal Categories</span><button class="btn btn-g" onclick="openModal('catModal')"><i class="fas fa-plus"></i> Add Category</button></div>
         <div class="alert as" id="catOk"></div><div class="alert ae" id="catErr"></div>
-        <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Description</th><th></th></tr></thead>
+        <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Description</th><th>Items</th><th>Veg</th><th>Non-Veg</th><th></th></tr></thead>
         <tbody id="catBody"><tr><td colspan="3" class="loading"><span class="spinner"></span></td></tr></tbody></table></div></div>
       </div>
       <div id="page-meals" class="page">
@@ -494,6 +522,13 @@ select[multiple].fc{height:120px;}
     </div>
   </div>
 </div>
+<div class="modal-bg" id="catItemsModal"><div class="modal-box">
+  <div class="modal-hd">
+    <span class="modal-title">Category Items</span>
+    <button class="modal-close" onclick="closeModal('catItemsModal')">&times;</button>
+  </div>
+  <div class="modal-body" id="catItemsBody"></div>
+</div></div>
 <!-- MODALS -->
 
 <!-- SLOT EDIT MODAL -->
@@ -809,6 +844,20 @@ const API="/api";
 let token=null,user=null,cats=[],plans=[],customers=[],kitchens=[],territories=[],savedMenus=[];
 let generatedMenuData=null;
 document.getElementById("pgDate").textContent=new Date().toLocaleDateString("en-IN",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
+function toggleSidebar() {
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('show');
+}
+function closeSidebar() {
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('show');
+}
+// Close sidebar on page change on mobile
+const _origShowPage = showPage;
+function showPage(name, el) {
+  _origShowPage(name, el);
+  if (window.innerWidth <= 768) closeSidebar();
+}
 window.addEventListener("load",()=>{const t=sessionStorage.getItem("aToken");if(t){token=t;user=JSON.parse(sessionStorage.getItem("aUser")||"{}");showApp();loadAll();}});
 async function doLogin(){
   const email=document.getElementById("loginEmail").value,pwd=document.getElementById("loginPwd").value,err=document.getElementById("loginErr");
@@ -913,8 +962,38 @@ async function loadCategories(){
     const data=await api(`${API}/admin/categories`);cats=data||[];refreshCatDropdowns();
     const body=document.getElementById("catBody");
     if(!cats.length){body.innerHTML="<tr><td colspan='3'><div class='empty'><i class='fas fa-tag'></i><p>No categories yet</p></div></td></tr>";return;}
-    body.innerHTML=cats.map(c=>`<tr><td><strong>${c.name}</strong></td><td>${c.description||"?"}</td><td style="display:flex;gap:6px;"><button class="btn btn-o btn-sm" onclick="openEditCat(${c.id},'${c.name.replace(/'/g,"")}','${(c.description||"").replace(/'/g,"")}')"><i class="fas fa-edit"></i></button><button class="btn btn-r btn-sm" onclick="deleteCat(${c.id})"><i class="fas fa-trash"></i></button></td></tr>`).join("");
+    body.innerHTML=cats.map(c=>`<tr><td>
+  <div style="display:flex;gap:6px;align-items:center;cursor:pointer;" onclick="showCatItems(${c.id},'${c.name}')">
+    <span style="background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:700;">${c.total_items||0} items</span>
+    <span style="background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:10px;font-size:12px;">🟢 ${c.veg_count||0}</span>
+    <span style="background:#fee2e2;color:#b91c1c;padding:2px 8px;border-radius:10px;font-size:12px;">🔴 ${c.non_veg_count||0}</span>
+  </div>
+</td><td style="display:flex;gap:6px;"><button class="btn btn-o btn-sm" onclick="openEditCat(${c.id},'${c.name.replace(/'/g,"")}','${(c.description||"").replace(/'/g,"")}')"><i class="fas fa-edit"></i></button><button class="btn btn-r btn-sm" onclick="deleteCat(${c.id})"><i class="fas fa-trash"></i></button></td></tr>`).join("");
   }catch(e){showErr2("catErr","Error loading - check server connection");}
+}
+
+async function showCatItems(catId, catName) {
+  const items = (await api(`${API}/admin/meal-items`))
+    .filter(m => m.category_id == catId);
+  const veg = items.filter(m => m.veg_tag);
+  const nonVeg = items.filter(m => m.non_veg_tag);
+  let html = `<div style="font-weight:700;font-size:15px;margin-bottom:12px;">${catName} — ${items.length} items</div>`;
+  if (veg.length) {
+    html += `<div style="font-weight:600;color:var(--gd);margin-bottom:6px;">🟢 Veg (${veg.length})</div>`;
+    html += veg.map(m => `<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;">
+      ${m.name} ${m.calories ? `<span style="color:var(--muted);font-size:11px;">${m.calories} kcal</span>` : ''}
+    </div>`).join('');
+  }
+  if (nonVeg.length) {
+    html += `<div style="font-weight:600;color:var(--red);margin:10px 0 6px;">🔴 Non-Veg (${nonVeg.length})</div>`;
+    html += nonVeg.map(m => `<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;">
+      ${m.name} ${m.calories ? `<span style="color:var(--muted);font-size:11px;">${m.calories} kcal</span>` : ''}
+    </div>`).join('');
+  }
+  if (!items.length) html += '<div style="color:var(--muted);font-size:13px;">No items in this category yet</div>';
+  // Show in a simple alert modal or reuse existing modal
+  document.getElementById('catItemsBody').innerHTML = html;
+  openModal('catItemsModal');
 }
 function refreshCatDropdowns(){
   const mc=document.getElementById("mCat");if(mc)mc.innerHTML="<option value=''>Select Category</option>"+cats.map(c=>`<option value="${c.id}">${c.name}</option>`).join("");

@@ -869,7 +869,15 @@ app.get('/api/admin/stats', verifyToken, async (req, res) => {
 
 // ==================== ADMIN CATEGORIES ====================
 app.get('/api/admin/categories', verifyToken, async (req, res) => {
-    try { res.json(await db.all(`SELECT * FROM meal_categories WHERE status='active' ORDER BY name`)); }
+    try { res.json(await db.all(`SELECT mc.*, 
+  COUNT(mi.id) as total_items,
+  SUM(CASE WHEN mi.veg_tag=1 THEN 1 ELSE 0 END) as veg_count,
+  SUM(CASE WHEN mi.non_veg_tag=1 THEN 1 ELSE 0 END) as non_veg_count
+FROM meal_categories mc
+LEFT JOIN meal_items mi ON mi.category_id=mc.id AND mi.status='active'
+WHERE mc.status='active'
+GROUP BY mc.id
+ORDER BY mc.name`)); }
     catch(e) { res.status(500).json({ error: e.message }); }
 });
 app.post('/api/admin/categories', verifyToken, async (req, res) => {
@@ -2352,12 +2360,25 @@ app.post('/api/admin/plan-menu/generate', verifyToken, async (req, res) => {
             catItems[cat.id] = { veg: vegItems, nonVeg: nonVegItems };
         }
 
-        // Track item usage per category per week to avoid same-week repeats
-        // usageMap[catId][week] = { vegIdx, nonVegIdx }
+        // Track item usage per category — GLOBAL counter across all weeks
+        // This ensures no item repeats until all items in category are used
         const usageMap = {};
         for (const cat of categories) {
-            usageMap[cat.id] = {};
-            for (let w = 0; w < 4; w++) usageMap[cat.id][w] = { vegIdx: 0, nonVegIdx: 0 };
+            // Shuffle items to avoid always starting from same item
+            const shuffle = arr => {
+                const a = [...arr];
+                for (let i = a.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [a[i], a[j]] = [a[j], a[i]];
+                }
+                return a;
+            };
+            usageMap[cat.id] = {
+                veg: shuffle(catItems[cat.id].veg),
+                nonVeg: shuffle(catItems[cat.id].nonVeg),
+                vegIdx: 0,
+                nonVegIdx: 0,
+            };
         }
 
         const slots = [];
@@ -2369,27 +2390,26 @@ app.post('/api/admin/plan-menu/generate', verifyToken, async (req, res) => {
             const weekday = ((slot - 1) % WEEKDAYS) + 1;
             const week = Math.floor((slot - 1) / WEEKDAYS);
             const dayType = slot % 2 === 1 ? 'veg' : 'non_veg';
-            const items = catItems[cat.id];
-            const usage = usageMap[cat.id][week];
+            const usage = usageMap[cat.id];
 
-            // Pick veg item (primary on veg day, alternate on non-veg day)
+            // Pick veg item — cycles through ALL items before repeating
             let vegItem = null, nonVegItem = null;
 
-            if (items.veg.length > 0) {
-                vegItem = items.veg[usage.vegIdx % items.veg.length];
+            if (usage.veg.length > 0) {
+                vegItem = usage.veg[usage.vegIdx % usage.veg.length];
                 usage.vegIdx++;
-                if (items.veg.length < 4) {
-                    warnings.push(`Category "${cat.name}" has only ${items.veg.length} veg item(s) — some will repeat`);
+                if (usage.veg.length < 4) {
+                    warnings.push(`Category "${cat.name}" has only ${usage.veg.length} veg item(s) — some will repeat`);
                 }
             } else {
                 warnings.push(`Category "${cat.name}" has NO veg items — slot ${slot} veg unassigned`);
             }
 
-            if (items.nonVeg.length > 0) {
-                nonVegItem = items.nonVeg[usage.nonVegIdx % items.nonVeg.length];
+            if (usage.nonVeg.length > 0) {
+                nonVegItem = usage.nonVeg[usage.nonVegIdx % usage.nonVeg.length];
                 usage.nonVegIdx++;
-                if (items.nonVeg.length < 4) {
-                    warnings.push(`Category "${cat.name}" has only ${items.nonVeg.length} non-veg item(s) — some will repeat`);
+                if (usage.nonVeg.length < 4) {
+                    warnings.push(`Category "${cat.name}" has only ${usage.nonVeg.length} non-veg item(s) — some will repeat`);
                 }
             } else {
                 warnings.push(`Category "${cat.name}" has NO non-veg items — slot ${slot} non-veg unassigned`);

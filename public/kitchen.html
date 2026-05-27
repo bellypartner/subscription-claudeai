@@ -140,6 +140,22 @@ tbody tr:hover{background:var(--bg);}
 .loading{text-align:center;padding:32px;color:var(--muted);}
 .last-upd{font-size:11px;color:rgba(255,255,255,.35);}
 @media print{.topbar,.tab-bar,.controls,button{display:none!important;}}
+@media(max-width:768px){
+  .topbar{padding:10px 12px!important;flex-wrap:wrap;gap:6px;}
+  .tab-bar{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .tab-bar button{white-space:nowrap;font-size:12px;padding:9px 12px;}
+  .sc-grid{grid-template-columns:repeat(2,1fr)!important;}
+  .sc-item{min-width:0;}
+  .net-bar{flex-direction:column;gap:8px;}
+  table{font-size:12px;}
+  th,td{padding:7px 6px;}
+  .controls{flex-wrap:wrap;gap:6px;}
+  select.fc{font-size:14px;}
+}
+@media(max-width:420px){
+  .sc-grid{grid-template-columns:1fr 1fr!important;}
+  .topbar h1{font-size:15px;}
+}
 </style>
 </head>
 <body>
