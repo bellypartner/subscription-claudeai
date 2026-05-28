@@ -357,7 +357,7 @@ select[multiple].fc{height:120px;}
       <div id="page-territories" class="page">
         <div class="sec-hd"><span class="sec-title">Territories</span><button class="btn btn-g" onclick="openModal('terrModal')"><i class="fas fa-plus"></i> Add Territory</button></div>
         <div class="alert as" id="terrOk"></div><div class="alert ae" id="terrErr"></div>
-        <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Description</th><th></th></tr></thead>
+        <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Description</th><th>Items</th><th></th></tr></thead>
         <tbody id="terrBody"><tr><td colspan="2" class="loading"><span class="spinner"></span></td></tr></tbody></table></div></div>
       </div>
       <div id="page-kitchens" class="page">
@@ -962,13 +962,18 @@ async function loadCategories(){
     const data=await api(`${API}/admin/categories`);cats=data||[];refreshCatDropdowns();
     const body=document.getElementById("catBody");
     if(!cats.length){body.innerHTML="<tr><td colspan='3'><div class='empty'><i class='fas fa-tag'></i><p>No categories yet</p></div></td></tr>";return;}
-    body.innerHTML=cats.map(c=>`<tr><td>
-  <div style="display:flex;gap:6px;align-items:center;cursor:pointer;" onclick="showCatItems(${c.id},'${c.name}')">
-    <span style="background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:700;">${c.total_items||0} items</span>
-    <span style="background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:10px;font-size:12px;">🟢 ${c.veg_count||0}</span>
-    <span style="background:#fee2e2;color:#b91c1c;padding:2px 8px;border-radius:10px;font-size:12px;">🔴 ${c.non_veg_count||0}</span>
-  </div>
-</td><td style="display:flex;gap:6px;"><button class="btn btn-o btn-sm" onclick="openEditCat(${c.id},'${c.name.replace(/'/g,"")}','${(c.description||"").replace(/'/g,"")}')"><i class="fas fa-edit"></i></button><button class="btn btn-r btn-sm" onclick="deleteCat(${c.id})"><i class="fas fa-trash"></i></button></td></tr>`).join("");
+    body.innerHTML=cats.map(c=>`<tr>
+      <td><strong style="cursor:pointer;color:var(--gd);" onclick="showCatItems(${c.id},'${c.name}')">${c.name}</strong></td>
+      <td style="color:var(--muted);font-size:13px;">${c.description||'—'}</td>
+      <td>
+        <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
+          <span style="background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;" onclick="showCatItems(${c.id},'${c.name}')" title="Click to see all items">${c.total_items||0} items</span>
+          <span style="background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:10px;font-size:12px;">🟢 ${c.veg_count||0}</span>
+          <span style="background:#fee2e2;color:#b91c1c;padding:2px 8px;border-radius:10px;font-size:12px;">🔴 ${c.non_veg_count||0}</span>
+        </div>
+      </td>
+      <td style="display:flex;gap:6px;"><button class="btn btn-o btn-sm" onclick="openEditCat(${c.id},'${c.name.replace(/'/g,"")}','${(c.description||"").replace(/'/g,"")}')"><i class="fas fa-edit"></i></button><button class="btn btn-r btn-sm" onclick="deleteCat(${c.id})"><i class="fas fa-trash"></i></button></td>
+    </tr>`).join("");
   }catch(e){showErr2("catErr","Error loading - check server connection");}
 }
 
