@@ -429,7 +429,18 @@ select[multiple].fc{height:120px;}
             <div class="fg"><label class="fl">Show Dinner list from</label><input type="time" class="fc" id="settDinnerShow" value="13:00"></div>
           </div>
           <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px;">Kitchen will only see that meal's list after this time. Before this time it's hidden.</div>
-          <button class="btn btn-g" onclick="saveSettings()">Save Meal Times</button>
+          <div style="border-top:1px solid var(--border);margin:14px 0;"></div>
+          <div style="font-weight:700;font-size:13px;margin-bottom:10px;">🥗 Veg / Non-Veg Day Schedule</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Tick days to mark as <strong>Veg Day</strong>. Unticked days = Non-Veg Day. Applies to all customers on mixed plans.</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="vd1" value="1"> Monday</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="vd2" value="2"> Tuesday</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="vd3" value="3"> Wednesday</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="vd4" value="4"> Thursday</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="vd5" value="5"> Friday</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="vd6" value="6"> Saturday</label>
+          </div>
+          <button class="btn btn-g" onclick="saveSettings()">Save Meal Times & Veg Days</button>
         </div>
 
         <!-- BRAND SETTINGS CARD -->
@@ -530,6 +541,39 @@ select[multiple].fc{height:120px;}
   <div class="modal-body" id="catItemsBody"></div>
 </div></div>
 <!-- MODALS -->
+
+<!-- EDIT ORDER MODAL -->
+<div class="modal-bg" id="editOrderModal"><div class="modal-box">
+  <div class="modal-hd"><span class="modal-title">✏️ Edit Order</span>
+    <button class="modal-close" onclick="closeModal('editOrderModal')">&times;</button>
+  </div>
+  <div class="modal-body">
+    <input type="hidden" id="editOrdId">
+    <div class="fg"><label class="fl">Plan</label>
+      <select class="fc" id="editOrdPlan"><option value="">Select plan</option></select>
+    </div>
+    <div class="frow">
+      <div class="fg"><label class="fl">Status</label>
+        <select class="fc" id="editOrdStatus">
+          <option value="active">Active</option>
+          <option value="completed">Completed</option>
+          <option value="paused">Paused</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Paid Amount (Rs)</label>
+        <input type="number" class="fc" id="editOrdPaid" placeholder="0">
+      </div>
+    </div>
+    <div class="fg"><label class="fl">Notes</label>
+      <input type="text" class="fc" id="editOrdNotes" placeholder="Internal notes...">
+    </div>
+    <div style="background:#fef9c3;border-radius:8px;padding:10px 12px;font-size:12px;color:#92400e;margin-bottom:12px;">
+      ⚠️ Changing the plan here only updates the order record. Existing scheduled deliveries are not changed. To reschedule deliveries, cancel this order and create a new one.
+    </div>
+    <button class="btn btn-g" style="width:100%;justify-content:center;" onclick="saveEditOrder()">Save Changes</button>
+  </div>
+</div></div>
 
 <!-- SLOT EDIT MODAL -->
 <div class="modal-bg" id="slotEditModal"><div class="modal-box">
@@ -1234,7 +1278,18 @@ async function loadOrders(){
   try{
     const data=await api(`${API}/admin/orders`);const body=document.getElementById("orderBody");
     if(!data?.length){body.innerHTML="<tr><td colspan='7'><div class='empty'><i class='fas fa-receipt'></i><p>No orders</p></div></td></tr>";return;}
-    body.innerHTML=data.map(o=>`<tr><td>#${o.id}</td><td><strong>${o.customer_name||"?"}</strong><div style="font-size:11px;color:var(--muted)">${o.customer_phone||""}</div></td><td>${o.plan_name||"?"}</td><td style="font-size:12px;">${fmtDate(o.start_date)} to ${fmtDate(o.end_date)}</td><td>Rs ${o.total_amount||0}<div style="font-size:11px;color:var(--muted)">Paid: Rs ${o.paid_amount||0}</div></td><td>${statusBadge(o.order_status)}</td><td><select class="fc" style="width:110px;padding:5px 7px;font-size:12px;" onchange="quickUpdateOrder(${o.id},this.value)"><option value="">Update</option><option value="active">Active</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></td></tr>`).join("");
+    body.innerHTML=data.map(o=>`<tr>
+      <td>#${o.id}</td>
+      <td><strong>${o.customer_name||"?"}</strong><div style="font-size:11px;color:var(--muted)">${o.customer_phone||""}</div></td>
+      <td>${o.plan_name||"?"}</td>
+      <td style="font-size:12px;">${fmtDate(o.start_date)} to ${fmtDate(o.end_date)}</td>
+      <td>Rs ${o.total_amount||0}<div style="font-size:11px;color:var(--muted)">Paid: Rs ${o.paid_amount||0}</div></td>
+      <td>${statusBadge(o.order_status)}</td>
+      <td style="display:flex;gap:5px;align-items:center;">
+        <button class="btn btn-o btn-sm" onclick="openEditOrder(${o.id},${o.plan_id||'null'},'${o.order_status}',${o.paid_amount||0},'${(o.notes||'').replace(/'/g,'')}')" title="Edit Order"><i class="fas fa-edit"></i></button>
+        <select class="fc" style="width:100px;padding:5px 7px;font-size:12px;" onchange="quickUpdateOrder(${o.id},this.value)"><option value="">Update</option><option value="active">Active</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select>
+      </td>
+    </tr>`).join("");
   }catch(e){}
 }
 function updateOrderPreview(){const sel=document.getElementById("oPlan"),opt=sel.options[sel.selectedIndex],info=document.getElementById("oPlanInfo");if(opt?.dataset?.price){info.textContent="Plan: Rs "+opt.dataset.price+" - "+opt.dataset.info;info.style.display="block";}else info.style.display="none";}
@@ -1244,6 +1299,31 @@ async function addOrder(){
   const d=await api(`${API}/admin/orders`,{method:"POST",body:JSON.stringify({customer_id:cust,plan_id:plan,kitchen_id:document.getElementById("oKitchen").value||null,start_date:start,paid_amount:document.getElementById("oPaid").value||0,notes:document.getElementById("oNotes").value})});
   if(d.error){showErr2("orderErr",d.error);return;}
   showOk("orderOk","Order created! "+(d.slots||"")+" delivery slots generated.");closeModal("orderModal");await loadOrders();await loadStats();
+}
+async function openEditOrder(id, planId, status, paidAmount, notes) {
+  document.getElementById('editOrdId').value = id;
+  document.getElementById('editOrdStatus').value = status || 'active';
+  document.getElementById('editOrdPaid').value = paidAmount || '';
+  document.getElementById('editOrdNotes').value = notes || '';
+  const ps = document.getElementById('editOrdPlan');
+  ps.innerHTML = (window.plans||[]).map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  if (planId) ps.value = planId;
+  openModal('editOrderModal');
+}
+async function saveEditOrder() {
+  const id = document.getElementById('editOrdId').value;
+  const d = await api(`${API}/admin/orders/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      plan_id: document.getElementById('editOrdPlan').value || null,
+      status: document.getElementById('editOrdStatus').value || null,
+      paid_amount: document.getElementById('editOrdPaid').value || null,
+      notes: document.getElementById('editOrdNotes').value || null,
+    })
+  });
+  if (d.error) { alert('Error: ' + d.error); return; }
+  closeModal('editOrderModal');
+  loadOrders();
 }
 async function quickUpdateOrder(id,status){if(!status)return;await api(`${API}/admin/orders/${id}/status`,{method:"PUT",body:JSON.stringify({order_status:status})});await loadOrders();await loadStats();}
 async function loadDeliveries(){
@@ -1640,6 +1720,12 @@ async function loadSettings() {
     if (s.breakfast_show) document.getElementById('settBreakfastShow').value = s.breakfast_show;
     if (s.lunch_show) document.getElementById('settLunchShow').value = s.lunch_show;
     if (s.dinner_show) document.getElementById('settDinnerShow').value = s.dinner_show;
+    // Veg weekdays checkboxes
+    const vegDays = (s.veg_weekdays || '1,3,5').split(',').map(Number);
+    [1,2,3,4,5,6].forEach(d => {
+      const el = document.getElementById('vd'+d);
+      if (el) el.checked = vegDays.includes(d);
+    });
   } catch(e) {}
   // Load brand settings
   try {
@@ -1723,6 +1809,7 @@ async function saveSettings() {
     breakfast_show: document.getElementById('settBreakfastShow').value,
     lunch_show: document.getElementById('settLunchShow').value,
     dinner_show: document.getElementById('settDinnerShow').value,
+    veg_weekdays: [1,2,3,4,5,6].filter(d=>document.getElementById('vd'+d)?.checked).join(',') || '1,3,5',
   };
   const d = await api(`${API}/admin/settings`, {method:'POST', body:JSON.stringify(body)});
   if (d.error) { showErr2('settErr', d.error); return; }

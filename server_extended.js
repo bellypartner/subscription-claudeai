@@ -333,21 +333,38 @@ function toDS(v) {
     return v instanceof Date ? v.toISOString().split('T')[0] : String(v).split('T')[0];
 }
 
-// Slot 1-24: odd = veg day, even = non_veg day
+// day_type now determined by actual delivery date's weekday, not slot number
+// Veg weekdays configurable in admin Settings
+// 0=Sun,1=Mon,2=Tue,3=Wed,4=Thu,5=Fri,6=Sat — default Mon,Wed,Fri = veg
+async function getVegWeekdays() {
+    try {
+        const row = await db.one(`SELECT value FROM system_settings WHERE key='veg_weekdays'`).catch(()=>null);
+        if (row && row.value) return row.value.split(',').map(Number);
+    } catch(e) {}
+    return [1, 3, 5];
+}
+function getDayTypeForDate(dateStr, vegWeekdays) {
+    const d = new Date(dateStr + 'T12:00:00Z');
+    return vegWeekdays.includes(d.getUTCDay()) ? 'veg' : 'non_veg';
+}
 function slotDayType(slotNumber) {
-    return slotNumber % 2 === 1 ? 'veg' : 'non_veg';
+    return slotNumber % 2 === 1 ? 'veg' : 'non_veg'; // kept for menu generation only
 }
 
 // Given customer diet and slot day type, decide which item to assign
-// pure_veg customer: veg day → primary, non_veg day → alternate (veg substitute)
-// non_veg customer:  non_veg day → primary, veg day → alternate (non-veg substitute)
-function pickItemForCustomer(slot, customerDiet) {
+// pure_veg customer: always gets veg item regardless of day
+// mixed customer: follows day_type (veg day=primary, non_veg day=alternate or vice versa)
+// non_veg customer buying mixed plan: still follows day_type cycle
+function pickItemForCustomer(slot, customerDiet, dayType) {
+    // dayType passed from actual delivery date, not slot.day_type
+    const dt = dayType || slot.day_type;
     const isVegCustomer = customerDiet === 'pure_veg' || customerDiet === 'vegan' || customerDiet === 'eggetarian';
     if (isVegCustomer) {
-        return slot.day_type === 'veg' ? slot.primary_item_id : slot.alternate_item_id;
+        // Always give veg item regardless of day type
+        return dt === 'veg' ? slot.primary_item_id : slot.alternate_item_id;
     } else {
-        // non_veg customer
-        return slot.day_type === 'non_veg' ? slot.primary_item_id : slot.alternate_item_id;
+        // Mixed/non-veg: follows day cycle — non-veg day = primary, veg day = alternate
+        return dt === 'non_veg' ? slot.primary_item_id : slot.alternate_item_id;
     }
 }
 
@@ -1147,11 +1164,20 @@ app.post('/api/admin/orders', verifyToken, async (req, res) => {
             [customer_id, plan_id, kitchen_id||null, start_date, end_date, startSlotNum, plan.price, paid_amount||0, notes||'']
         );
 
-        // Insert deliveries — each date maps to the corresponding planSlot (cycling through)
+        // Insert deliveries — align startIdx to actual weekday of start_date
+        // so Friday order gets Friday's slot, not Monday's slot
+        const vegWeekdays = await getVegWeekdays();
+        
+        // Find which slot number corresponds to the start_date's weekday position
+        // Slot 1 = first delivery day of the menu cycle
+        // We need to find the right slot based on how many days from start of week
+        
         for (let i = 0; i < dates.length; i++) {
             const ds = dates[i];
             const slotIdx = (startIdx + i) % (planSlots.length || 1);
             const slot = planSlots.length > 0 ? planSlots[slotIdx] : null;
+            // Use actual delivery date to determine veg/non-veg, not slot.day_type
+            const actualDayType = getDayTypeForDate(ds, vegWeekdays);
 
             const isCombo = mealTypes.includes('lunch') && mealTypes.includes('dinner');
             for (const mt of mealTypes) {
@@ -1167,10 +1193,10 @@ app.post('/api/admin/orders', verifyToken, async (req, res) => {
                             mealItemId = slot.dinner_item_id;
                         } else {
                             // Fallback — same as lunch item
-                            mealItemId = pickItemForCustomer(slot, customer.diet_preference);
+                            mealItemId = pickItemForCustomer(slot, customer.diet_preference, actualDayType);
                         }
                     } else {
-                        mealItemId = pickItemForCustomer(slot, customer.diet_preference);
+                        mealItemId = pickItemForCustomer(slot, customer.diet_preference, actualDayType);
                     }
                 }
 
@@ -1188,6 +1214,26 @@ app.post('/api/admin/orders', verifyToken, async (req, res) => {
             startSlot: startSlotNum, endDate: end_date
         });
     } catch(e) { console.error(e); res.status(400).json({ error: e.message }); }
+});
+
+// Edit order — change plan, kitchen, notes, paid_amount
+app.put('/api/admin/orders/:id', verifyToken, async (req, res) => {
+    try {
+        if (!['super_admin','admin','sales_manager'].includes(req.user.authority))
+            return res.status(403).json({ error: 'Not authorized' });
+        const { plan_id, kitchen_id, notes, paid_amount, status } = req.body;
+        const order = await db.one(`SELECT * FROM orders WHERE id=$1`, [req.params.id]);
+        if (!order) return res.status(404).json({ error: 'Order not found' });
+        await db.query(`UPDATE orders SET 
+            plan_id=COALESCE($1,plan_id),
+            kitchen_id=COALESCE($2,kitchen_id),
+            notes=COALESCE($3,notes),
+            paid_amount=COALESCE($4,paid_amount),
+            status=COALESCE($5,status)
+            WHERE id=$6`,
+            [plan_id||null, kitchen_id||null, notes||null, paid_amount||null, status||null, req.params.id]);
+        res.json({ message: 'Order updated' });
+    } catch(e) { res.status(400).json({ error: e.message }); }
 });
 
 // Renew order — creates a new order starting from next slot window
@@ -2163,6 +2209,7 @@ app.get('/api/admin/settings', verifyToken, async (req, res) => {
             lunch_deadline: s.lunch_deadline || '10:00',
             dinner_deadline: s.dinner_deadline || '15:00',
             breakfast_show: s.breakfast_show || '05:00',
+            veg_weekdays: s.veg_weekdays || '1,3,5',
             lunch_show: s.lunch_show || '07:00',
             dinner_show: s.dinner_show || '13:00',
         });
@@ -2174,7 +2221,7 @@ app.post('/api/admin/settings', verifyToken, async (req, res) => {
         await db.query(`CREATE TABLE IF NOT EXISTS system_settings (
             key TEXT PRIMARY KEY, value TEXT, updated_at TIMESTAMPTZ DEFAULT NOW()
         )`);
-        const fields = ['breakfast_time','lunch_time','dinner_time','breakfast_deadline','lunch_deadline','dinner_deadline','breakfast_show','lunch_show','dinner_show'];
+        const fields = ['breakfast_time','lunch_time','dinner_time','breakfast_deadline','lunch_deadline','dinner_deadline','breakfast_show','lunch_show','dinner_show','veg_weekdays'];
         for (const key of fields) {
             if (req.body[key] !== undefined) {
                 await db.query(`INSERT INTO system_settings (key, value) VALUES ($1, $2)
