@@ -40,6 +40,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--dk);font-
 .sb-av{width:30px;height:30px;background:var(--g);border-radius:50%;color:white;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;}
 .sb-uname{color:white;font-size:12.5px;font-weight:500;}
 .sb-urole{color:rgba(255,255,255,.35);font-size:10.5px;}
+.chip{padding:6px 12px;border-radius:20px;border:1.5px solid var(--border);font-size:12px;cursor:pointer;transition:all .15s;background:white;user-select:none;}
+.chip.on{background:var(--g);color:white;border-color:var(--g);}
 .sb-logout{margin-top:7px;width:100%;padding:7px;background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.2);border-radius:6px;cursor:pointer;font-size:11.5px;font-weight:600;font-family:"DM Sans",sans-serif;}
 /* ── Mobile responsive ── */
 .mob-menu-btn{display:none;background:none;border:none;color:white;font-size:22px;cursor:pointer;padding:4px 8px;}
@@ -2064,6 +2066,23 @@ function openEditCust(id) {
   document.getElementById('editCustCity').value=c.city||'';
   document.getElementById('editCustDiet').value=c.diet_preference||'non_veg';
   document.getElementById('editCustInstr').value=c.delivery_instructions||'';
+  // Location fields
+  const locEl=document.getElementById('editCustLoc1'); if(locEl) locEl.value=c.google_location_1||'';
+  const lat1El=document.getElementById('editCustLat1'); if(lat1El) lat1El.value=c.lat_1||'';
+  const lng1El=document.getElementById('editCustLng1'); if(lng1El) lng1El.value=c.lng_1||'';
+  const locRes=document.getElementById('editCustLocRes');
+  if(locRes){ if(c.lat_1&&c.lng_1){locRes.textContent=`📍 ${c.lat_1}, ${c.lng_1}`;locRes.style.display='block';}else{locRes.style.display='none';} }
+  // Health & body fields
+  const hEl=document.getElementById('editCustHeight'); if(hEl) hEl.value=c.height||'';
+  const wEl=document.getElementById('editCustWeight'); if(wEl) wEl.value=c.weight||'';
+  const gEl=document.getElementById('editCustGoal'); if(gEl) gEl.value=c.diet_goal||'';
+  const hnEl=document.getElementById('editCustHealthNotes'); if(hnEl) hnEl.value=c.health_notes||'';
+  // Health chips
+  const healthVals=(c.health_conditions||'').split(',').map(s=>s.trim()).filter(Boolean);
+  document.querySelectorAll('#editHealthChips .chip').forEach(ch=>ch.classList.toggle('on',healthVals.includes(ch.dataset.h)));
+  // Allergy chips
+  const allergyVals=(c.allergy_info||'').split(',').map(s=>s.trim()).filter(Boolean);
+  document.querySelectorAll('#editAllergyChips .chip').forEach(ch=>ch.classList.toggle('on',allergyVals.includes(ch.dataset.a)));
   // Populate territory
   const tsel=document.getElementById('editCustTerr');
   tsel.innerHTML='<option value="">Select</option>';
@@ -2091,6 +2110,15 @@ async function saveEditCust() {
     diet_preference:document.getElementById('editCustDiet').value,
     delivery_instructions:document.getElementById('editCustInstr').value||null,
     delivery_boy_id:document.getElementById('editCustDB').value||null,
+    google_location_1:document.getElementById('editCustLoc1')?.value||null,
+    lat_1:document.getElementById('editCustLat1')?.value||null,
+    lng_1:document.getElementById('editCustLng1')?.value||null,
+    height:document.getElementById('editCustHeight')?.value||null,
+    weight:document.getElementById('editCustWeight')?.value||null,
+    diet_goal:document.getElementById('editCustGoal')?.value||null,
+    health_notes:document.getElementById('editCustHealthNotes')?.value||null,
+    health_conditions:[...document.querySelectorAll('#editHealthChips .chip.on')].map(c=>c.dataset.h).join(',')||null,
+    allergy_info:[...document.querySelectorAll('#editAllergyChips .chip.on')].map(c=>c.dataset.a).join(',')||null,
   };
   const d=await api(`${API}/admin/customers/${id}`,{method:'PUT',body:JSON.stringify(body)});
   if(d.error){showErr2('custErr',d.error);return;}
@@ -2563,7 +2591,60 @@ function openDetailEditModal() {
         <option value="vegan">🌿 Vegan</option>
       </select>
     </div>
-    <div class="fg"><label class="fl">Delivery Instructions</label><input type="text" class="fc" id="editCustInstr"></div>
+    <div class="fg"><label class="fl">Delivery Instructions</label><input type="text" class="fc" id="editCustInstr" placeholder="e.g. Leave at door, ring bell twice"></div>
+
+    <!-- Google Maps Location -->
+    <div class="fg"><label class="fl">📍 Google Maps Location Link</label>
+      <div style="display:flex;gap:7px;">
+        <input type="text" class="fc" id="editCustLoc1" placeholder="Paste Google Maps share link...">
+        <button onclick="extractEditCustLoc()" style="padding:9px 13px;background:var(--g);color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;">Extract</button>
+      </div>
+      <div id="editCustLocRes" style="display:none;margin-top:5px;background:var(--gl);border-radius:7px;padding:7px 11px;font-size:12px;color:var(--gd);"></div>
+      <input type="hidden" id="editCustLat1"><input type="hidden" id="editCustLng1">
+    </div>
+
+    <!-- Health & Body -->
+    <div style="border-top:1px solid var(--border);margin:14px 0;padding-top:14px;">
+      <div style="font-weight:700;font-size:13px;margin-bottom:12px;">🏃 Health & Body</div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Height (cm)</label><input type="number" class="fc" id="editCustHeight" placeholder="170"></div>
+        <div class="fg"><label class="fl">Weight (kg)</label><input type="number" class="fc" id="editCustWeight" placeholder="70"></div>
+      </div>
+      <div class="fg"><label class="fl">Health Conditions</label>
+        <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:4px;" id="editHealthChips">
+          <div class="chip" data-h="BP" onclick="this.classList.toggle('on')">🩺 BP</div>
+          <div class="chip" data-h="Cholesterol" onclick="this.classList.toggle('on')">🫀 Cholesterol</div>
+          <div class="chip" data-h="Diabetes" onclick="this.classList.toggle('on')">🩸 Diabetes</div>
+          <div class="chip" data-h="Thyroid" onclick="this.classList.toggle('on')">Thyroid</div>
+          <div class="chip" data-h="None" onclick="this.classList.toggle('on')">✅ None</div>
+        </div>
+      </div>
+      <div class="fg" style="margin-top:10px;"><label class="fl">Allergy Info</label>
+        <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:4px;" id="editAllergyChips">
+          <div class="chip" data-a="Gluten" onclick="this.classList.toggle('on')">Gluten</div>
+          <div class="chip" data-a="Dairy" onclick="this.classList.toggle('on')">Dairy</div>
+          <div class="chip" data-a="Nuts" onclick="this.classList.toggle('on')">Nuts</div>
+          <div class="chip" data-a="Shellfish" onclick="this.classList.toggle('on')">Shellfish</div>
+          <div class="chip" data-a="Eggs" onclick="this.classList.toggle('on')">Eggs</div>
+          <div class="chip" data-a="Soy" onclick="this.classList.toggle('on')">Soy</div>
+          <div class="chip" data-a="Sesame" onclick="this.classList.toggle('on')">Sesame</div>
+        </div>
+      </div>
+      <div class="fg" style="margin-top:10px;"><label class="fl">Diet Goal</label>
+        <select class="fc" id="editCustGoal">
+          <option value="">Select goal</option>
+          <option value="weight_loss">⚖️ Weight Loss</option>
+          <option value="muscle_gain">💪 Muscle Gain</option>
+          <option value="healthy_eating">🥗 Healthy Eating</option>
+          <option value="medical">🏥 Medical</option>
+          <option value="maintenance">🔄 Maintenance</option>
+        </select>
+      </div>
+      <div class="fg" style="margin-top:10px;"><label class="fl">Additional Health Notes</label>
+        <textarea class="fc" id="editCustHealthNotes" placeholder="Any other health information..." rows="2" style="resize:vertical;"></textarea>
+      </div>
+    </div>
+
     <div class="fg"><label class="fl">Assign Delivery Boy</label><select class="fc" id="editCustDB"><option value="">Not assigned</option></select></div>
     <button class="btn btn-g" style="width:100%;justify-content:center;" onclick="saveEditCust()">Save Changes</button>
   </div>
