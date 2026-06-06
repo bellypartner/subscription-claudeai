@@ -849,6 +849,39 @@ select[multiple].fc{height:120px;}
       <div class="fg"><label class="fl">Weight (kg)</label><input type="number" class="fc" id="cWeight" placeholder="70"></div>
     </div>
     <div class="fg"><label class="fl">Delivery Instructions</label><input type="text" class="fc" id="cInstructions" placeholder="e.g. Leave at door, call on arrival"></div>
+    <div class="fg"><label class="fl">Health Conditions</label>
+      <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:4px;" id="cHealthChips">
+        <div class="chip" data-h="BP" onclick="this.classList.toggle('on')">🩺 BP</div>
+        <div class="chip" data-h="Cholesterol" onclick="this.classList.toggle('on')">🫀 Cholesterol</div>
+        <div class="chip" data-h="Diabetes" onclick="this.classList.toggle('on')">🩸 Diabetes</div>
+        <div class="chip" data-h="Thyroid" onclick="this.classList.toggle('on')">Thyroid</div>
+        <div class="chip" data-h="None" onclick="this.classList.toggle('on')">✅ None</div>
+      </div>
+    </div>
+    <div class="fg"><label class="fl">Allergies</label>
+      <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:4px;" id="cAllergyChips">
+        <div class="chip" data-a="Gluten" onclick="this.classList.toggle('on')">Gluten</div>
+        <div class="chip" data-a="Dairy" onclick="this.classList.toggle('on')">Dairy</div>
+        <div class="chip" data-a="Nuts" onclick="this.classList.toggle('on')">Nuts</div>
+        <div class="chip" data-a="Shellfish" onclick="this.classList.toggle('on')">Shellfish</div>
+        <div class="chip" data-a="Eggs" onclick="this.classList.toggle('on')">Eggs</div>
+        <div class="chip" data-a="Soy" onclick="this.classList.toggle('on')">Soy</div>
+        <div class="chip" data-a="Sesame" onclick="this.classList.toggle('on')">Sesame</div>
+      </div>
+    </div>
+    <div class="fg"><label class="fl">Special Notes / Health Notes</label>
+      <textarea class="fc" id="cHealthNotes" rows="2" placeholder="Any medical conditions, dietary restrictions, special notes..."></textarea>
+    </div>
+    <div class="fg"><label class="fl">Diet Goal</label>
+      <select class="fc" id="cGoal">
+        <option value="">Select goal</option>
+        <option value="weight_loss">⚖️ Weight Loss</option>
+        <option value="muscle_gain">💪 Muscle Gain</option>
+        <option value="healthy_eating">🥗 Healthy Eating</option>
+        <option value="medical">🏥 Medical</option>
+        <option value="maintenance">🔄 Maintenance</option>
+      </select>
+    </div>
     <button class="btn btn-g" style="width:100%;justify-content:center;" onclick="addCustomer()">Create Customer</button>
   </div>
 </div></div>
@@ -1256,6 +1289,10 @@ async function addCustomer(){
     territory_id:document.getElementById("cTerritory").value||null,
     diet_preference:document.getElementById("cDiet").value||"non_veg",
     delivery_instructions:document.getElementById("cInstructions").value||null,
+    health_conditions:[...document.querySelectorAll('#cHealthChips .chip.on')].map(c=>c.dataset.h).join(',')||null,
+    allergy_info:[...document.querySelectorAll('#cAllergyChips .chip.on')].map(c=>c.dataset.a).join(',')||null,
+    health_notes:document.getElementById('cHealthNotes')?.value||null,
+    diet_goal:document.getElementById('cGoal')?.value||null,
     height:document.getElementById("cHeight").value||null,
     weight:document.getElementById("cWeight").value||null,
     lat_1:document.getElementById("cLat1").value||null,
@@ -1944,12 +1981,19 @@ function plotMapPoints(data) {
   google.maps.event.addListenerOnce(mapInstance,'bounds_changed',()=>{ if(mapInstance.getZoom()>13)mapInstance.setZoom(13); });
 }
 
-function initMap() {
+async function initMap() {
   if(mapInstance){loadMapData();return;}
+  // Get API key from brand config (works on mobile too)
   if(typeof google==='undefined'){
-    const script=document.createElement('script');
-    script.src=`https://maps.googleapis.com/maps/api/js?key=AIzaSyAcKKkjErvVOK3y40_0WgkzQwCt05XK7gM&callback=onGoogleMapsLoaded`;
-    script.async=true;document.head.appendChild(script);
+    try {
+      const b = window.BRAND || await fetch('/api/brand').then(r=>r.json());
+      const key = b.mapsKey || 'AIzaSyAcKKkjErvVOK3y40_0WgkzQwCt05XK7gM';
+      window._mapsKeyLoaded = true;
+      const script=document.createElement('script');
+      script.src=`https://maps.googleapis.com/maps/api/js?key=${key}&callback=onGoogleMapsLoaded`;
+      script.async=true; script.defer=true;
+      document.head.appendChild(script);
+    } catch(e) { console.error('Maps init failed',e); }
   } else { onGoogleMapsLoaded(); }
 }
 
@@ -1963,6 +2007,11 @@ function onGoogleMapsLoaded() {
 async function cascadeKitchen(terrSelectId, kitchenSelectId) {
   const terrId=document.getElementById(terrSelectId)?.value;
   const kSel=document.getElementById(kitchenSelectId);
+  if (!kSel) return;
+  kSel.innerHTML='<option value="">Select Kitchen</option>';
+  if (!terrId) { kitchens.forEach(k=>{const o=document.createElement('option');o.value=k.id;o.text=k.name;kSel.appendChild(o);}); return; }
+  // Filter kitchens by territory
+  const filtered = kitchens.filter(k=>k.territory_id==terrId);
   if(!kSel)return;
   kSel.innerHTML='<option value="">Select Kitchen</option>';
   if(!terrId){kitchens.forEach(k=>{const o=document.createElement('option');o.value=k.id;o.text=k.name;kSel.appendChild(o);});return;}

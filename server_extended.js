@@ -945,7 +945,13 @@ app.post('/api/admin/territories', verifyToken, async (req, res) => {
 
 // ==================== ADMIN KITCHENS ====================
 app.get('/api/admin/kitchens', verifyToken, async (req, res) => {
-    try { res.json(await db.all(`SELECT k.*,t.name as territory_name FROM kitchens k LEFT JOIN territories t ON k.territory_id=t.id WHERE k.status='active' ORDER BY k.name`)); }
+    try {
+        const territory_id = req.query.territory_id;
+        const query = territory_id
+            ? `SELECT k.*,t.name as territory_name FROM kitchens k LEFT JOIN territories t ON k.territory_id=t.id WHERE k.status='active' AND k.territory_id=$1 ORDER BY k.name`
+            : `SELECT k.*,t.name as territory_name FROM kitchens k LEFT JOIN territories t ON k.territory_id=t.id WHERE k.status='active' ORDER BY k.name`;
+        res.json(await db.all(query, territory_id ? [territory_id] : []));
+    }
     catch(e) { res.status(500).json({ error: e.message }); }
 });
 app.post('/api/admin/kitchens', verifyToken, async (req, res) => {

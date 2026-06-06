@@ -458,47 +458,75 @@ function printKOT(mealType, date) {
   const kitchenName = document.getElementById('kitchenSel')?.options[document.getElementById('kitchenSel')?.selectedIndex]?.text || 'Kitchen';
 
   let kotHTML = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width">
   <style>
     *{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:'Courier New',monospace;font-size:12px;width:80mm;padding:4mm;}
+    body{font-family:Arial,Helvetica,sans-serif;font-size:14px;width:80mm;padding:5mm;line-height:1.6;color:#000;}
     .center{text-align:center;}
-    .bold{font-weight:bold;}
-    .lg{font-size:14px;}
-    .sm{font-size:10px;}
-    hr{border:none;border-top:1px dashed #000;margin:4px 0;}
-    .item-row{display:flex;justify-content:space-between;padding:2px 0;}
-    .cust-row{padding:2px 0;border-bottom:1px dotted #ccc;}
-    .allergy{background:#000;color:#fff;padding:1px 4px;font-size:10px;}
-    @media print{body{width:80mm;}}
+    .right{text-align:right;}
+    .bold{font-weight:700;}
+    .kitchen-name{font-size:20px;font-weight:900;text-transform:uppercase;letter-spacing:1px;}
+    .kot-title{font-size:13px;font-weight:600;letter-spacing:2px;margin:2px 0;}
+    .date-line{font-size:12px;color:#333;margin-bottom:3px;}
+    hr{border:none;border-top:2px solid #000;margin:5px 0;}
+    hr.light{border-top:1px dashed #666;margin:3px 0;}
+    .section-hd{font-size:15px;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin:4px 0;}
+    .item-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;}
+    .item-name{font-size:15px;font-weight:700;flex:1;}
+    .item-qty{font-size:20px;font-weight:900;min-width:36px;text-align:right;}
+    .item-breakdown{font-size:12px;color:#444;padding:0 0 4px 8px;}
+    .totals-box{border:2px solid #000;padding:5px 8px;margin:4px 0;border-radius:2px;}
+    .total-row{display:flex;justify-content:space-between;font-size:14px;font-weight:700;}
+    .sub-row{display:flex;gap:16px;font-size:12px;margin-top:2px;}
+    .cust-row{padding:5px 0;border-bottom:1px solid #ccc;}
+    .cust-num{font-size:13px;font-weight:900;color:#555;}
+    .cust-name{font-size:15px;font-weight:700;}
+    .cust-diet{font-size:11px;color:#555;font-weight:400;}
+    .cust-item{font-size:13px;margin-top:1px;color:#222;}
+    .allergy-tag{display:inline-block;background:#000;color:#fff;padding:2px 8px;font-size:13px;font-weight:700;margin-top:3px;border-radius:2px;}
+    .note-tag{display:inline-block;background:#eee;color:#333;padding:2px 8px;font-size:12px;margin-top:3px;border-radius:2px;}
+    .footer{font-size:11px;color:#666;margin-top:6px;}
+    @media print{body{width:80mm;}@page{size:80mm auto;margin:0;}}
   </style></head><body>
-  <div class="center bold lg">${kitchenName}</div>
-  <div class="center sm">KOT — Kitchen Order Ticket</div>
-  <div class="center sm">${date} | ${mt}</div>
+  <div class="center kitchen-name">${kitchenName}</div>
+  <div class="center kot-title">Kitchen Order Ticket</div>
+  <div class="center date-line">${date} &nbsp;•&nbsp; ${mt.toUpperCase()}</div>
   <hr>
-  <div class="bold center">ITEMS TO PREPARE</div>
-  <hr>
+  <div class="section-hd">Items to Prepare</div>
+  <hr class="light">
   ${s.items_to_prepare.map(item=>`
-    <div class="item-row bold"><span>${item.meal_item_name}</span><span>× ${item.total}</span></div>
-    <div class="sm" style="padding-left:8px;">🟢 Veg: ${item.veg_count} &nbsp; 🔴 Non-Veg: ${item.non_veg_count}</div>
-  `).join('<hr>')}
+    <div class="item-row">
+      <span class="item-name">${item.meal_item_name}</span>
+      <span class="item-qty">×${item.total}</span>
+    </div>
+    <div class="item-breakdown">🟢 Veg: ${item.veg_count} &nbsp;&nbsp; 🔴 Non-Veg: ${item.non_veg_count}</div>
+    <hr class="light">
+  `).join('')}
+  <div class="totals-box">
+    <div class="total-row"><span>TOTAL PREPARE</span><span>${s.net_to_prepare}</span></div>
+    <div class="sub-row">
+      <span>🟢 Veg: <strong>${s.net_veg}</strong></span>
+      <span>🔴 Non-Veg: <strong>${s.net_non_veg}</strong></span>
+      <span>⏭ Skip: <strong>${s.skipped_total}</strong></span>
+    </div>
+  </div>
   <hr>
-  <div class="item-row sm"><span>Total Prepare:</span><span>${s.net_to_prepare}</span></div>
-  <div class="item-row sm"><span>🟢 Veg:</span><span>${s.net_veg}</span></div>
-  <div class="item-row sm"><span>🔴 Non-Veg:</span><span>${s.net_non_veg}</span></div>
-  <div class="item-row sm"><span>Skipped:</span><span>${s.skipped_total}</span></div>
-  <hr>
-  <div class="bold">CUSTOMER LIST</div>
-  <hr>
+  <div class="section-hd">Customer List</div>
+  <hr class="light">
   ${s.customer_list.filter(c=>c.status!=='skipped').map((c,i)=>`
     <div class="cust-row">
-      <div>${i+1}. ${c.name} ${c.is_veg?'[V]':'[NV]'}</div>
-      <div class="sm">${c.item}</div>
-      ${c.allergy_info?`<div class="allergy sm">⚠️ ALLERGY: ${c.allergy_info}</div>`:''}
-      ${c.delivery_instructions?`<div class="sm">📝 ${c.delivery_instructions}</div>`:''}
+      <div>
+        <span class="cust-num">${i+1}.</span>
+        <span class="cust-name">${c.name}</span>
+        <span class="cust-diet">${c.is_veg?'[Veg]':'[Non-Veg]'}</span>
+      </div>
+      <div class="cust-item">→ ${c.item}</div>
+      ${c.allergy_info?`<div><span class="allergy-tag">⚠ ALLERGY: ${c.allergy_info}</span></div>`:''}
+      ${c.delivery_instructions?`<div><span class="note-tag">📝 ${c.delivery_instructions}</span></div>`:''}
     </div>
   `).join('')}
   <hr>
-  <div class="center sm">Printed: ${new Date().toLocaleTimeString()}</div>
+  <div class="center footer">Printed: ${new Date().toLocaleString()}</div>
   <script>
 // ── Load brand config from server ────────────────────────────────
 async function loadBrand() {
