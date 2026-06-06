@@ -1611,6 +1611,35 @@ async function saveSlotEdit() {
   if (fresh) { renderSlotGrid(fresh.slots || []); }
 }
 
+async function extractEditCustLoc(num) {
+  num = num || 1;
+  const url = (document.getElementById(`editCustLoc${num}`) || document.getElementById('editCustLoc1')).value.trim();
+  if (!url) { alert('Paste a Google Maps link first'); return; }
+  try {
+    const r = await fetch(`/api/util/extract-location?url=${encodeURIComponent(url)}`);
+    const d = await r.json();
+    if (d.error) { alert(d.error); return; }
+    if (num === 1) {
+      document.getElementById('editCustLat1').value = d.lat;
+      document.getElementById('editCustLng1').value = d.lng;
+      const res = document.getElementById('editCustLocRes');
+      if (res) { res.innerHTML = `📍 ${d.lat}, ${d.lng} — <a href="https://maps.google.com/?q=${d.lat},${d.lng}" target="_blank" style="color:var(--gd);">View ↗</a>`; res.style.display='block'; }
+    } else {
+      document.getElementById('editCustLat2').value = d.lat;
+      document.getElementById('editCustLng2').value = d.lng;
+      const res = document.getElementById('editCustLocRes2');
+      if (res) { res.innerHTML = `📍 ${d.lat}, ${d.lng} — <a href="https://maps.google.com/?q=${d.lat},${d.lng}" target="_blank" style="color:var(--gd);">View ↗</a>`; res.style.display='block'; }
+    }
+  } catch(e) { alert('Connection error. Try again.'); }
+}
+
+function filterDbKitchen() {
+  const tId = document.getElementById('dbTerritory').value;
+  const sel = document.getElementById('dbKitchen');
+  const fk = tId ? kitchens.filter(k=>k.territory_id==tId) : kitchens;
+  sel.innerHTML = '<option value="">Select Kitchen</option>' + fk.map(k=>`<option value="${k.id}">${k.name}</option>`).join('');
+}
+
 async function deleteMenu(id) {
   if (!confirm("Delete this menu? Plans using it will lose their menu assignment.")) return;
   await api(`${API}/admin/plan-menus/${id}`, {method:"DELETE"});
@@ -1722,12 +1751,19 @@ function openEditDeliveryBoy(id, name, phone, vehicle, kitchen_id, territory_id,
   const ts = document.getElementById('editDbTerritory');
   Array.from(ks.options).forEach(o => o.selected = (o.value == kitchen_id));
   Array.from(ts.options).forEach(o => o.selected = (o.value == territory_id));
-  // Populate kitchens
-  const ks2 = document.getElementById('editDbKitchen');
-  ks2.innerHTML = '<option value="">Select Kitchen</option>' + kitchens.map(k=>`<option value="${k.id}" ${k.id==kitchen_id?'selected':''}>${k.name}</option>`).join('');
   // Populate territories
   const ts2 = document.getElementById('editDbTerritory');
   ts2.innerHTML = '<option value="">Select Territory</option>' + territories.map(t=>`<option value="${t.id}" ${t.id==territory_id?'selected':''}>${t.name}</option>`).join('');
+  // Populate kitchens filtered by territory
+  const ks2 = document.getElementById('editDbKitchen');
+  const filteredKitchens = territory_id ? kitchens.filter(k=>k.territory_id==territory_id) : kitchens;
+  ks2.innerHTML = '<option value="">Select Kitchen</option>' + filteredKitchens.map(k=>`<option value="${k.id}" ${k.id==kitchen_id?'selected':''}>${k.name}</option>`).join('');
+  // Wire territory change to filter kitchens
+  ts2.onchange = function() {
+    const tId = this.value;
+    const fk = tId ? kitchens.filter(k=>k.territory_id==tId) : kitchens;
+    ks2.innerHTML = '<option value="">Select Kitchen</option>' + fk.map(k=>`<option value="${k.id}">${k.name}</option>`).join('');
+  };
   openModal('editDbModal');
 }
 async function saveEditDeliveryBoy() {
@@ -2120,7 +2156,14 @@ function openEditCust(id) {
   const lat1El=document.getElementById('editCustLat1'); if(lat1El) lat1El.value=c.lat_1||'';
   const lng1El=document.getElementById('editCustLng1'); if(lng1El) lng1El.value=c.lng_1||'';
   const locRes=document.getElementById('editCustLocRes');
-  if(locRes){ if(c.lat_1&&c.lng_1){locRes.textContent=`📍 ${c.lat_1}, ${c.lng_1}`;locRes.style.display='block';}else{locRes.style.display='none';} }
+  if(locRes){ if(c.lat_1&&c.lng_1){locRes.innerHTML=`📍 ${c.lat_1}, ${c.lng_1}`;locRes.style.display='block';}else{locRes.style.display='none';} }
+  // Location 2 + secondary address
+  const loc2El=document.getElementById('editCustLoc2'); if(loc2El) loc2El.value=c.google_location_2||'';
+  const lat2El=document.getElementById('editCustLat2'); if(lat2El) lat2El.value=c.lat_2||'';
+  const lng2El=document.getElementById('editCustLng2'); if(lng2El) lng2El.value=c.lng_2||'';
+  const addr2bEl=document.getElementById('editCustAddr2b'); if(addr2bEl) addr2bEl.value=c.address_2||'';
+  const locRes2=document.getElementById('editCustLocRes2');
+  if(locRes2){ if(c.lat_2&&c.lng_2){locRes2.innerHTML=`📍 ${c.lat_2}, ${c.lng_2}`;locRes2.style.display='block';}else{locRes2.style.display='none';} }
   // Health & body fields
   const hEl=document.getElementById('editCustHeight'); if(hEl) hEl.value=c.height||'';
   const wEl=document.getElementById('editCustWeight'); if(wEl) wEl.value=c.weight||'';
@@ -2162,6 +2205,10 @@ async function saveEditCust() {
     google_location_1:document.getElementById('editCustLoc1')?.value||null,
     lat_1:document.getElementById('editCustLat1')?.value||null,
     lng_1:document.getElementById('editCustLng1')?.value||null,
+    address_2:document.getElementById('editCustAddr2b')?.value||document.getElementById('editCustAddr2')?.value||null,
+    google_location_2:document.getElementById('editCustLoc2')?.value||null,
+    lat_2:document.getElementById('editCustLat2')?.value||null,
+    lng_2:document.getElementById('editCustLng2')?.value||null,
     height:document.getElementById('editCustHeight')?.value||null,
     weight:document.getElementById('editCustWeight')?.value||null,
     diet_goal:document.getElementById('editCustGoal')?.value||null,
@@ -2642,14 +2689,26 @@ function openDetailEditModal() {
     </div>
     <div class="fg"><label class="fl">Delivery Instructions</label><input type="text" class="fc" id="editCustInstr" placeholder="e.g. Leave at door, ring bell twice"></div>
 
-    <!-- Google Maps Location -->
-    <div class="fg"><label class="fl">📍 Google Maps Location Link</label>
+    <!-- Google Maps Location 1 -->
+    <div class="fg"><label class="fl">📍 Location 1 — Google Maps Link</label>
       <div style="display:flex;gap:7px;">
         <input type="text" class="fc" id="editCustLoc1" placeholder="Paste Google Maps share link...">
-        <button onclick="extractEditCustLoc()" style="padding:9px 13px;background:var(--g);color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;">Extract</button>
+        <button onclick="extractEditCustLoc(1)" style="padding:9px 13px;background:var(--g);color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;">Extract</button>
       </div>
       <div id="editCustLocRes" style="display:none;margin-top:5px;background:var(--gl);border-radius:7px;padding:7px 11px;font-size:12px;color:var(--gd);"></div>
       <input type="hidden" id="editCustLat1"><input type="hidden" id="editCustLng1">
+    </div>
+    <!-- Secondary Address + Location 2 -->
+    <div class="fg"><label class="fl">Secondary Address (optional)</label>
+      <input type="text" class="fc" id="editCustAddr2b" placeholder="Alternative delivery address">
+    </div>
+    <div class="fg"><label class="fl">📍 Location 2 — Google Maps Link</label>
+      <div style="display:flex;gap:7px;">
+        <input type="text" class="fc" id="editCustLoc2" placeholder="Paste Google Maps share link...">
+        <button onclick="extractEditCustLoc(2)" style="padding:9px 13px;background:var(--g);color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;">Extract</button>
+      </div>
+      <div id="editCustLocRes2" style="display:none;margin-top:5px;background:var(--gl);border-radius:7px;padding:7px 11px;font-size:12px;color:var(--gd);"></div>
+      <input type="hidden" id="editCustLat2"><input type="hidden" id="editCustLng2">
     </div>
 
     <!-- Health & Body -->
