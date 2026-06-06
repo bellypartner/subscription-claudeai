@@ -1547,7 +1547,7 @@ app.get('/api/delivery/today', verifyToken, reqDelivery, async (req, res) => {
             LEFT JOIN subscription_plans p ON o.plan_id=p.id
             WHERE d.delivery_boy_id=$1 AND d.delivery_date=$2
             AND d.is_sunday_skip=0
-            AND d.food_ready=1
+            AND d.status != 'skipped'
             ORDER BY d.delivery_sequence ASC, c.name ASC
         `, [db_row.id, date]);
 
@@ -1578,15 +1578,33 @@ app.put('/api/delivery/mark/:id', verifyToken, reqDelivery, async (req, res) => 
 
 app.put('/api/kitchen/mark-ready/:date/:mealType', verifyToken, reqKitchen, async (req, res) => {
     try {
-        const u = await db.one(`SELECT id FROM users WHERE id=$1`, [req.user.id]);
-        const k = await db.one(`SELECT k.id FROM kitchens k 
-            JOIN users u ON u.kitchen_id=k.id WHERE u.id=$1`, [req.user.id]);
-        if (!k) return res.status(404).json({ error: 'Kitchen not found' });
-        await db.query(
-            `UPDATE deliveries SET food_ready=1 
-             WHERE kitchen_id=$1 AND delivery_date=$2 AND meal_type=$3 AND status='pending'`,
-            [k.id, req.params.date, req.params.mealType]
-        );
+        // kitchen_id passed as query param from dashboard (most reliable)
+        // fallback: lookup from users.kitchen_id
+        let kitchenId = req.query.kitchen_id;
+        if (!kitchenId) {
+            const u = await db.one(`SELECT kitchen_id FROM users WHERE id=$1`, [req.user.id]);
+            kitchenId = u?.kitchen_id;
+        }
+        // Also try kitchen linked to delivery_boys table
+        if (!kitchenId) {
+            const dbrow = await db.one(`SELECT kitchen_id FROM delivery_boys WHERE user_id=$1`, [req.user.id]);
+            kitchenId = dbrow?.kitchen_id;
+        }
+        // If still no kitchen, mark ALL pending deliveries for this date/meal regardless of kitchen
+        if (kitchenId) {
+            await db.query(
+                `UPDATE deliveries SET food_ready=1
+                 WHERE kitchen_id=$1 AND delivery_date=$2 AND meal_type=$3 AND status='pending'`,
+                [kitchenId, req.params.date, req.params.mealType]
+            );
+        } else {
+            // Fallback: mark all deliveries for this date/meal (single kitchen setup)
+            await db.query(
+                `UPDATE deliveries SET food_ready=1
+                 WHERE delivery_date=$1 AND meal_type=$2 AND status='pending'`,
+                [req.params.date, req.params.mealType]
+            );
+        }
         res.json({ message: `${req.params.mealType} marked ready — delivery boys can now see orders` });
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
@@ -1819,8 +1837,10 @@ app.get('/api/customer/my-delivery-boy', verifyToken, reqCust, async (req, res) 
         const d = await db.one(`SELECT db.name, db.phone, db.photo_base64, db.vehicle_type,
             del.status, del.delivery_sequence
             FROM deliveries del
-            LEFT JOIN delivery_boys db ON del.delivery_boy_id=db.id
-            WHERE del.customer_id=$1 AND del.delivery_date=$2 AND del.is_sunday_skip=0
+            JOIN delivery_boys db ON del.delivery_boy_id=db.id
+            WHERE del.customer_id=$1 AND del.delivery_date=$2 
+            AND del.is_sunday_skip=0
+            AND del.delivery_boy_id IS NOT NULL
             LIMIT 1`, [c.id, today]);
         res.json(d || null);
     } catch(e) { res.status(500).json({ error: e.message }); }

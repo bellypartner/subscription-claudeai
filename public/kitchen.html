@@ -290,7 +290,8 @@ async function loadKitchens() {
 }
 async function markFoodReady(mealType, date) {
   if (!confirm(`Mark all ${mealType} as ready for delivery boys?`)) return;
-  const r = await fetch(`${API}/kitchen/mark-ready/${date}/${mealType}`, {
+  const kId = kitchenId || '';
+  const r = await fetch(`${API}/kitchen/mark-ready/${date}/${mealType}?kitchen_id=${kId}`, {
     method: 'PUT', headers: { 'Authorization': 'Bearer ' + token }
   });
   const d = await r.json();
