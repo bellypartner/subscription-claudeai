@@ -716,9 +716,38 @@ app.post('/api/customer/pause-subscription/:id', verifyToken, reqCust, async (re
         let ne = new Date(toDS(order.end_date) + 'T12:00:00Z');
         let added = 0;
         while (added < ext) { ne.setUTCDate(ne.getUTCDate() + 1); if (ne.getUTCDay() !== 0) added++; }
+        const newEndDate = ne.toISOString().split('T')[0];
         await db.query(`UPDATE orders SET order_status='paused',pause_start=$1,pause_end=$2,end_date=$3 WHERE id=$4`,
-            [pause_start, pause_end, ne.toISOString().split('T')[0], order.id]);
-        res.json({ message: `Paused. End date extended. No refund for paused days.` });
+            [pause_start, pause_end, newEndDate, order.id]);
+
+        // Insert new delivery rows for each extended working day
+        // Get last slot_number used in this order to continue sequence
+        const lastSlot = await db.one(`SELECT slot_number,meal_type,meal_item_id,is_veg_customer,kitchen_id,delivery_boy_id
+            FROM deliveries WHERE order_id=$1 AND status!='skipped' ORDER BY delivery_date DESC LIMIT 1`, [order.id]);
+
+        // Get skipped deliveries to know what slots were paused
+        const skippedDels = await db.all(`SELECT * FROM deliveries
+            WHERE order_id=$1 AND delivery_date>=$2 AND delivery_date<=$3
+            AND skipped_reason='Subscription paused' ORDER BY delivery_date ASC`,
+            [order.id, pause_start, pause_end]);
+
+        // Create new rows after new end_date for each skipped delivery
+        let insertDate = new Date(toDS(order.end_date) + 'T12:00:00Z');
+        for (const skipped of skippedDels) {
+            // Advance to next working day
+            insertDate.setUTCDate(insertDate.getUTCDate() + 1);
+            while (insertDate.getUTCDay() === 0) insertDate.setUTCDate(insertDate.getUTCDate() + 1);
+            const ds = insertDate.toISOString().split('T')[0];
+            await db.query(
+                `INSERT INTO deliveries (order_id,customer_id,kitchen_id,delivery_date,meal_type,
+                 slot_number,meal_item_id,is_veg_customer,status,is_sunday_skip,delivery_boy_id)
+                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending',0,$9)`,
+                [order.id, c.id, skipped.kitchen_id, ds, skipped.meal_type,
+                 skipped.slot_number, skipped.meal_item_id, skipped.is_veg_customer, skipped.delivery_boy_id||null]
+            );
+        }
+
+        res.json({ message: `Paused ${ext} days. Schedule extended to ${newEndDate}. New deliveries created.` });
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -2686,9 +2715,38 @@ app.post('/api/customer/pause-subscription/:id', verifyToken, reqCust, async (re
         let ne = new Date(toDS(order.end_date) + 'T12:00:00Z');
         let added = 0;
         while (added < ext) { ne.setUTCDate(ne.getUTCDate() + 1); if (ne.getUTCDay() !== 0) added++; }
+        const newEndDate = ne.toISOString().split('T')[0];
         await db.query(`UPDATE orders SET order_status='paused',pause_start=$1,pause_end=$2,end_date=$3 WHERE id=$4`,
-            [pause_start, pause_end, ne.toISOString().split('T')[0], order.id]);
-        res.json({ message: `Paused. End date extended. No refund for paused days.` });
+            [pause_start, pause_end, newEndDate, order.id]);
+
+        // Insert new delivery rows for each extended working day
+        // Get last slot_number used in this order to continue sequence
+        const lastSlot = await db.one(`SELECT slot_number,meal_type,meal_item_id,is_veg_customer,kitchen_id,delivery_boy_id
+            FROM deliveries WHERE order_id=$1 AND status!='skipped' ORDER BY delivery_date DESC LIMIT 1`, [order.id]);
+
+        // Get skipped deliveries to know what slots were paused
+        const skippedDels = await db.all(`SELECT * FROM deliveries
+            WHERE order_id=$1 AND delivery_date>=$2 AND delivery_date<=$3
+            AND skipped_reason='Subscription paused' ORDER BY delivery_date ASC`,
+            [order.id, pause_start, pause_end]);
+
+        // Create new rows after new end_date for each skipped delivery
+        let insertDate = new Date(toDS(order.end_date) + 'T12:00:00Z');
+        for (const skipped of skippedDels) {
+            // Advance to next working day
+            insertDate.setUTCDate(insertDate.getUTCDate() + 1);
+            while (insertDate.getUTCDay() === 0) insertDate.setUTCDate(insertDate.getUTCDate() + 1);
+            const ds = insertDate.toISOString().split('T')[0];
+            await db.query(
+                `INSERT INTO deliveries (order_id,customer_id,kitchen_id,delivery_date,meal_type,
+                 slot_number,meal_item_id,is_veg_customer,status,is_sunday_skip,delivery_boy_id)
+                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending',0,$9)`,
+                [order.id, c.id, skipped.kitchen_id, ds, skipped.meal_type,
+                 skipped.slot_number, skipped.meal_item_id, skipped.is_veg_customer, skipped.delivery_boy_id||null]
+            );
+        }
+
+        res.json({ message: `Paused ${ext} days. Schedule extended to ${newEndDate}. New deliveries created.` });
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
