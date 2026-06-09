@@ -2472,6 +2472,58 @@ app.get('/api/admin/fix-coordinates', verifyToken, async (req, res) => {
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
+
+// ================================================================
+//  LIVE DELIVERY TRACKING (FEATURE_LIVE_TRACKING)
+// ================================================================
+// In-memory store — latest position per delivery boy user_id
+const riderLocations = {};
+
+// Delivery boy posts location (called silently from app every 30s)
+app.post('/api/delivery/location', verifyToken, async (req, res) => {
+    try {
+        const { lat, lng, accuracy } = req.body;
+        if (!lat || !lng) return res.status(400).json({ error: 'lat/lng required' });
+        const dbrow = await db.one(`SELECT db.id, db.name, db.phone, db.kitchen_id,
+            db.territory_id, db.vehicle_type
+            FROM delivery_boys db WHERE db.user_id=$1`, [req.user.id]);
+        if (!dbrow) return res.status(404).json({ error: 'Not found' });
+        riderLocations[req.user.id] = {
+            user_id:      req.user.id,
+            rider_id:     dbrow.id,
+            name:         dbrow.name,
+            phone:        dbrow.phone,
+            kitchen_id:   dbrow.kitchen_id,
+            territory_id: dbrow.territory_id,
+            vehicle_type: dbrow.vehicle_type,
+            lat:          parseFloat(lat),
+            lng:          parseFloat(lng),
+            accuracy:     accuracy || null,
+            updated_at:   new Date().toISOString(),
+        };
+        res.json({ ok: true });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Delivery boy clears location on logout
+app.delete('/api/delivery/location', verifyToken, async (req, res) => {
+    delete riderLocations[req.user.id];
+    res.json({ ok: true });
+});
+
+// Admin polls all active rider locations (stale >5min filtered out)
+app.get('/api/admin/rider-locations', verifyToken, async (req, res) => {
+    try {
+        if (!['super_admin','admin','kitchen_manager','sales_manager'].includes(req.user.authority))
+            return res.status(403).json({ error: 'Not authorized' });
+        const now = Date.now();
+        const active = Object.values(riderLocations).filter(r =>
+            (now - new Date(r.updated_at).getTime()) < 5 * 60 * 1000
+        );
+        res.json(active);
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 // ── Emergency reseed endpoint ──────────────────────────────────────
 app.get('/api/reseed', async (req, res) => {
     try {

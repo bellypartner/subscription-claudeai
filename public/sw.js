@@ -1,5 +1,5 @@
-// Service Worker — MealBox PWA
-const CACHE_NAME = 'mealbox-v3';
+// Service Worker — MealBox PWA v4
+const CACHE_NAME = 'mealbox-v4';
 const STATIC_ASSETS = [
   '/manifest.json',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
@@ -77,7 +77,7 @@ self.addEventListener('fetch', event => {
   );
 });
 
-// Push notifications (for future use)
+// Push notifications
 self.addEventListener('push', event => {
   const data = event.data?.json() || {};
   event.waitUntil(
@@ -93,4 +93,18 @@ self.addEventListener('push', event => {
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   event.waitUntil(clients.openWindow(event.notification.data || '/'));
+});
+
+// Background sync — reconnects location sending after offline
+self.addEventListener('sync', event => {
+  if (event.tag === 'location-sync') {
+    event.waitUntil(Promise.resolve());
+  }
+});
+
+// Periodic sync — keeps SW alive on Android Chrome PWA
+self.addEventListener('periodicsync', event => {
+  if (event.tag === 'keep-alive') {
+    event.waitUntil(Promise.resolve());
+  }
 });
