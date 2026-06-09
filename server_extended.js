@@ -1156,7 +1156,22 @@ app.post('/api/admin/orders', verifyToken, async (req, res) => {
         // e.g. Mon/Wed/Sat plan: slots [1,3,6, 7,9,12, 13,15,18, 19,21,24]
 
         // startSlot: which index in planSlots to begin from (0-based)
-        const startSlotNum = parseInt(menu_start_slot) || 1;
+        // Auto-calculate start slot from start_date weekday
+        // Mon=slot1, Tue=slot2, Wed=slot3, Thu=slot4, Fri=slot5, Sat=slot6
+        // If menu_start_slot passed explicitly use that, otherwise derive from date
+        let startSlotNum = parseInt(menu_start_slot) || 0;
+        if (!startSlotNum && start_date && planSlots.length > 0) {
+            const startDow = new Date(start_date + 'T12:00:00Z').getUTCDay(); // 0=Sun,1=Mon..6=Sat
+            // Map weekday to slot offset within a week (Mon=0,Tue=1...Sat=5)
+            const dowToOffset = {1:0,2:1,3:2,4:3,5:4,6:5};
+            const weekOffset = dowToOffset[startDow] ?? 0;
+            // Find the slot that matches this weekday offset
+            // Slots cycle weekly: slot 1-6=week1, 7-12=week2 etc
+            // Just use weekday offset directly as starting slot index
+            startSlotNum = (weekOffset % planSlots.length) + 1;
+        }
+        startSlotNum = startSlotNum || 1;
+
         // Find starting index in planSlots
         let startIdx = 0;
         if (planSlots.length > 0) {
