@@ -187,7 +187,68 @@ async function showApp() {
   } catch(e) {}
   loadDeliveries();
   setInterval(loadDeliveries, 120000); // refresh every 2 mins
+  // Silently start location tracking on login
+  startSilentTracking();
 }
+
+// ===== SILENT BACKGROUND LOCATION TRACKING =====
+let _trackInterval = null;
+let _watchId = null;
+
+function startSilentTracking() {
+  // Only track between 6AM and 10PM
+  const h = new Date().getHours();
+  if (h < 6 || h >= 22) return;
+
+  if (!navigator.geolocation) return;
+
+  // Use watchPosition for continuous background tracking
+  // This works even when app is minimized on Android Chrome
+  _watchId = navigator.geolocation.watchPosition(
+    pos => _sendLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy),
+    err => {},
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 }
+  );
+
+  // Also poll every 30 seconds as fallback (iOS Safari needs active calls)
+  _trackInterval = setInterval(() => {
+    const h2 = new Date().getHours();
+    if (h2 >= 22 || h2 < 6) { stopSilentTracking(); return; }
+    navigator.geolocation.getCurrentPosition(
+      pos => _sendLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy),
+      err => {},
+      { enableHighAccuracy: false, timeout: 8000 }
+    );
+  }, 30000);
+}
+
+function _sendLocation(lat, lng, accuracy) {
+  if (!token) return;
+  fetch(`${API}/delivery/location`, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json','Authorization':'Bearer '+token},
+    body: JSON.stringify({lat, lng, accuracy})
+  }).catch(()=>{});
+}
+
+function stopSilentTracking() {
+  if (_watchId !== null) { navigator.geolocation.clearWatch(_watchId); _watchId = null; }
+  if (_trackInterval) { clearInterval(_trackInterval); _trackInterval = null; }
+  if (token) fetch(`${API}/delivery/location`, {method:'DELETE', headers:{'Authorization':'Bearer '+token}}).catch(()=>{});
+}
+
+// Stop on logout
+const _origLogout = window.doLogout;
+window.doLogout = function() { stopSilentTracking(); if(_origLogout) _origLogout(); else { sessionStorage.removeItem('dbToken'); location.reload(); } };
+
+// Stop at 10PM automatically
+setInterval(() => { if (new Date().getHours() >= 22) stopSilentTracking(); }, 60000);
+
+// Keep alive on iOS: request permission early
+document.addEventListener('click', function _initGeo() {
+  navigator.geolocation?.getCurrentPosition(()=>{}, ()=>{});
+  document.removeEventListener('click', _initGeo);
+}, {once: true});
 
 function vehicleIcon(v) {
   if (v==="bike"||v==="motorcycle") return "🏍️";

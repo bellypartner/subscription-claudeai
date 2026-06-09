@@ -231,6 +231,21 @@ select[multiple].fc{height:120px;}
     <div class="overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
     <div class="content">
       <div id="page-dashboard" class="page active">
+        <!-- LIVE RIDERS PANEL (shows only if FEATURE_LIVE_TRACKING=true) -->
+        <div id="liveRiderPanel" style="display:none;margin-bottom:16px;">
+          <div class="card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+              <div style="font-weight:700;font-size:15px;">🏍️ Live Riders <span id="liveRiderCount" style="background:var(--gl);color:var(--gd);padding:2px 10px;border-radius:10px;font-size:12px;margin-left:6px;">0 active</span></div>
+              <div style="display:flex;gap:8px;">
+                <span id="riderLastUpdate" style="font-size:11px;color:var(--muted);"></span>
+                <button onclick="refreshRiders()" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;">⟳ Refresh</button>
+              </div>
+            </div>
+            <div id="liveRiderGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;">
+              <div style="color:var(--muted);font-size:13px;">No riders online</div>
+            </div>
+          </div>
+        </div>
         <div class="stats-grid">
           <div class="stat-card"><div class="stat-ico ico-g"><i class="fas fa-users"></i></div><div><div class="stat-val" id="st-cust">0</div><div class="stat-lbl">Customers</div></div></div>
           <div class="stat-card"><div class="stat-ico ico-b"><i class="fas fa-receipt"></i></div><div><div class="stat-val" id="st-ord">0</div><div class="stat-lbl">Total Orders</div></div></div>
@@ -1035,11 +1050,61 @@ function dietLabel(s){const m={pure_veg:"Pure Veg",eggetarian:"Eggetarian",vegan
 async function loadAll(){
   await Promise.all([loadStats(),loadCategories(),loadMeals(),loadTerritories(),loadKitchens(),loadPlans(),loadCustomers(),loadDeliveryBoys()]);
   try { window.allMealItems = await api(`${API}/admin/meal-items`); } catch(e) {}
-  // Load veg weekdays for plan menu display
   try {
     const s = await api(`${API}/admin/settings`);
     window.vegWeekdaysSettings = (s.veg_weekdays||'1,3,5').split(',').map(Number);
   } catch(e) { window.vegWeekdaysSettings = [1,3,5]; }
+}
+
+// ===== LIVE RIDER TRACKING =====
+let riderRefreshInterval = null;
+
+function initRiderPanel() {
+  const panel = document.getElementById('liveRiderPanel');
+  if (!panel) return;
+  const b = window.BRAND;
+  if (!b?.features?.liveTracking) return;
+  panel.style.display = 'block';
+  refreshRiders();
+  // Auto-refresh every 15 seconds
+  if (riderRefreshInterval) clearInterval(riderRefreshInterval);
+  riderRefreshInterval = setInterval(refreshRiders, 15000);
+}
+
+async function refreshRiders() {
+  try {
+    const riders = await api(`${API}/admin/rider-locations`);
+    const grid = document.getElementById('liveRiderGrid');
+    const countEl = document.getElementById('liveRiderCount');
+    const updateEl = document.getElementById('riderLastUpdate');
+    if (!grid) return;
+    updateEl.textContent = 'Updated ' + new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    if (!riders?.length) {
+      grid.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:8px 0;">No riders currently online</div>';
+      countEl.textContent = '0 active';
+      return;
+    }
+    countEl.textContent = riders.length + ' active';
+    grid.innerHTML = riders.map(r => {
+      const age = Math.round((Date.now() - new Date(r.updated_at).getTime()) / 1000);
+      const ageStr = age < 60 ? `${age}s ago` : `${Math.round(age/60)}m ago`;
+      const fresh = age < 60;
+      const vIcon = r.vehicle_type==='bike'?'🏍️':r.vehicle_type==='cycle'?'🚴':r.vehicle_type==='auto'?'🛺':'🚶';
+      return `<div style="background:${fresh?'var(--gl)':'var(--bg)'};border:1.5px solid ${fresh?'var(--g)':'var(--border)'};border-radius:10px;padding:12px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <div style="width:36px;height:36px;border-radius:50%;background:${fresh?'var(--g)':'var(--muted)'};display:flex;align-items:center;justify-content:center;font-size:18px;">${vIcon}</div>
+          <div>
+            <div style="font-weight:700;font-size:13px;">${r.name}</div>
+            <div style="font-size:11px;color:${fresh?'var(--gd)':'var(--muted)'};">⬤ ${fresh?'Live':'Last seen'} ${ageStr}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <a href="tel:${r.phone}" style="flex:1;text-align:center;background:white;border:1px solid var(--border);border-radius:7px;padding:6px;font-size:12px;font-weight:600;color:var(--gd);text-decoration:none;">📞 Call</a>
+          <a href="https://maps.google.com/?q=${r.lat},${r.lng}" target="_blank" style="flex:1;text-align:center;background:white;border:1px solid var(--border);border-radius:7px;padding:6px;font-size:12px;font-weight:600;color:#2563eb;text-decoration:none;">📍 Track</a>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {}
 }
 async function loadStats(){
   try{
@@ -2911,6 +2976,7 @@ async function loadBrand() {
   try {
     const b = await fetch('/api/brand').then(r => r.json());
     window.BRAND = b;
+    if (b.features?.liveTracking) initRiderPanel();
     // Apply brand name
     document.querySelectorAll('.brand-name').forEach(el => el.textContent = b.name);
     document.querySelectorAll('.brand-tagline').forEach(el => el.textContent = b.tagline);
