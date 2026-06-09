@@ -2417,6 +2417,46 @@ app.get('/api/customer/feedback/:deliveryId', verifyToken, reqCust, async (req, 
     } catch(e) { res.json({}); }
 });
 
+// ── Bulk re-extract coordinates from stored google_location URLs ────
+app.get('/api/admin/fix-coordinates', verifyToken, async (req, res) => {
+    try {
+        if (!['super_admin'].includes(req.user.authority))
+            return res.status(403).json({ error: 'Super admin only' });
+        // Find customers with google_location_1 but no lat_1
+        const custs = await db.all(`SELECT id, google_location_1, google_location_2 
+            FROM customers WHERE google_location_1 IS NOT NULL AND lat_1 IS NULL`);
+        let fixed = 0, failed = 0;
+        for (const c of custs) {
+            // Extract coords from URL using regex
+            const extractCoords = (url) => {
+                if (!url) return null;
+                const patterns = [
+                    /@(-?\d+\.\d+),(-?\d+\.\d+)/,
+                    /q=(-?\d+\.\d+),(-?\d+\.\d+)/,
+                    /!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/,
+                    /\?ll=(-?\d+\.\d+),(-?\d+\.\d+)/
+                ];
+                for (const p of patterns) {
+                    const m = url.match(p);
+                    if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+                }
+                return null;
+            };
+            const loc1 = extractCoords(c.google_location_1);
+            const loc2 = extractCoords(c.google_location_2);
+            if (loc1 || loc2) {
+                await db.query(`UPDATE customers SET 
+                    lat_1=COALESCE($1,lat_1), lng_1=COALESCE($2,lng_1),
+                    lat_2=COALESCE($3,lat_2), lng_2=COALESCE($4,lng_2)
+                    WHERE id=$5`,
+                    [loc1?.lat||null, loc1?.lng||null, loc2?.lat||null, loc2?.lng||null, c.id]);
+                fixed++;
+            } else failed++;
+        }
+        res.json({ message: `Fixed ${fixed} customers, ${failed} could not extract`, total: custs.length });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 // ── Emergency reseed endpoint ──────────────────────────────────────
 app.get('/api/reseed', async (req, res) => {
     try {

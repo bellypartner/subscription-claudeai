@@ -1624,24 +1624,34 @@ async function saveSlotEdit() {
 
 async function extractEditCustLoc(num) {
   num = num || 1;
-  const url = (document.getElementById(`editCustLoc${num}`) || document.getElementById('editCustLoc1')).value.trim();
+  const urlInput = document.getElementById(`editCustLoc${num}`) || document.getElementById('editCustLoc1');
+  const url = urlInput?.value.trim();
   if (!url) { alert('Paste a Google Maps link first'); return; }
   try {
     const r = await fetch(`/api/util/extract-location?url=${encodeURIComponent(url)}`);
     const d = await r.json();
-    if (d.error) { alert(d.error); return; }
-    if (num === 1) {
-      document.getElementById('editCustLat1').value = d.lat;
-      document.getElementById('editCustLng1').value = d.lng;
-      const res = document.getElementById('editCustLocRes');
-      if (res) { res.innerHTML = `📍 ${d.lat}, ${d.lng} — <a href="https://maps.google.com/?q=${d.lat},${d.lng}" target="_blank" style="color:var(--gd);">View ↗</a>`; res.style.display='block'; }
-    } else {
-      document.getElementById('editCustLat2').value = d.lat;
-      document.getElementById('editCustLng2').value = d.lng;
-      const res = document.getElementById('editCustLocRes2');
-      if (res) { res.innerHTML = `📍 ${d.lat}, ${d.lng} — <a href="https://maps.google.com/?q=${d.lat},${d.lng}" target="_blank" style="color:var(--gd);">View ↗</a>`; res.style.display='block'; }
+    if (d.error || !d.lat) { 
+      // Fallback: try to extract from URL directly
+      const match = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)||url.match(/q=(-?\d+\.\d+),(-?\d+\.\d+)/)||url.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+      if (match) { d.lat = match[1]; d.lng = match[2]; }
+      else { alert('Could not extract location. Paste the full Google Maps share link.'); return; }
     }
-  } catch(e) { alert('Connection error. Try again.'); }
+    const latEl = document.getElementById(`editCustLat${num}`);
+    const lngEl = document.getElementById(`editCustLng${num}`);
+    const resEl = document.getElementById(num===1?'editCustLocRes':'editCustLocRes2');
+    if (latEl) latEl.value = d.lat;
+    if (lngEl) lngEl.value = d.lng;
+    if (resEl) { 
+      resEl.innerHTML = `📍 ${d.lat}, ${d.lng} — <a href="https://maps.google.com/?q=${d.lat},${d.lng}" target="_blank" style="color:var(--gd);font-weight:700;">View on Map ↗</a>`; 
+      resEl.style.display='block'; 
+    }
+    // Auto-save coords immediately so they're not lost
+    const custId = document.getElementById('editCustId')?.value;
+    if (custId) {
+      const body = num===1 ? {lat_1:d.lat, lng_1:d.lng, google_location_1:url} : {lat_2:d.lat, lng_2:d.lng, google_location_2:url};
+      await api(`${API}/admin/customers/${custId}`, {method:'PUT', body:JSON.stringify(body)});
+    }
+  } catch(e) { console.error(e); alert('Connection error. Try again.'); }
 }
 
 function filterDbKitchen() {
@@ -1978,7 +1988,13 @@ async function onMapTerrChange() {
 }
 
 async function loadMapData() {
-  if(!mapInstance)return;
+  if(!mapInstance){ 
+    // Map not ready yet — init it first then reload
+    if(typeof google !== 'undefined') onGoogleMapsLoaded();
+    else initMap();
+    setTimeout(loadMapData, 1500);
+    return;
+  }
   const type=currentMapType;
   const terrId=document.getElementById('mapTerr')?.value||'';
   const kitchenId=document.getElementById('mapKitchen')?.value||'';
