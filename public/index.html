@@ -2598,19 +2598,12 @@ async function resumeDetailOrder(orderId) {
   loadCustomerDetail(detailData.customer.id);
 }
 
-// Edit profile from detail panel — reuse existing editCustModal
+// Edit profile from detail panel — reuse openEditCust which populates ALL fields
 function openDetailEditModal() {
   const c = detailData.customer;
-  // Populate editCustModal fields
-  const sv=(id,v)=>{const el=document.getElementById(id);if(el&&v!=null)el.value=v;};
-  sv('editCustId',c.id); sv('editCustName',c.name); sv('editCustPhone',c.phone);
-  sv('editCustAlt',c.alternate_phone); sv('editCustEmail',c.email);
-  sv('editCustAddr',c.address); sv('editCustAddr2',c.address_2);
-  sv('editCustCity',c.city); sv('editCustDiet',c.diet_preference||'non_veg');
-  sv('editCustInstr',c.delivery_instructions);
-  const tsel=document.getElementById('editCustTerr');
-  if(tsel){tsel.innerHTML='<option value="">Select</option>';territories.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.text=t.name;if(t.id==c.territory_id)o.selected=true;tsel.appendChild(o);});}
-  openModal('editCustModal');
+  if (!c) return;
+  // Use the full openEditCust which populates location, health, allergy etc
+  openEditCust(c.id);
 }
 // ==================== END CUSTOMER DETAIL PANEL ====================
 // ===== END MAP & CASCADE =====
