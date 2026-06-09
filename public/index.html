@@ -369,7 +369,17 @@ select[multiple].fc{height:120px;}
         <tbody id="kitBody"><tr><td colspan="4" class="loading"><span class="spinner"></span></td></tr></tbody></table></div></div>
       </div>
       <div id="page-customers" class="page">
-        <div class="sec-hd"><span class="sec-title">Customers</span><button class="btn btn-g" onclick="openModal('custModal')"><i class="fas fa-plus"></i> Add Customer</button></div>
+        <div class="sec-hd">
+          <span class="sec-title">Customers</span>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <select id="custStatusFilter" onchange="loadCustomers()" style="padding:7px 10px;border-radius:8px;border:1px solid var(--border);font-size:13px;font-family:'DM Sans',sans-serif;background:white;">
+              <option value="active">✅ Active</option>
+              <option value="all">All Customers</option>
+              <option value="inactive">❌ Inactive</option>
+            </select>
+            <button class="btn btn-g" onclick="openModal('custModal')"><i class="fas fa-plus"></i> Add Customer</button>
+          </div>
+        </div>
         <div class="alert as" id="custOk"></div><div class="alert ae" id="custErr"></div>
         <div id="custAlertBanner" style="display:none;background:#fef9c3;border:1px solid #fde68a;border-radius:9px;padding:11px 14px;margin-bottom:12px;font-size:13px;font-weight:600;color:#92400e;gap:8px;align-items:center;"></div>
         <div class="card"><div class="tbl-wrap"><table>
@@ -1222,7 +1232,8 @@ async function loadCustomers(){
     customers.forEach(c=>{const o=document.createElement("option");o.value=c.id;o.text=c.name+" ("+(c.phone||c.email||"?")+")";sel.appendChild(o);});
 
     // Status list for table
-    const data=await api(`${API}/admin/customers/status`);
+    const statusFilter = document.getElementById('custStatusFilter')?.value || 'active';
+    const data=await api(`${API}/admin/customers/status?status=${statusFilter}`);
     const body=document.getElementById("custBody");
     if(!data?.length){body.innerHTML="<tr><td colspan='7'><div class='empty'><i class='fas fa-users'></i><p>No customers yet</p></div></td></tr>";return;}
 
@@ -1989,14 +2000,34 @@ function plotMapPoints(data) {
   if(data.type==='deliveries'){
     legendEl.innerHTML='<span style="display:flex;align-items:center;gap:5px;"><span style="width:12px;height:12px;border-radius:50%;background:#2ecc71;display:inline-block;"></span>Delivered</span><span style="display:flex;align-items:center;gap:5px;"><span style="width:12px;height:12px;border-radius:50%;background:#3498db;display:inline-block;"></span>Pending</span><span style="display:flex;align-items:center;gap:5px;"><span style="width:12px;height:12px;border-radius:50%;background:#95a5a6;display:inline-block;"></span>Skipped</span>';
   } else {
+    if (currentMapType === 'customers') {
+    legendEl.innerHTML = `
+      <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;border-radius:50%;background:#16a34a;display:inline-block;"></span>Active</span>
+      <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;border-radius:50%;background:#f59e0b;display:inline-block;"></span>Paused</span>
+      <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;border-radius:50%;background:#2563eb;display:inline-block;"></span>Completed</span>
+      <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;border-radius:50%;background:#dc2626;display:inline-block;"></span>Inactive</span>
+      <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;border-radius:50%;background:#9ca3af;display:inline-block;"></span>No Plan</span>`;
+  } else {
     legendEl.innerHTML=terrIds.map((t,i)=>`<span style="display:flex;align-items:center;gap:5px;"><span style="width:12px;height:12px;border-radius:50%;background:${TERR_COLORS[i%TERR_COLORS.length]};display:inline-block;"></span>${t}</span>`).join('');
+  }
   }
   const bounds=new google.maps.LatLngBounds();
   let openIW=null;
   points.forEach(p=>{
     const lat=parseFloat(p.lat||p.lat_1),lng=parseFloat(p.lng||p.lng_1);
     if(!lat||!lng||isNaN(lat)||isNaN(lng))return;
-    let color=data.type==='deliveries'?(p.status==='delivered'?'#2ecc71':p.status==='skipped'?'#95a5a6':'#3498db'):(terrColorMap[p.territory_id||p.territory_name||'?']||'#2ecc71');
+    let color;
+    if (data.type === 'deliveries') {
+      color = p.status==='delivered'?'#2ecc71':p.status==='skipped'?'#95a5a6':'#3498db';
+    } else {
+      // Color by customer status
+      const custSt = p.customer_status || 'active';
+      const orderSt = p.order_status || 'no_plan';
+      color = custSt==='inactive' ? '#dc2626' :
+              orderSt==='paused'  ? '#f59e0b' :
+              orderSt==='active'  ? '#16a34a' :
+              orderSt==='completed' ? '#2563eb' : '#9ca3af';
+    }
     const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 32 40"><path d="M16 0C7.16 0 0 7.16 0 16c0 12 16 24 16 24S32 28 32 16C32 7.16 24.84 0 16 0z" fill="${color}" stroke="white" stroke-width="2"/><circle cx="16" cy="16" r="6" fill="white"/></svg>`;
     const icon={url:'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg),scaledSize:new google.maps.Size(28,36),anchor:new google.maps.Point(14,36)};
     const marker=new google.maps.Marker({position:{lat,lng},map:mapInstance,icon,title:p.customer_name||p.name});
@@ -2006,7 +2037,19 @@ function plotMapPoints(data) {
       info=`<div style="font-family:sans-serif;min-width:170px;font-size:13px;"><strong>${p.customer_name}</strong><br>📞 ${p.customer_phone||'—'}<br>🍽️ ${p.meal_item_name||'—'}<br>🏍️ ${p.delivery_boy_name||'Unassigned'}<br><span style="background:${color};color:white;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700;">${p.status}</span></div>`;
     } else {
       const d=p.diet_preference==='pure_veg'||p.diet_preference==='vegan'?'🟢':'🔴';
-      info=`<div style="font-family:sans-serif;min-width:170px;font-size:13px;"><strong>${p.name}</strong><br>📞 ${p.phone||'—'}<br>${d} ${p.diet_preference||'—'}${p.active_plan?`<br>📋 ${p.active_plan}`:''}${p.delivery_boy_name?`<br>🏍️ ${p.delivery_boy_name}`:''}<br><span style="color:#666;font-size:11px;">📍 ${p.territory_name||'—'}</span><br><a href="https://maps.google.com/?q=${lat},${lng}" target="_blank" style="font-size:11px;color:#3498db;">Open in Maps ↗</a></div>`;
+      const stLabel = p.customer_status==='inactive'?'❌ Inactive':
+        p.order_status==='active'?'✅ Active':p.order_status==='paused'?'⏸ Paused':
+        p.order_status==='completed'?'✔ Completed':'No Plan';
+      info=`<div style="font-family:sans-serif;min-width:180px;font-size:13px;">
+        <strong>${p.name}</strong><br>
+        📞 ${p.phone||'—'}<br>
+        ${d} ${p.diet_preference||'—'}<br>
+        ${p.active_plan?`📋 ${p.active_plan}<br>`:''}
+        ${p.delivery_boy_name?`🏍️ ${p.delivery_boy_name}<br>`:''}
+        <span style="background:${color};color:white;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700;">${stLabel}</span>
+        <span style="font-size:11px;color:#666;"> ${p.territory_name||'—'}</span><br>
+        <a href="https://maps.google.com/?q=${lat},${lng}" target="_blank" style="font-size:11px;color:#3498db;">Open in Maps ↗</a>
+      </div>`;
     }
     const iw=new google.maps.InfoWindow({content:info});
     marker.addListener('click',()=>{if(openIW)openIW.close();iw.open(mapInstance,marker);openIW=iw;});

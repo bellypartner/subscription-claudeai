@@ -1945,16 +1945,21 @@ app.get('/api/admin/map-data', verifyToken, async (req, res) => {
             // All active customers with locations
             let q = `SELECT c.id, c.name, c.phone, c.address, c.city,
                 c.lat_1, c.lng_1, c.lat_2, c.lng_2,
+                c.status as customer_status,
                 c.diet_preference, c.delivery_boy_id,
                 t.name as territory_name, t.id as territory_id,
                 k.name as kitchen_name,
                 db.name as delivery_boy_name,
+                COALESCE(
+                  (SELECT o.order_status FROM orders o WHERE o.customer_id=c.id ORDER BY o.created_at DESC LIMIT 1),
+                  'no_plan'
+                ) as order_status,
                 (SELECT p.name FROM orders o JOIN subscription_plans p ON o.plan_id=p.id WHERE o.customer_id=c.id AND o.order_status='active' LIMIT 1) as active_plan
                 FROM customers c
                 LEFT JOIN territories t ON c.territory_id=t.id
                 LEFT JOIN delivery_boys db ON c.delivery_boy_id=db.id
                 LEFT JOIN kitchens k ON db.kitchen_id=k.id
-                WHERE c.status='active' AND (c.lat_1 IS NOT NULL OR c.lat_2 IS NOT NULL)`;
+                WHERE (c.lat_1 IS NOT NULL OR c.lat_2 IS NOT NULL)`;
             const params = [];
             if (territory_id) { params.push(territory_id); q += ` AND c.territory_id=$${params.length}`; }
             if (kitchen_id) { params.push(kitchen_id); q += ` AND db.kitchen_id=$${params.length}`; }
@@ -2197,9 +2202,9 @@ app.get('/api/admin/customers/status', verifyToken, async (req, res) => {
             ) o ON true
             LEFT JOIN subscription_plans p ON o.plan_id=p.id
             LEFT JOIN deliveries d ON d.order_id=o.id
-            WHERE c.status='active'
+            WHERE ($1::text = 'all' OR c.status=$1)
             GROUP BY c.id,t.name,db.name,db.phone,o.id,o.order_status,o.end_date,o.pause_start,o.pause_end,p.name
-            ORDER BY c.name ASC`);
+            ORDER BY c.name ASC`, [req.query.status || 'active']);
         res.json(rows);
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
