@@ -1718,7 +1718,8 @@ app.put('/api/admin/customers/:id', verifyToken, async (req, res) => {
     try {
         const { name, phone, alternate_phone, email, address, address_2, city,
             territory_id, diet_preference, delivery_boy_id, delivery_instructions,
-            height, weight, health_conditions, allergy_info, diet_goal } = req.body;
+            height, weight, health_conditions, allergy_info, diet_goal, health_notes,
+            google_location_1, google_location_2, lat_1, lng_1, lat_2, lng_2 } = req.body;
         await db.query(`UPDATE customers SET
             name=COALESCE($1,name), phone=COALESCE($2,phone),
             alternate_phone=$3, email=$4, address=$5, address_2=$6, city=$7,
@@ -1726,14 +1727,23 @@ app.put('/api/admin/customers/:id', verifyToken, async (req, res) => {
             diet_preference=COALESCE($9,diet_preference),
             delivery_boy_id=$10, delivery_instructions=$11,
             height=$12, weight=$13, health_conditions=$14,
-            allergy_info=$15, diet_goal=$16
-            WHERE id=$17`,
+            allergy_info=$15, diet_goal=$16, health_notes=$17,
+            google_location_1=COALESCE($18,google_location_1),
+            lat_1=COALESCE($19::decimal,lat_1),
+            lng_1=COALESCE($20::decimal,lng_1),
+            google_location_2=COALESCE($21,google_location_2),
+            lat_2=COALESCE($22::decimal,lat_2),
+            lng_2=COALESCE($23::decimal,lng_2)
+            WHERE id=$24`,
             [name||null,phone||null,alternate_phone||null,email||null,
             address||null,address_2||null,city||null,
             territory_id||null,diet_preference||null,
             delivery_boy_id||null,delivery_instructions||null,
             height||null,weight||null,health_conditions||null,
-            allergy_info||null,diet_goal||null,req.params.id]);
+            allergy_info||null,diet_goal||null,health_notes||null,
+            google_location_1||null,lat_1||null,lng_1||null,
+            google_location_2||null,lat_2||null,lng_2||null,
+            req.params.id]);
         res.json({ message: 'Updated' });
     } catch(e) { res.status(400).json({ error: e.message }); }
 });
