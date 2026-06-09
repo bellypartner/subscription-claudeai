@@ -1271,6 +1271,23 @@ app.put('/api/admin/orders/:id', verifyToken, async (req, res) => {
     } catch(e) { res.status(400).json({ error: e.message }); }
 });
 
+// Edit order — change plan, status, paid amount, notes
+app.put('/api/admin/orders/:id', verifyToken, async (req, res) => {
+    try {
+        if (!['super_admin','admin','sales_manager'].includes(req.user.authority))
+            return res.status(403).json({ error: 'Not authorized' });
+        const { plan_id, status, paid_amount, notes } = req.body;
+        await db.query(`UPDATE orders SET
+            plan_id=COALESCE($1,plan_id),
+            order_status=COALESCE($2,order_status),
+            paid_amount=COALESCE($3,paid_amount),
+            notes=COALESCE($4,notes)
+            WHERE id=$5`,
+            [plan_id||null, status||null, paid_amount||null, notes||null, req.params.id]);
+        res.json({ message: 'Order updated' });
+    } catch(e) { res.status(400).json({ error: e.message }); }
+});
+
 // Renew order — creates a new order starting from next slot window
 app.post('/api/admin/orders/renew/:id', verifyToken, async (req, res) => {
     try {
@@ -2491,12 +2508,16 @@ app.post('/api/admin/plan-menu/generate', verifyToken, async (req, res) => {
         const slots = [];
         const warnings = [];
 
+        // Load veg weekdays from settings
+        const vegWdRow = await db.one(`SELECT value FROM system_settings WHERE key='veg_weekdays'`).catch(()=>null);
+        const vegWeekdaysArr = vegWdRow?.value ? vegWdRow.value.split(',').map(Number) : [1,3,5];
+
         for (let slot = 1; slot <= TOTAL_SLOTS; slot++) {
             const catIdx = getCategoryForSlot(slot);
             const cat = categories[catIdx];
             const weekday = ((slot - 1) % WEEKDAYS) + 1;
             const week = Math.floor((slot - 1) / WEEKDAYS);
-            const dayType = slot % 2 === 1 ? 'veg' : 'non_veg';
+            const dayType = vegWeekdaysArr.includes(weekday) ? 'veg' : 'non_veg';
             const usage = usageMap[cat.id];
 
             // Pick veg item — cycles through ALL items before repeating
