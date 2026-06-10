@@ -296,41 +296,63 @@ select[multiple].fc{height:120px;}
         <div class="alert as" id="pmOk"></div><div class="alert ae" id="pmErr"></div>
 
         <div class="card">
-          <div class="card-hd"><span class="card-title"><i class="fas fa-magic" style="color:var(--g);margin-right:6px;"></i>Step 1 &mdash; Configure &amp; Generate 24-Slot Menu</span></div>
+          <div class="card-hd"><span class="card-title"><i class="fas fa-magic" style="color:var(--g);margin-right:6px;"></i>Step 1 — Menu Name & Settings</span></div>
           <div class="card-body">
-            <div class="frow" style="margin-bottom:14px;">
-              <div class="fg" style="margin-bottom:0;">
-                <label class="fl">Meal Type *</label>
+            <div class="frow">
+              <div class="fg"><label class="fl">Menu Name *</label>
+                <input type="text" class="fc" id="pmMenuName" placeholder="e.g. June 2026 Mixed Lunch">
+              </div>
+              <div class="fg"><label class="fl">Meal Type *</label>
                 <select class="fc" id="pmMealType">
                   <option value="lunch">Lunch</option>
                   <option value="breakfast">Breakfast</option>
                   <option value="dinner">Dinner</option>
                 </select>
               </div>
-              <div class="fg" style="margin-bottom:0;">
-                <label class="fl">Menu Name *</label>
-                <input type="text" class="fc" id="pmMenuName" placeholder="e.g. Monthly Veg-NonVeg Lunch">
-              </div>
             </div>
-
             <div class="fg">
-              <label class="fl">Categories * &mdash; click to add in order (order = weekday assignment)</label>
-              <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;">
-                <strong>Rule:</strong> 6 cats = 1 per weekday. 4 cats = Mon+Tue share same, Wed+Thu share etc. 7+ cats = rotates each week.
+              <label class="fl">Categories (click to add to picker)</label>
+              <div id="catPickerArea" style="display:flex;gap:8px;flex-wrap:wrap;min-height:36px;">
+                <span style="color:var(--muted);font-size:12px;align-self:center;">Loading...</span>
               </div>
-              <div id="catPickerArea" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;min-height:36px;">
-                <span style="color:var(--muted);font-size:12px;align-self:center;">Loading categories...</span>
-              </div>
-              <div id="catOrderList" style="display:flex;flex-direction:column;gap:6px;min-height:52px;border:1.5px dashed var(--border);border-radius:8px;padding:10px;background:var(--bg);">
-                <div style="color:var(--muted);font-size:12px;text-align:center;padding:6px;">Click categories above to add them here in order</div>
-              </div>
-              <div style="font-size:11px;color:var(--muted);margin-top:4px;"><i class="fas fa-info-circle"></i> First added = Monday. Shows which weekday each category maps to.</div>
+              <input type="hidden" id="catOrderList">
             </div>
+          </div>
+        </div>
 
-            <div style="display:flex;gap:12px;align-items:center;margin-top:6px;">
-              <button class="btn btn-g" onclick="generateMenu()"><i class="fas fa-magic"></i> Generate 24 Slots</button>
-              <span id="pmGenerating" style="display:none;font-size:12.5px;color:var(--muted);"><span class="spinner"></span> Generating...</span>
+        <!-- WEEKLY SCHEDULE GRID -->
+        <div class="card" style="margin-top:12px;">
+          <div class="card-hd" style="display:flex;align-items:center;justify-content:space-between;">
+            <span class="card-title">📅 Step 2 — Weekly Schedule Grid</span>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-o" onclick="autoFillGrid()" style="font-size:12px;padding:6px 12px;"><i class="fas fa-magic"></i> Auto Fill</button>
+              <button class="btn" onclick="clearGrid()" style="font-size:12px;padding:6px 12px;background:var(--bg);border:1px solid var(--border);">Clear</button>
             </div>
+          </div>
+          <div style="font-size:12px;color:var(--muted);padding:0 16px 10px;">
+            Set which <strong>category</strong> and <strong>day type (V=Veg / NV=Non-Veg)</strong> for each cell. Mixed plan customers follow this exactly.
+          </div>
+          <div style="overflow-x:auto;padding:0 16px 16px;">
+            <table id="scheduleGrid" style="border-collapse:separate;border-spacing:6px;width:100%;">
+              <thead>
+                <tr>
+                  <th style="font-size:11px;color:var(--muted);font-weight:700;padding:4px 8px;"></th>
+                  <th style="font-size:12px;font-weight:700;padding:4px 8px;text-align:center;color:var(--gd);">MON</th>
+                  <th style="font-size:12px;font-weight:700;padding:4px 8px;text-align:center;">TUE</th>
+                  <th style="font-size:12px;font-weight:700;padding:4px 8px;text-align:center;color:var(--gd);">WED</th>
+                  <th style="font-size:12px;font-weight:700;padding:4px 8px;text-align:center;">THU</th>
+                  <th style="font-size:12px;font-weight:700;padding:4px 8px;text-align:center;color:var(--gd);">FRI</th>
+                  <th style="font-size:12px;font-weight:700;padding:4px 8px;text-align:center;">SAT</th>
+                </tr>
+              </thead>
+              <tbody id="scheduleGridBody">
+                <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px;">Add categories above then click Auto Fill</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="padding:0 16px 16px;display:flex;gap:12px;align-items:center;">
+            <button class="btn btn-g" onclick="generateFromGrid()"><i class="fas fa-magic"></i> Generate 24 Slots from Grid</button>
+            <span id="pmGenerating" style="display:none;font-size:12.5px;color:var(--muted);"><span class="spinner"></span> Generating...</span>
           </div>
         </div>
 
@@ -1520,41 +1542,157 @@ function renderCatOrderList() {
   }).join("");
 }
 
-async function generateMenu() {
-  if (!orderedCats.length) { showErr2("pmErr","Add at least one category"); return; }
-  const name = document.getElementById("pmMenuName").value.trim();
-  if (!name) { showErr2("pmErr","Enter a menu name"); return; }
-  const mealType = document.getElementById("pmMealType").value;
+// ===== WEEKLY SCHEDULE GRID =====
+// scheduleGrid[week][weekday] = { cat_id, cat_name, day_type: 'veg'|'non_veg' }
+let scheduleGrid = {}; // [0-3][0-5]
 
-  document.getElementById("pmGenerating").style.display = "inline";
+function renderScheduleGrid() {
+  const body = document.getElementById('scheduleGridBody');
+  if (!body) return;
+  if (!orderedCats.length) {
+    body.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px;">Add categories above then click Auto Fill</td></tr>';
+    return;
+  }
+  let html = '';
+  for (let w = 0; w < 4; w++) {
+    html += `<tr><td style="font-size:12px;font-weight:700;color:var(--muted);padding:4px 8px;white-space:nowrap;">Wk ${w+1}</td>`;
+    for (let d = 0; d < 6; d++) {
+      const cell = scheduleGrid[w]?.[d] || {};
+      const isVeg = cell.day_type === 'veg';
+      const bg = isVeg ? 'var(--gl)' : '#fee2e2';
+      const border = isVeg ? 'var(--g)' : '#ef4444';
+      const catName = cell.cat_name || '—';
+      html += `<td style="padding:3px;">
+        <div style="background:${bg};border:1.5px solid ${border};border-radius:8px;padding:6px;min-width:110px;cursor:pointer;" onclick="openCellEdit(${w},${d})">
+          <div style="font-size:11px;font-weight:700;color:${isVeg?'var(--gd)':'#b91c1c'};margin-bottom:3px;">${isVeg?'🟢 Veg':'🔴 Non-Veg'}</div>
+          <div style="font-size:12px;font-weight:600;color:#1f2937;">${catName}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px;">Slot ${w*6+d+1} • click to edit</div>
+        </div>
+      </td>`;
+    }
+    html += '</tr>';
+  }
+  body.innerHTML = html;
+}
+
+function openCellEdit(week, day) {
+  if (!orderedCats.length) { alert('Add categories first'); return; }
+  const cell = scheduleGrid[week]?.[day] || {};
+  const catOpts = orderedCats.map(c => `<option value="${c.id}" ${c.id==cell.cat_id?'selected':''}>${c.name}</option>`).join('');
+  const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const html = `<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;" id="cellEditOverlay">
+    <div style="background:white;border-radius:14px;padding:20px;min-width:280px;max-width:340px;">
+      <div style="font-weight:700;font-size:15px;margin-bottom:14px;">Week ${week+1} — ${days[day]}</div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:5px;">Category</label>
+        <select id="cellCat" style="width:100%;padding:9px;border-radius:8px;border:1px solid var(--border);font-size:13px;">${catOpts}</select>
+      </div>
+      <div style="margin-bottom:16px;">
+        <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:8px;">Day Type</label>
+        <div style="display:flex;gap:8px;">
+          <button onclick="selectDayType('veg')" id="dtVeg" style="flex:1;padding:10px;border-radius:8px;border:2px solid ${cell.day_type!=='non_veg'?'var(--g)':'var(--border)'};background:${cell.day_type!=='non_veg'?'var(--gl)':'white'};font-size:13px;font-weight:700;cursor:pointer;color:var(--gd);">🟢 Veg</button>
+          <button onclick="selectDayType('non_veg')" id="dtNV" style="flex:1;padding:10px;border-radius:8px;border:2px solid ${cell.day_type==='non_veg'?'#ef4444':'var(--border)'};background:${cell.day_type==='non_veg'?'#fee2e2':'white'};font-size:13px;font-weight:700;cursor:pointer;color:#b91c1c;">🔴 Non-Veg</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="saveCellEdit(${week},${day})" style="flex:1;padding:10px;background:var(--g);color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;">Save</button>
+        <button onclick="document.getElementById('cellEditOverlay').remove()" style="flex:1;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-weight:600;cursor:pointer;">Cancel</button>
+      </div>
+    </div>
+  </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+  window._cellDayType = cell.day_type || 'veg';
+}
+
+function selectDayType(dt) {
+  window._cellDayType = dt;
+  document.getElementById('dtVeg').style.borderColor = dt==='veg'?'var(--g)':'var(--border)';
+  document.getElementById('dtVeg').style.background = dt==='veg'?'var(--gl)':'white';
+  document.getElementById('dtNV').style.borderColor = dt==='non_veg'?'#ef4444':'var(--border)';
+  document.getElementById('dtNV').style.background = dt==='non_veg'?'#fee2e2':'white';
+}
+
+function saveCellEdit(week, day) {
+  const catId = parseInt(document.getElementById('cellCat').value);
+  const cat = orderedCats.find(c=>c.id==catId);
+  if (!scheduleGrid[week]) scheduleGrid[week] = {};
+  scheduleGrid[week][day] = { cat_id: catId, cat_name: cat?.name||'?', day_type: window._cellDayType||'veg' };
+  document.getElementById('cellEditOverlay').remove();
+  renderScheduleGrid();
+}
+
+function autoFillGrid() {
+  if (!orderedCats.length) { showErr2('pmErr','Add categories first'); return; }
+  const n = orderedCats.length;
+  // Smart rotation: each week shifts which category falls on which day
+  // Also alternates veg/non-veg so each category gets both day types across 4 weeks
+  const vegWeekdays = window.vegWeekdaysSettings || [1,3,5]; // 1=Mon...6=Sat
+  for (let w = 0; w < 4; w++) {
+    if (!scheduleGrid[w]) scheduleGrid[w] = {};
+    for (let d = 0; d < 6; d++) {
+      // Rotate category: week offset ensures each cat hits different days each week
+      const catIdx = (d + w * 2) % n;
+      const cat = orderedCats[catIdx];
+      // Day type: alternate from previous week for this slot
+      // Odd week = follow vegWeekdays setting, Even week = flip it
+      const weekday = d + 1; // 1-6
+      const isVegByDefault = vegWeekdays.includes(weekday);
+      const flipped = w % 2 === 1; // flip every other week
+      const dayType = (isVegByDefault !== flipped) ? 'veg' : 'non_veg';
+      scheduleGrid[w][d] = { cat_id: cat.id, cat_name: cat.name, day_type: dayType };
+    }
+  }
+  renderScheduleGrid();
+}
+
+function clearGrid() {
+  scheduleGrid = {};
+  renderScheduleGrid();
+}
+
+async function generateFromGrid() {
+  const name = document.getElementById('pmMenuName').value.trim();
+  if (!name) { showErr2('pmErr','Enter a menu name'); return; }
+  if (!orderedCats.length) { showErr2('pmErr','Add categories first'); return; }
+  // Check all 24 cells filled
+  let missing = [];
+  for (let w=0;w<4;w++) for (let d=0;d<6;d++) {
+    if (!scheduleGrid[w]?.[d]?.cat_id) missing.push(`Wk${w+1} ${['Mon','Tue','Wed','Thu','Fri','Sat'][d]}`);
+  }
+  if (missing.length) { showErr2('pmErr','Fill all cells first: '+missing.slice(0,3).join(', ')+(missing.length>3?'...':'')); return; }
+
+  const mealType = document.getElementById('pmMealType').value;
+  // Convert grid to flat array of 24 { slot, cat_id, day_type }
+  const gridData = [];
+  for (let w=0;w<4;w++) for (let d=0;d<6;d++) {
+    gridData.push({ slot: w*6+d+1, cat_id: scheduleGrid[w][d].cat_id, day_type: scheduleGrid[w][d].day_type });
+  }
+
+  document.getElementById('pmGenerating').style.display = 'inline';
   try {
     const d = await api(`${API}/admin/plan-menu/generate`, {
-      method:"POST",
-      body: JSON.stringify({ categories: orderedCats, meal_type: mealType })
+      method:'POST',
+      body: JSON.stringify({ categories: orderedCats, meal_type: mealType, grid: gridData })
     });
-    document.getElementById("pmGenerating").style.display = "none";
-    if (d.error) { showErr2("pmErr", d.error); return; }
+    document.getElementById('pmGenerating').style.display = 'none';
+    if (d.error) { showErr2('pmErr',d.error); return; }
     generatedSlots = d.slots;
-
-    // Show warnings
-    const warnDiv = document.getElementById("menuWarnings");
-    const warnList = document.getElementById("menuWarningList");
-    if (d.warnings && d.warnings.length) {
-      warnList.innerHTML = d.warnings.map(w => `<li>${w}</li>`).join("");
-      warnDiv.style.display = "block";
-    } else {
-      warnDiv.style.display = "none";
-    }
-
-    document.getElementById("menuSummary").textContent = `${d.slots.length} slots | ${orderedCats.length} categories`;
-    document.getElementById("menuPreview").style.display = "block";
+    const warnDiv = document.getElementById('menuWarnings');
+    const warnList = document.getElementById('menuWarningList');
+    if (d.warnings?.length) { warnList.innerHTML = d.warnings.map(w=>`<li>${w}</li>`).join(''); warnDiv.style.display='block'; }
+    else { warnDiv.style.display='none'; }
+    document.getElementById('menuSummary').textContent = `${d.slots.length} slots | ${orderedCats.length} categories`;
+    document.getElementById('menuPreview').style.display = 'block';
     renderSlotGrid(d.slots);
-    document.getElementById("menuPreview").scrollIntoView({behavior:"smooth",block:"nearest"});
+    document.getElementById('menuPreview').scrollIntoView({behavior:'smooth',block:'nearest'});
   } catch(e) {
-    document.getElementById("pmGenerating").style.display = "none";
-    showErr2("pmErr","Error generating — check server connection");
+    document.getElementById('pmGenerating').style.display = 'none';
+    showErr2('pmErr','Error generating — check server connection');
   }
 }
+
+// Keep old generateMenu as alias for backwards compat
+async function generateMenu() { return generateFromGrid(); }
 
 function renderSlotGrid(slots) {
   const grid = document.getElementById("slotGrid");

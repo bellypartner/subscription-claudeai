@@ -2625,16 +2625,32 @@ app.post('/api/admin/plan-menu/generate', verifyToken, async (req, res) => {
         const slots = [];
         const warnings = [];
 
-        // Load veg weekdays from settings
+        // Load veg weekdays from settings (fallback if no grid)
         const vegWdRow = await db.one(`SELECT value FROM system_settings WHERE key='veg_weekdays'`).catch(()=>null);
         const vegWeekdaysArr = vegWdRow?.value ? vegWdRow.value.split(',').map(Number) : [1,3,5];
 
+        // If grid passed from frontend, use it directly
+        // grid = array of { slot, cat_id, day_type }
+        const gridMap = {};
+        if (req.body.grid && Array.isArray(req.body.grid)) {
+            req.body.grid.forEach(g => { gridMap[g.slot] = g; });
+        }
+
         for (let slot = 1; slot <= TOTAL_SLOTS; slot++) {
-            const catIdx = getCategoryForSlot(slot);
-            const cat = categories[catIdx];
+            let cat, dayType;
+            if (gridMap[slot]) {
+                // Use admin-defined grid
+                const gridCell = gridMap[slot];
+                cat = categories.find(c => c.id === gridCell.cat_id) || categories[getCategoryForSlot(slot)];
+                dayType = gridCell.day_type || 'veg';
+            } else {
+                // Fallback: auto-assign
+                cat = categories[getCategoryForSlot(slot)];
+                const weekday = ((slot - 1) % WEEKDAYS) + 1;
+                dayType = vegWeekdaysArr.includes(weekday) ? 'veg' : 'non_veg';
+            }
             const weekday = ((slot - 1) % WEEKDAYS) + 1;
             const week = Math.floor((slot - 1) / WEEKDAYS);
-            const dayType = vegWeekdaysArr.includes(weekday) ? 'veg' : 'non_veg';
             const usage = usageMap[cat.id];
 
             // Pick veg item — cycles through ALL items before repeating
