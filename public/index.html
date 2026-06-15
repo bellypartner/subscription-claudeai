@@ -1498,19 +1498,24 @@ function initCatPicker() {
 }
 
 function addCatToOrder(id, name) {
-  if (orderedCats.find(c => c.id === id)) return;
-  orderedCats.push({id, name});
-  const chip = document.getElementById("chip-"+id);
-  if (chip) { chip.classList.add("added"); chip.textContent = "✓ "+name; }
+  // Allow same category multiple times — unique instanceId per click
+  const instanceId = id + '_' + Date.now();
+  orderedCats.push({id, name, instanceId});
+  // Flash chip green briefly to confirm click (stays clickable for repeat)
+  const chip = document.getElementById('chip-'+id);
+  if (chip) {
+    chip.style.background = 'var(--gl)';
+    chip.style.borderColor = 'var(--g)';
+    setTimeout(() => { chip.style.background=''; chip.style.borderColor=''; }, 300);
+  }
   renderCatOrderList();
+  renderScheduleGrid();
 }
 
-function removeCatFromOrder(id) {
-  orderedCats = orderedCats.filter(c => c.id !== id);
-  const chip = document.getElementById("chip-"+id);
-  const orig = cats.find(c => c.id === id);
-  if (chip && orig) { chip.classList.remove("added"); chip.textContent = "+ "+orig.name; }
+function removeCatFromOrder(instanceId) {
+  orderedCats = orderedCats.filter(c => c.instanceId !== instanceId);
   renderCatOrderList();
+  renderScheduleGrid();
 }
 
 function renderCatOrderList() {
@@ -1537,7 +1542,7 @@ function renderCatOrderList() {
       <div class="cat-num">${i+1}</div>
       <span style="font-size:13px;font-weight:600;">${c.name}</span>
       <span class="cat-day-assign">→ ${dayAssign}</span>
-      <button class="cat-remove" onclick="removeCatFromOrder(${c.id})"><i class="fas fa-times"></i></button>
+      <button class="cat-remove" onclick="removeCatFromOrder('${c.instanceId}')"><i class="fas fa-times"></i></button>
     </div>`;
   }).join("");
 }
