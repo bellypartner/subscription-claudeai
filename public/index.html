@@ -1467,6 +1467,75 @@ async function saveEditOrder() {
   closeModal('editOrderModal');
   loadOrders();
 }
+async function openAdjustDeliveries(orderId, pending, delivered, custName) {
+  const overlay = document.createElement('div');
+  overlay.id = 'adjustOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  overlay.innerHTML = `
+    <div style="background:white;border-radius:16px;padding:28px;min-width:320px;max-width:400px;width:90%;">
+      <div style="font-weight:700;font-size:16px;margin-bottom:4px;">⚙️ Adjust Deliveries</div>
+      <div style="font-size:12.5px;color:var(--muted);margin-bottom:20px;">${custName}</div>
+      
+      <div style="background:#fef9c3;border-radius:8px;padding:10px 12px;margin-bottom:18px;font-size:12.5px;color:#92400e;">
+        Current: <strong>${delivered} delivered</strong> + <strong>${pending} pending</strong> = ${delivered+pending} total<br>
+        Adjust pending count to remove trial days or fix errors.
+      </div>
+
+      <label style="font-size:13px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px;">Set pending deliveries to:</label>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+        <button onclick="adjStep(-1)" style="width:38px;height:38px;border-radius:8px;border:1px solid var(--border);background:var(--bg);font-size:20px;cursor:pointer;font-family:'DM Sans',sans-serif;">−</button>
+        <input type="number" id="adjPending" value="${pending}" min="0" max="${pending+50}" 
+          style="flex:1;text-align:center;font-size:24px;font-weight:800;padding:8px;border:2px solid var(--g);border-radius:10px;font-family:'Space Grotesk',sans-serif,monospace;color:var(--gd);">
+        <button onclick="adjStep(1)" style="width:38px;height:38px;border-radius:8px;border:1px solid var(--border);background:var(--bg);font-size:20px;cursor:pointer;font-family:'DM Sans',sans-serif;">+</button>
+      </div>
+      <div id="adjNote" style="font-size:12px;color:var(--muted);margin-bottom:18px;min-height:18px;"></div>
+
+      <div style="display:flex;gap:8px;">
+        <button onclick="saveAdjustDeliveries(${orderId},${pending})" 
+          style="flex:1;padding:11px;background:var(--g);color:white;border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;">
+          Save Adjustment
+        </button>
+        <button onclick="document.getElementById('adjustOverlay').remove()" 
+          style="flex:1;padding:11px;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-weight:600;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;">
+          Cancel
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  // Update note on change
+  const origPending = parseInt(document.getElementById('adjPending').value||0);
+  document.getElementById('adjPending').addEventListener('input', function() {
+    const diff = parseInt(this.value||0) - origPending;
+    const note = document.getElementById('adjNote');
+    const abs = Math.abs(diff);
+    if (diff < 0) note.innerHTML = '<span style="color:var(--red);">Will remove '+abs+' future pending delivery row'+(abs!==1?'s':'')+'</span>';
+    else if (diff > 0) note.innerHTML = '<span style="color:var(--gd);">Will add '+diff+' delivery row'+(diff!==1?'s':'')+' after current end date</span>';
+    else note.textContent = 'No change';
+  });
+  document.getElementById('adjPending').dispatchEvent(new Event('input'));
+}
+
+function adjStep(n) {
+  const el = document.getElementById('adjPending');
+  if (el) el.value = Math.max(0, parseInt(el.value||0) + n);
+  el.dispatchEvent(new Event('input'));
+}
+
+async function saveAdjustDeliveries(orderId, currentPending) {
+  const newPending = parseInt(document.getElementById('adjPending').value || 0);
+  if (newPending === currentPending) { document.getElementById('adjustOverlay').remove(); return; }
+  const d = await api(`${API}/admin/orders/${orderId}/adjust-deliveries`, {
+    method: 'POST',
+    body: JSON.stringify({ pending_count: newPending })
+  });
+  document.getElementById('adjustOverlay').remove();
+  if (d.error) { alert('Error: ' + d.error); return; }
+  // Reload customer detail
+  const custId = detailData?.customer?.id;
+  if (custId) loadCustomerDetail(custId);
+  showOk('custOk', `✅ ${d.message}`);
+}
+
 async function quickUpdateOrder(id,status){if(!status)return;await api(`${API}/admin/orders/${id}/status`,{method:"PUT",body:JSON.stringify({order_status:status})});await loadOrders();await loadStats();}
 async function loadDeliveries(){
   const date=document.getElementById("delDate").value,status=document.getElementById("delStatus").value;
@@ -2667,6 +2736,7 @@ function renderCustomerDetail() {
           <div style="background:white;border-radius:7px;padding:8px;text-align:center;"><div style="font-size:17px;font-weight:800;color:var(--amber)">${p2}</div><div style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;">Left</div></div>
           <div style="background:white;border-radius:7px;padding:8px;text-align:center;"><div style="font-size:17px;font-weight:800;color:var(--red)">${s2}</div><div style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;">Skipped</div></div>
         </div>
+        ${(o.order_status==='active'||o.order_status==='paused')?`<button onclick="openAdjustDeliveries(${o.id},${p2},${d2},'${c.name.replace(/'/g,"")}')" style="width:100%;margin-top:8px;padding:8px;background:var(--bg);border:1px dashed var(--border);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;color:var(--muted);font-family:'DM Sans',sans-serif;" onmouseover="this.style.borderColor='#f59e0b';this.style.color='#92400e'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">⚙️ Adjust Pending Deliveries (${p2} pending)</button>`:''}
       </div>`;
     }).join('')}
   </div>

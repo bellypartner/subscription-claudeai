@@ -1286,6 +1286,88 @@ app.put('/api/admin/orders/:id', verifyToken, async (req, res) => {
     } catch(e) { res.status(400).json({ error: e.message }); }
 });
 
+// Adjust pending deliveries — remove or add delivery rows
+app.post('/api/admin/orders/:id/adjust-deliveries', verifyToken, async (req, res) => {
+    try {
+        if (!['super_admin','admin'].includes(req.user.authority))
+            return res.status(403).json({ error: 'Not authorized' });
+        const { pending_count } = req.body;
+        if (pending_count === undefined || pending_count < 0)
+            return res.status(400).json({ error: 'pending_count required (>= 0)' });
+
+        // Get current pending deliveries ordered by date desc
+        const currentPending = await db.all(
+            `SELECT id, delivery_date, meal_type FROM deliveries
+             WHERE order_id=$1 AND status='pending'
+             ORDER BY delivery_date DESC`,
+            [req.params.id]
+        );
+        const current = currentPending.length;
+        const target = parseInt(pending_count);
+        const diff = target - current;
+
+        if (diff === 0) return res.json({ message: 'No change needed' });
+
+        if (diff < 0) {
+            // Remove last N pending rows (most future ones)
+            const toRemove = currentPending.slice(0, Math.abs(diff)).map(d => d.id);
+            await db.query(
+                `DELETE FROM deliveries WHERE id = ANY($1::int[])`,
+                [toRemove]
+            );
+            // Update end_date to last remaining pending or last delivered
+            await db.query(
+                `UPDATE orders SET end_date = COALESCE(
+                    (SELECT MAX(delivery_date) FROM deliveries WHERE order_id=$1 AND status='pending'),
+                    (SELECT MAX(delivery_date) FROM deliveries WHERE order_id=$1 AND status='delivered'),
+                    end_date
+                ) WHERE id=$1`,
+                [req.params.id]
+            );
+            return res.json({ message: `Removed ${Math.abs(diff)} pending deliveries. ${target} pending remaining.` });
+        } else {
+            // Add N delivery rows after current end date
+            // Copy pattern from last pending delivery
+            const lastPending = currentPending[currentPending.length - 1] ||
+                await db.one(`SELECT * FROM deliveries WHERE order_id=$1 ORDER BY delivery_date DESC LIMIT 1`, [req.params.id]);
+            if (!lastPending) return res.status(400).json({ error: 'No deliveries found to copy pattern from' });
+
+            // Get all meal_types for this order (lunch, dinner, etc.)
+            const mealTypes = await db.all(
+                `SELECT DISTINCT meal_type, kitchen_id, delivery_boy_id, is_veg_customer, meal_item_id, slot_number
+                 FROM deliveries WHERE order_id=$1 AND delivery_date=(
+                   SELECT MAX(delivery_date) FROM deliveries WHERE order_id=$1
+                 )`, [req.params.id]
+            );
+
+            const order = await db.one(`SELECT * FROM orders WHERE id=$1`, [req.params.id]);
+            let insertDate = new Date(order.end_date + 'T12:00:00Z');
+
+            for (let i = 0; i < diff; i++) {
+                // Advance to next working day (skip Sunday)
+                insertDate.setUTCDate(insertDate.getUTCDate() + 1);
+                while (insertDate.getUTCDay() === 0) insertDate.setUTCDate(insertDate.getUTCDate() + 1);
+                const ds = insertDate.toISOString().split('T')[0];
+                for (const mt of mealTypes) {
+                    await db.query(
+                        `INSERT INTO deliveries (order_id, customer_id, kitchen_id, delivery_date, meal_type,
+                         slot_number, meal_item_id, is_veg_customer, status, is_sunday_skip, delivery_boy_id)
+                         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending',0,$9)`,
+                        [req.params.id, order.customer_id, mt.kitchen_id, ds, mt.meal_type,
+                         mt.slot_number, mt.meal_item_id, mt.is_veg_customer, mt.delivery_boy_id||null]
+                    );
+                }
+            }
+            // Update end_date
+            await db.query(
+                `UPDATE orders SET end_date=$1 WHERE id=$2`,
+                [insertDate.toISOString().split('T')[0], req.params.id]
+            );
+            return res.json({ message: `Added ${diff} pending deliveries. ${target} pending total.` });
+        }
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 // Edit order — change plan, status, paid amount, notes
 app.put('/api/admin/orders/:id', verifyToken, async (req, res) => {
     try {
