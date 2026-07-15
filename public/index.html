@@ -794,20 +794,41 @@ select[multiple].fc{height:120px;}
 
     <div class="fg"><label class="fl">Meal Types *</label>
       <div style="display:flex;gap:14px;margin-top:5px;">
-        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;font-weight:600;"><input type="checkbox" id="pB" style="accent-color:var(--g)"> Breakfast</label>
-        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;font-weight:600;"><input type="checkbox" id="pL" checked style="accent-color:var(--g)"> Lunch</label>
-        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;font-weight:600;"><input type="checkbox" id="pD" style="accent-color:var(--g)"> Dinner</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;font-weight:600;"><input type="checkbox" id="pB" style="accent-color:var(--g)" onchange="updatePlanMenuRows()"> Breakfast</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;font-weight:600;"><input type="checkbox" id="pL" checked style="accent-color:var(--g)" onchange="updatePlanMenuRows()"> Lunch</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;font-weight:600;"><input type="checkbox" id="pD" style="accent-color:var(--g)" onchange="updatePlanMenuRows()"> Dinner</label>
       </div>
     </div>
 
-    <div class="fg">
-      <label class="fl">Plan Menu *</label>
-      <select class="fc" id="pMenuId">
-        <option value="">None — assign manually later</option>
-      </select>
-      <div style="font-size:11px;color:var(--muted);margin-top:4px;">
-        Create menus first in the <strong>Plan Menu</strong> tab, then attach here. The plan uses only the slots matching the delivery days above.
+    <div id="breakfastMenuRow" style="display:none;">
+      <div class="fg">
+        <label class="fl">🌅 Breakfast Menu</label>
+        <select class="fc" id="pBreakfastMenuId">
+          <option value="">None — assign later</option>
+        </select>
       </div>
+    </div>
+    <div id="lunchMenuRow">
+      <div class="fg">
+        <label class="fl">☀️ Lunch Menu</label>
+        <select class="fc" id="pMenuId">
+          <option value="">None — assign later</option>
+        </select>
+      </div>
+    </div>
+    <div id="dinnerMenuRow" style="display:none;">
+      <div class="fg">
+        <label class="fl">🌙 Dinner Menu <span style="color:var(--muted);font-size:11px;">(exclusive dinner menu — different from lunch)</span></label>
+        <select class="fc" id="pDinnerMenuId">
+          <option value="">None — uses lunch menu fallback</option>
+        </select>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;">
+          Leave empty to use lunch menu for dinner items too. Set an exclusive dinner menu for combo plans.
+        </div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:4px;margin-bottom:12px;">
+      Create menus first in the <strong>Plan Menu</strong> tab, then attach here.
     </div>
     <button class="btn btn-g" style="width:100%;justify-content:center;" onclick="addPlan()">Create Plan</button>
   </div>
@@ -1287,6 +1308,21 @@ async function addKitchen(){
   if(d.error){showErr2("kitErr",d.error);return;}
   showOk("kitOk","Kitchen created!");closeModal("kitchenModal");await loadKitchens();
 }
+function updatePlanMenuRows() {
+  const hasB = document.getElementById('pB')?.checked;
+  const hasL = document.getElementById('pL')?.checked;
+  const hasD = document.getElementById('pD')?.checked;
+  const bRow = document.getElementById('breakfastMenuRow');
+  const lRow = document.getElementById('lunchMenuRow');
+  const dRow = document.getElementById('dinnerMenuRow');
+  if (bRow) bRow.style.display = hasB ? 'block' : 'none';
+  if (lRow) lRow.style.display = (hasL||hasD) ? 'block' : 'none';
+  if (dRow) dRow.style.display = (hasL&&hasD) ? 'block' : 'none';
+}
+function populatePlanMenuDropdowns() {
+  const menuOpts = '<option value="">None</option>'+(savedMenus||[]).map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
+  ['pMenuId','pBreakfastMenuId','pDinnerMenuId'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=menuOpts;});
+}
 async function loadPlans(){
   try{
     const data=await api(`${API}/admin/subscription-plans`);plans=data||[];
@@ -1308,7 +1344,10 @@ async function addPlan(){
   const selDays=Array.from(document.querySelectorAll("#pDayChips .dchip.sel")).map(c=>parseInt(c.dataset.day));
   if(!name||!days||!deliveries||!diet||!price||!mts.length){showErr2("planErr","Fill all required fields and select meal types");return;}
   if(!selDays.length){showErr2("planErr","Select at least one delivery day");return;}
-  const body={name,duration_days:parseInt(days),num_deliveries:parseInt(deliveries),diet_type:diet,price:parseFloat(price),meal_types:mts.join(","),delivery_days:selDays,plan_menu_id:document.getElementById("pMenuId").value||null};
+  const body={name,duration_days:parseInt(days),num_deliveries:parseInt(deliveries),diet_type:diet,price:parseFloat(price),meal_types:mts.join(","),delivery_days:selDays,
+    plan_menu_id:document.getElementById("pMenuId").value||null,
+    breakfast_menu_id:document.getElementById("pBreakfastMenuId")?.value||null,
+    dinner_menu_id:document.getElementById("pDinnerMenuId")?.value||null};
   const d=await api(`${API}/admin/subscription-plans`,{method:"POST",body:JSON.stringify(body)});
   if(d.error){showErr2("planErr",d.error);return;}
   showOk("planOk","Plan created!");closeModal("planModal");await loadPlans();

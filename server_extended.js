@@ -218,6 +218,8 @@ async function initDB() {
         `ALTER TABLE meal_items ADD COLUMN IF NOT EXISTS vitamins TEXT`,
         `ALTER TABLE meal_items ADD COLUMN IF NOT EXISTS image_base64 TEXT`,
         `ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS plan_menu_id INTEGER`,
+        `ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS breakfast_menu_id INTEGER REFERENCES plan_menus(id)`,
+        `ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS dinner_menu_id INTEGER REFERENCES plan_menus(id)`,
         `ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS meal_types TEXT`,
         `ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS slot_number INTEGER`,
         `ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS is_veg_customer INTEGER DEFAULT 0`,
@@ -1076,8 +1078,9 @@ app.post('/api/admin/subscription-plans', verifyToken, async (req, res) => {
         if (!name || !duration_days || !num_deliveries || !diet_type || !price || !meal_types)
             return res.status(400).json({ error: 'Missing required fields' });
         const deliveryDaysStr = Array.isArray(delivery_days) ? delivery_days.join(',') : (delivery_days || '1,2,3,4,5,6');
-        const r = await db.one(`INSERT INTO subscription_plans (name,duration_days,num_deliveries,diet_type,price,meal_types,plan_menu_id,delivery_days) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
-            [name, duration_days, num_deliveries, diet_type, price, meal_types, plan_menu_id || null, deliveryDaysStr]);
+        const { breakfast_menu_id, dinner_menu_id } = req.body;
+        const r = await db.one(`INSERT INTO subscription_plans (name,duration_days,num_deliveries,diet_type,price,meal_types,plan_menu_id,breakfast_menu_id,dinner_menu_id,delivery_days) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
+            [name, duration_days, num_deliveries, diet_type, price, meal_types, plan_menu_id||null, breakfast_menu_id||null, dinner_menu_id||null, deliveryDaysStr]);
         res.status(201).json({ message: 'Created', planId: r.id });
     } catch(e) { res.status(400).json({ error: e.message }); }
 });
@@ -1140,14 +1143,18 @@ app.post('/api/admin/orders', verifyToken, async (req, res) => {
         // Parse delivery days for this plan (e.g. [1,3,6] = Mon,Wed,Sat)
         const deliveryDays = (plan.delivery_days || '1,2,3,4,5,6').split(',').map(Number);
 
-        // Load ALL 24 menu slots if plan has a menu
-        let allMenuSlots = [];
-        if (plan.plan_menu_id) {
-            allMenuSlots = await db.all(
-                `SELECT * FROM plan_menu_slots WHERE plan_menu_id=$1 ORDER BY slot_number`,
-                [plan.plan_menu_id]
-            );
-        }
+        // Load slots per meal type — each meal type can have its own menu
+        // breakfast_menu_id, plan_menu_id (lunch), dinner_menu_id
+        const getSlots = async (menuId) => {
+            if (!menuId) return [];
+            return db.all(`SELECT * FROM plan_menu_slots WHERE plan_menu_id=$1 ORDER BY slot_number`, [menuId]);
+        };
+        const breakfastSlots = await getSlots(plan.breakfast_menu_id);
+        const lunchSlots     = await getSlots(plan.plan_menu_id);       // plan_menu_id = lunch menu
+        const dinnerSlots    = await getSlots(plan.dinner_menu_id || plan.plan_menu_id); // fallback to lunch menu if no dinner menu
+
+        // For backwards compat — allMenuSlots = lunch slots
+        let allMenuSlots = lunchSlots;
 
         // Filter master slots to only those matching plan delivery days
         // A slot's weekday = ((slot_number-1) % 6) + 1
@@ -1232,27 +1239,47 @@ app.post('/api/admin/orders', verifyToken, async (req, res) => {
             const isCombo = mealTypes.includes('lunch') && mealTypes.includes('dinner');
             for (const mt of mealTypes) {
                 let mealItemId = null;
-                if (slot) {
-                    if (mt === 'dinner' && isCombo) {
+
+                // Pick correct slots for this meal type
+                let mtPlanSlots;
+                if (mt === 'breakfast') {
+                    const bSlots = breakfastSlots.length ? breakfastSlots : lunchSlots;
+                    mtPlanSlots = bSlots.filter(s => deliveryDays.includes(s.weekday));
+                } else if (mt === 'dinner' && dinnerSlots !== lunchSlots) {
+                    mtPlanSlots = dinnerSlots.filter(s => deliveryDays.includes(s.weekday));
+                } else {
+                    mtPlanSlots = planSlots; // lunch (default)
+                }
+
+                const mtSlot = mtPlanSlots.length > 0
+                    ? mtPlanSlots[(startIdx + i) % mtPlanSlots.length]
+                    : slot;
+
+                if (mtSlot) {
+                    if (mt === 'dinner' && plan.dinner_menu_id) {
+                        // Exclusive dinner menu — use primary/alternate like lunch
+                        mealItemId = pickItemForCustomer(mtSlot, customer.diet_preference, actualDayType);
+                    } else if (mt === 'breakfast' && plan.breakfast_menu_id) {
+                        // Exclusive breakfast menu
+                        mealItemId = pickItemForCustomer(mtSlot, customer.diet_preference, actualDayType);
+                    } else if (mt === 'dinner' && isCombo) {
+                        // No exclusive dinner menu — use dinner_item_id fields from lunch slot
                         const isVeg = isVegCustomer(customer.diet_preference);
-                        if (isVeg && slot.dinner_veg_item_id) {
-                            // Veg combo customers get veg dinner alternate
-                            mealItemId = slot.dinner_veg_item_id;
-                        } else if (!isVeg && slot.dinner_item_id) {
-                            // Non-veg combo customers get non-veg dinner alternate
-                            mealItemId = slot.dinner_item_id;
+                        if (isVeg && mtSlot.dinner_veg_item_id) {
+                            mealItemId = mtSlot.dinner_veg_item_id;
+                        } else if (!isVeg && mtSlot.dinner_item_id) {
+                            mealItemId = mtSlot.dinner_item_id;
                         } else {
-                            // Fallback — same as lunch item
-                            mealItemId = pickItemForCustomer(slot, customer.diet_preference, actualDayType);
+                            mealItemId = pickItemForCustomer(mtSlot, customer.diet_preference, actualDayType);
                         }
                     } else {
-                        mealItemId = pickItemForCustomer(slot, customer.diet_preference, actualDayType);
+                        mealItemId = pickItemForCustomer(mtSlot, customer.diet_preference, actualDayType);
                     }
                 }
 
                 await db.query(
                     `INSERT INTO deliveries (order_id,customer_id,kitchen_id,delivery_date,meal_type,slot_number,meal_item_id,is_veg_customer,status,is_sunday_skip) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending',0)`,
-                    [ord.id, customer_id, kitchen_id||null, ds, mt, slot?.slot_number||null, mealItemId, vegCustomer?1:0]
+                    [ord.id, customer_id, kitchen_id||null, ds, mt, mtSlot?.slot_number||null, mealItemId, vegCustomer?1:0]
                 );
             }
         }
