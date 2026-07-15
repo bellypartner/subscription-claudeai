@@ -1045,9 +1045,9 @@ app.post('/api/admin/plan-menus', verifyToken, async (req, res) => {
 // Update a single slot (assign primary + alternate items)
 app.put('/api/admin/plan-menus/:menuId/slots/:slotNum', verifyToken, async (req, res) => {
     try {
-        const { primary_item_id, alternate_item_id, dinner_item_id, dinner_veg_item_id, category_id } = req.body;
-        await db.query(`UPDATE plan_menu_slots SET primary_item_id=$1,alternate_item_id=$2,dinner_item_id=$3,dinner_veg_item_id=$4,category_id=COALESCE($5,category_id) WHERE plan_menu_id=$6 AND slot_number=$7`,
-            [primary_item_id || null, alternate_item_id || null, dinner_item_id || null, dinner_veg_item_id || null, category_id || null, req.params.menuId, req.params.slotNum]);
+        const { primary_item_id, alternate_item_id, category_id } = req.body;
+        await db.query(`UPDATE plan_menu_slots SET primary_item_id=$1,alternate_item_id=$2,category_id=COALESCE($3,category_id) WHERE plan_menu_id=$4 AND slot_number=$5`,
+            [primary_item_id || null, alternate_item_id || null, category_id || null, req.params.menuId, req.params.slotNum]);
         res.json({ message: 'Slot updated' });
     } catch(e) { res.status(400).json({ error: e.message }); }
 });

@@ -635,10 +635,9 @@ select[multiple].fc{height:120px;}
     <input type="hidden" id="seSlotNum">
     <div style="background:var(--gl);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12.5px;color:var(--gd);">
       <strong>How items work:</strong><br>
-      🔴 <strong>Primary</strong> = main item (non-veg day) / veg day main<br>
-      🟢 <strong>Alternate</strong> = substitute for opposite diet customers<br>
-      🌙🔴 <strong>Dinner Non-Veg</strong> = different dinner for non-veg combo customers<br>
-      🌙🟢 <strong>Dinner Veg</strong> = different dinner for veg combo customers
+      🔴 <strong>Primary</strong> = main item served on this day type (veg or non-veg)<br>
+      🟢 <strong>Alternate</strong> = substitute for customers with opposite diet<br>
+      <span style="color:var(--muted);font-size:11.5px;">For combo plans, assign a separate Dinner Menu on the plan.</span>
     </div>
     <div class="fg">
       <label class="fl">🔴/🟢 Primary Item (main day item)</label>
@@ -648,14 +647,7 @@ select[multiple].fc{height:120px;}
       <label class="fl">↳ Alternate Item (opposite diet substitute)</label>
       <select class="fc" id="seAlternate"><option value="">— Select item —</option></select>
     </div>
-    <div class="fg">
-      <label class="fl">🌙🔴 Dinner Non-Veg (combo non-veg customers only)</label>
-      <select class="fc" id="seDinner"><option value="">— Same as lunch —</option></select>
-    </div>
-    <div class="fg">
-      <label class="fl">🌙🟢 Dinner Veg (combo veg/eggetarian customers only)</label>
-      <select class="fc" id="seDinnerVeg"><option value="">— Same as lunch —</option></select>
-    </div>
+
     <button class="btn btn-g" style="width:100%;justify-content:center;margin-top:6px;" onclick="saveSlotEdit()">
       <i class="fas fa-save"></i> Save Slot
     </button>
@@ -1827,14 +1819,13 @@ function renderSlotGrid(slots) {
       const primaryLabel = isVeg ? "🟢 Veg (primary)" : "🔴 Non-Veg (primary)";
       const altLabel = isVeg ? "🔴 Non-Veg (alt)" : "🟢 Veg (alt)";
       const currentMenuIdForSlot = window.currentEditMenuId || null;
-      html += `<div class="slot-cell ${isVeg?"veg-day":"nonveg-day"}" onclick="openSlotEdit(${currentMenuIdForSlot},${slotNum},${slot.primary_item_id||'null'},${slot.alternate_item_id||'null'},${slot.dinner_item_id||'null'},${slot.dinner_veg_item_id||'null'})" style="cursor:pointer;" title="Click to edit slot">
+      html += `<div class="slot-cell ${isVeg?"veg-day":"nonveg-day"}" onclick="openSlotEdit(${currentMenuIdForSlot},${slotNum},${slot.primary_item_id||'null'},${slot.alternate_item_id||'null'})" style="cursor:pointer;" title="Click to edit slot">
         <div class="slot-num">Slot ${slotNum}</div>
         <div class="slot-cat">${slot.category_name||"?"}</div>
         <div class="slot-day-badge" style="${dayBadgeStyle}">${isVeg?"Veg Day":"Non-Veg Day"}</div>
         <div class="slot-item" title="${primaryLabel}">${slot.primary_item_name||'<span style="color:var(--red)">No item</span>'}</div>
         <div class="slot-alt" title="${altLabel}">↳ ${slot.alternate_item_name||'<span style="color:var(--red)">No alt</span>'}</div>
-        <div class="slot-alt" style="color:#dc2626;" title="Non-veg combo dinner">🌙🔴 ${slot.dinner_item_name||'<span style="color:var(--muted)">No dinner NV</span>'}</div>
-        <div class="slot-alt" style="color:#16a34a;" title="Veg combo dinner">🌙🟢 ${slot.dinner_veg_item_name||'<span style="color:var(--muted)">No dinner V</span>'}</div>
+
         ${!slot.primary_item_id||!slot.alternate_item_id?'<div class="slot-warn"><i class="fas fa-exclamation-triangle"></i> Incomplete</div>':""} 
       </div>`;
     }
@@ -1907,7 +1898,7 @@ async function viewMenuSlots(menuId) {
   document.getElementById('menuPreview').scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 
-function openSlotEdit(menuId, slotNum, primaryId, altId, dinnerId, dinnerVegId) {
+function openSlotEdit(menuId, slotNum, primaryId, altId) {
   if (!menuId) { alert('Please use the 📅 button next to a saved menu to edit its slots'); return; }
   window.currentEditMenuId = menuId;
   document.getElementById('seMenuId').value = menuId;
@@ -1915,13 +1906,11 @@ function openSlotEdit(menuId, slotNum, primaryId, altId, dinnerId, dinnerVegId) 
   const items = window.allMealItems || [];
   const opts = '<option value="">— None —</option>' +
     items.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
-  ['sePrimary','seAlternate','seDinner','seDinnerVeg'].forEach(id => {
+  ['sePrimary','seAlternate'].forEach(id => {
     document.getElementById(id).innerHTML = opts;
   });
   document.getElementById('sePrimary').value = primaryId || '';
   document.getElementById('seAlternate').value = altId || '';
-  document.getElementById('seDinner').value = dinnerId || '';
-  document.getElementById('seDinnerVeg').value = dinnerVegId || '';
   openModal('slotEditModal');
 }
 
@@ -1933,8 +1922,6 @@ async function saveSlotEdit() {
     body: JSON.stringify({
       primary_item_id: document.getElementById('sePrimary').value || null,
       alternate_item_id: document.getElementById('seAlternate').value || null,
-      dinner_item_id: document.getElementById('seDinner').value || null,
-      dinner_veg_item_id: document.getElementById('seDinnerVeg').value || null,
     })
   });
   if (d.error) { alert('Error: ' + d.error); return; }
