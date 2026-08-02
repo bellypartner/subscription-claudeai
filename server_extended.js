@@ -1126,171 +1126,299 @@ app.get('/api/admin/orders', verifyToken, async (req, res) => {
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-app.post('/api/admin/orders', verifyToken, async (req, res) => {
-    try {
-        const { customer_id, plan_id, kitchen_id, start_date, paid_amount, notes, menu_start_slot } = req.body;
-        if (!customer_id || !plan_id || !start_date)
-            return res.status(400).json({ error: 'Customer, plan and start date required' });
+// ============================================================
+// Shared order-creation logic — used by both /api/admin/orders
+// (below) and /api/external/subscriptions (the website's checkout).
+// This is the exact same logic that used to live inline in
+// /api/admin/orders, extracted so both call paths generate
+// deliveries identically and never drift apart.
+// ============================================================
+async function createOrderWithDeliveries({ customer_id, plan_id, kitchen_id, start_date, paid_amount, notes, menu_start_slot }) {
+    if (!customer_id || !plan_id || !start_date) {
+        const e = new Error('Customer, plan and start date required');
+        e.statusCode = 400;
+        throw e;
+    }
 
-        const plan = await db.one(`SELECT * FROM subscription_plans WHERE id=$1`, [plan_id]);
-        if (!plan) return res.status(404).json({ error: 'Plan not found' });
+    const plan = await db.one(`SELECT * FROM subscription_plans WHERE id=$1`, [plan_id]);
+    if (!plan) { const e = new Error('Plan not found'); e.statusCode = 404; throw e; }
 
-        const customer = await db.one(`SELECT * FROM customers WHERE id=$1`, [customer_id]);
-        if (!customer) return res.status(404).json({ error: 'Customer not found' });
+    const customer = await db.one(`SELECT * FROM customers WHERE id=$1`, [customer_id]);
+    if (!customer) { const e = new Error('Customer not found'); e.statusCode = 404; throw e; }
 
-        const vegCustomer = isVegCustomer(customer.diet_preference);
+    const vegCustomer = isVegCustomer(customer.diet_preference);
 
-        // Parse delivery days for this plan (e.g. [1,3,6] = Mon,Wed,Sat)
-        const deliveryDays = (plan.delivery_days || '1,2,3,4,5,6').split(',').map(Number);
+    // Parse delivery days for this plan (e.g. [1,3,6] = Mon,Wed,Sat)
+    const deliveryDays = (plan.delivery_days || '1,2,3,4,5,6').split(',').map(Number);
 
-        // Load slots per meal type — each meal type can have its own menu
-        // breakfast_menu_id, plan_menu_id (lunch), dinner_menu_id
-        const getSlots = async (menuId) => {
-            if (!menuId) return [];
-            return db.all(`SELECT * FROM plan_menu_slots WHERE plan_menu_id=$1 ORDER BY slot_number`, [menuId]);
-        };
-        const breakfastSlots = await getSlots(plan.breakfast_menu_id);
-        const lunchSlots     = await getSlots(plan.plan_menu_id);       // plan_menu_id = lunch menu
-        const dinnerSlots    = await getSlots(plan.dinner_menu_id || plan.plan_menu_id); // fallback to lunch menu if no dinner menu
+    // Load slots per meal type — each meal type can have its own menu
+    // breakfast_menu_id, plan_menu_id (lunch), dinner_menu_id
+    const getSlots = async (menuId) => {
+        if (!menuId) return [];
+        return db.all(`SELECT * FROM plan_menu_slots WHERE plan_menu_id=$1 ORDER BY slot_number`, [menuId]);
+    };
+    const breakfastSlots = await getSlots(plan.breakfast_menu_id);
+    const lunchSlots     = await getSlots(plan.plan_menu_id);       // plan_menu_id = lunch menu
+    const dinnerSlots    = await getSlots(plan.dinner_menu_id || plan.plan_menu_id); // fallback to lunch menu if no dinner menu
 
-        // For backwards compat — allMenuSlots = lunch slots
-        let allMenuSlots = lunchSlots;
+    // For backwards compat — allMenuSlots = lunch slots
+    let allMenuSlots = lunchSlots;
 
-        // Filter master slots to only those matching plan delivery days
-        // A slot's weekday = ((slot_number-1) % 6) + 1
-        const planSlots = allMenuSlots.filter(s => deliveryDays.includes(s.weekday));
-        // planSlots is now ordered by slot_number, only matching weekdays
-        // e.g. Mon/Wed/Sat plan: slots [1,3,6, 7,9,12, 13,15,18, 19,21,24]
+    // Filter master slots to only those matching plan delivery days
+    // A slot's weekday = ((slot_number-1) % 6) + 1
+    const planSlots = allMenuSlots.filter(s => deliveryDays.includes(s.weekday));
+    // planSlots is now ordered by slot_number, only matching weekdays
+    // e.g. Mon/Wed/Sat plan: slots [1,3,6, 7,9,12, 13,15,18, 19,21,24]
 
-        // startSlot: which index in planSlots to begin from (0-based)
-        // Auto-calculate start slot from start_date weekday
-        // Mon=slot1, Tue=slot2, Wed=slot3, Thu=slot4, Fri=slot5, Sat=slot6
-        // If menu_start_slot passed explicitly use that, otherwise derive from date
-        let startSlotNum = parseInt(menu_start_slot) || 0;
-        if (!startSlotNum && start_date && planSlots.length > 0) {
-            const startDow = new Date(start_date + 'T12:00:00Z').getUTCDay(); // 0=Sun,1=Mon..6=Sat
-            // Map weekday to slot offset within a week (Mon=0,Tue=1...Sat=5)
-            const dowToOffset = {1:0,2:1,3:2,4:3,5:4,6:5};
-            const weekOffset = dowToOffset[startDow] ?? 0;
-            // Find the slot that matches this weekday offset
-            // Slots cycle weekly: slot 1-6=week1, 7-12=week2 etc
-            // Just use weekday offset directly as starting slot index
-            startSlotNum = (weekOffset % planSlots.length) + 1;
-        }
-        startSlotNum = startSlotNum || 1;
+    // startSlot: which index in planSlots to begin from (0-based)
+    // Auto-calculate start slot from start_date weekday
+    // Mon=slot1, Tue=slot2, Wed=slot3, Thu=slot4, Fri=slot5, Sat=slot6
+    // If menu_start_slot passed explicitly use that, otherwise derive from date
+    let startSlotNum = parseInt(menu_start_slot) || 0;
+    if (!startSlotNum && start_date && planSlots.length > 0) {
+        const startDow = new Date(start_date + 'T12:00:00Z').getUTCDay(); // 0=Sun,1=Mon..6=Sat
+        // Map weekday to slot offset within a week (Mon=0,Tue=1...Sat=5)
+        const dowToOffset = {1:0,2:1,3:2,4:3,5:4,6:5};
+        const weekOffset = dowToOffset[startDow] ?? 0;
+        // Find the slot that matches this weekday offset
+        // Slots cycle weekly: slot 1-6=week1, 7-12=week2 etc
+        // Just use weekday offset directly as starting slot index
+        startSlotNum = (weekOffset % planSlots.length) + 1;
+    }
+    startSlotNum = startSlotNum || 1;
 
-        // Find starting index in planSlots
-        let startIdx = 0;
-        if (planSlots.length > 0) {
-            const found = planSlots.findIndex(s => s.slot_number >= startSlotNum);
-            startIdx = found >= 0 ? found : 0;
-        }
+    // Find starting index in planSlots
+    let startIdx = 0;
+    if (planSlots.length > 0) {
+        const found = planSlots.findIndex(s => s.slot_number >= startSlotNum);
+        startIdx = found >= 0 ? found : 0;
+    }
 
-        const mealTypes = plan.meal_types ? plan.meal_types.split(',').map(s => s.trim()) : ['lunch'];
-        const numDeliveries = plan.num_deliveries || 24;
+    const mealTypes = plan.meal_types ? plan.meal_types.split(',').map(s => s.trim()) : ['lunch'];
+    const numDeliveries = plan.num_deliveries || 24;
 
-        // Generate actual calendar dates for this plan's delivery days
-        // We need numDeliveries dates that match the plan's delivery days (no Sundays ever)
-        function genDatesForDays(startStr, count, allowedWeekdays) {
-            const dates = [];
-            const d = new Date(startStr + 'T12:00:00Z');
-            while (dates.length < count) {
-                const dow = d.getUTCDay(); // 0=Sun,1=Mon...6=Sat
-                if (dow !== 0 && allowedWeekdays.includes(dow)) {
-                    dates.push(d.toISOString().split('T')[0]);
-                }
-                d.setUTCDate(d.getUTCDate() + 1);
+    // Generate actual calendar dates for this plan's delivery days
+    // We need numDeliveries dates that match the plan's delivery days (no Sundays ever)
+    function genDatesForDays(startStr, count, allowedWeekdays) {
+        const dates = [];
+        const d = new Date(startStr + 'T12:00:00Z');
+        while (dates.length < count) {
+            const dow = d.getUTCDay(); // 0=Sun,1=Mon...6=Sat
+            if (dow !== 0 && allowedWeekdays.includes(dow)) {
+                dates.push(d.toISOString().split('T')[0]);
             }
-            return dates;
+            d.setUTCDate(d.getUTCDate() + 1);
         }
+        return dates;
+    }
 
-        const dates = genDatesForDays(start_date, numDeliveries, deliveryDays);
-        const end_date = dates[dates.length - 1];
+    const dates = genDatesForDays(start_date, numDeliveries, deliveryDays);
+    const end_date = dates[dates.length - 1];
 
-        // Calculate next_start_slot for renewal:
-        // After using numDeliveries slots from planSlots starting at startIdx,
-        // next order should start at (startIdx + numDeliveries) % planSlots.length
-        let nextStartSlot = 1;
-        if (planSlots.length > 0) {
-            const nextIdx = (startIdx + numDeliveries) % planSlots.length;
-            nextStartSlot = planSlots[nextIdx]?.slot_number || 1;
-        }
+    // Calculate next_start_slot for renewal:
+    // After using numDeliveries slots from planSlots starting at startIdx,
+    // next order should start at (startIdx + numDeliveries) % planSlots.length
+    let nextStartSlot = 1;
+    if (planSlots.length > 0) {
+        const nextIdx = (startIdx + numDeliveries) % planSlots.length;
+        nextStartSlot = planSlots[nextIdx]?.slot_number || 1;
+    }
 
-        const ord = await db.one(
-            `INSERT INTO orders (customer_id,plan_id,kitchen_id,start_date,end_date,menu_start_slot,total_amount,paid_amount,notes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
-            [customer_id, plan_id, kitchen_id||null, start_date, end_date, startSlotNum, plan.price, paid_amount||0, notes||'']
-        );
+    const ord = await db.one(
+        `INSERT INTO orders (customer_id,plan_id,kitchen_id,start_date,end_date,menu_start_slot,total_amount,paid_amount,notes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
+        [customer_id, plan_id, kitchen_id||null, start_date, end_date, startSlotNum, plan.price, paid_amount||0, notes||'']
+    );
 
-        // Insert deliveries — align startIdx to actual weekday of start_date
-        // so Friday order gets Friday's slot, not Monday's slot
-        const vegWeekdays = await getVegWeekdays();
-        
-        // Find which slot number corresponds to the start_date's weekday position
-        // Slot 1 = first delivery day of the menu cycle
-        // We need to find the right slot based on how many days from start of week
-        
-        for (let i = 0; i < dates.length; i++) {
-            const ds = dates[i];
-            const slotIdx = (startIdx + i) % (planSlots.length || 1);
-            const slot = planSlots.length > 0 ? planSlots[slotIdx] : null;
-            // Use actual delivery date to determine veg/non-veg, not slot.day_type
-            const actualDayType = getDayTypeForDate(ds, vegWeekdays);
+    // Insert deliveries — align startIdx to actual weekday of start_date
+    // so Friday order gets Friday's slot, not Monday's slot
+    const vegWeekdays = await getVegWeekdays();
 
-            const isCombo = mealTypes.includes('lunch') && mealTypes.includes('dinner');
-            for (const mt of mealTypes) {
-                let mealItemId = null;
+    // Find which slot number corresponds to the start_date's weekday position
+    // Slot 1 = first delivery day of the menu cycle
+    // We need to find the right slot based on how many days from start of week
 
-                // Pick correct slots for this meal type
-                let mtPlanSlots;
-                if (mt === 'breakfast') {
-                    const bSlots = breakfastSlots.length ? breakfastSlots : lunchSlots;
-                    mtPlanSlots = bSlots.filter(s => deliveryDays.includes(s.weekday));
-                } else if (mt === 'dinner' && dinnerSlots !== lunchSlots) {
-                    mtPlanSlots = dinnerSlots.filter(s => deliveryDays.includes(s.weekday));
-                } else {
-                    mtPlanSlots = planSlots; // lunch (default)
-                }
+    for (let i = 0; i < dates.length; i++) {
+        const ds = dates[i];
+        const slotIdx = (startIdx + i) % (planSlots.length || 1);
+        const slot = planSlots.length > 0 ? planSlots[slotIdx] : null;
+        // Use actual delivery date to determine veg/non-veg, not slot.day_type
+        const actualDayType = getDayTypeForDate(ds, vegWeekdays);
 
-                const mtSlot = mtPlanSlots.length > 0
-                    ? mtPlanSlots[(startIdx + i) % mtPlanSlots.length]
-                    : slot;
+        const isCombo = mealTypes.includes('lunch') && mealTypes.includes('dinner');
+        for (const mt of mealTypes) {
+            let mealItemId = null;
 
-                if (mtSlot) {
-                    if (mt === 'dinner' && plan.dinner_menu_id) {
-                        // Exclusive dinner menu — use primary/alternate like lunch
-                        mealItemId = pickItemForCustomer(mtSlot, customer.diet_preference, actualDayType);
-                    } else if (mt === 'breakfast' && plan.breakfast_menu_id) {
-                        // Exclusive breakfast menu
-                        mealItemId = pickItemForCustomer(mtSlot, customer.diet_preference, actualDayType);
-                    } else if (mt === 'dinner' && isCombo) {
-                        // No exclusive dinner menu — use dinner_item_id fields from lunch slot
-                        const isVeg = isVegCustomer(customer.diet_preference);
-                        if (isVeg && mtSlot.dinner_veg_item_id) {
-                            mealItemId = mtSlot.dinner_veg_item_id;
-                        } else if (!isVeg && mtSlot.dinner_item_id) {
-                            mealItemId = mtSlot.dinner_item_id;
-                        } else {
-                            mealItemId = pickItemForCustomer(mtSlot, customer.diet_preference, actualDayType);
-                        }
+            // Pick correct slots for this meal type
+            let mtPlanSlots;
+            if (mt === 'breakfast') {
+                const bSlots = breakfastSlots.length ? breakfastSlots : lunchSlots;
+                mtPlanSlots = bSlots.filter(s => deliveryDays.includes(s.weekday));
+            } else if (mt === 'dinner' && dinnerSlots !== lunchSlots) {
+                mtPlanSlots = dinnerSlots.filter(s => deliveryDays.includes(s.weekday));
+            } else {
+                mtPlanSlots = planSlots; // lunch (default)
+            }
+
+            const mtSlot = mtPlanSlots.length > 0
+                ? mtPlanSlots[(startIdx + i) % mtPlanSlots.length]
+                : slot;
+
+            if (mtSlot) {
+                if (mt === 'dinner' && plan.dinner_menu_id) {
+                    // Exclusive dinner menu — use primary/alternate like lunch
+                    mealItemId = pickItemForCustomer(mtSlot, customer.diet_preference, actualDayType);
+                } else if (mt === 'breakfast' && plan.breakfast_menu_id) {
+                    // Exclusive breakfast menu
+                    mealItemId = pickItemForCustomer(mtSlot, customer.diet_preference, actualDayType);
+                } else if (mt === 'dinner' && isCombo) {
+                    // No exclusive dinner menu — use dinner_item_id fields from lunch slot
+                    const isVeg = isVegCustomer(customer.diet_preference);
+                    if (isVeg && mtSlot.dinner_veg_item_id) {
+                        mealItemId = mtSlot.dinner_veg_item_id;
+                    } else if (!isVeg && mtSlot.dinner_item_id) {
+                        mealItemId = mtSlot.dinner_item_id;
                     } else {
                         mealItemId = pickItemForCustomer(mtSlot, customer.diet_preference, actualDayType);
                     }
+                } else {
+                    mealItemId = pickItemForCustomer(mtSlot, customer.diet_preference, actualDayType);
                 }
-
-                await db.query(
-                    `INSERT INTO deliveries (order_id,customer_id,kitchen_id,delivery_date,meal_type,slot_number,meal_item_id,is_veg_customer,status,is_sunday_skip) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending',0)`,
-                    [ord.id, customer_id, kitchen_id||null, ds, mt, mtSlot?.slot_number||null, mealItemId, vegCustomer?1:0]
-                );
             }
+
+            await db.query(
+                `INSERT INTO deliveries (order_id,customer_id,kitchen_id,delivery_date,meal_type,slot_number,meal_item_id,is_veg_customer,status,is_sunday_skip) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending',0)`,
+                [ord.id, customer_id, kitchen_id||null, ds, mt, mtSlot?.slot_number||null, mealItemId, vegCustomer?1:0]
+            );
+        }
+    }
+
+    return {
+        orderId: ord.id,
+        deliveries: dates.length * mealTypes.length,
+        vegCustomer, nextStartSlot,
+        startSlot: startSlotNum, endDate: end_date,
+    };
+}
+
+app.post('/api/admin/orders', verifyToken, async (req, res) => {
+    try {
+        const { customer_id, plan_id, kitchen_id, start_date, paid_amount, notes, menu_start_slot } = req.body;
+        const result = await createOrderWithDeliveries({ customer_id, plan_id, kitchen_id, start_date, paid_amount, notes, menu_start_slot });
+        res.status(201).json({ message: 'Order created', ...result });
+    } catch(e) {
+        console.error(e);
+        res.status(e.statusCode || 400).json({ error: e.message });
+    }
+});
+
+// ============================================================
+// External order intake — called by the Salad Caffe website's
+// PHP checkout backend (verify-payment.php) right after a
+// Razorpay payment is verified. Protected by a shared API key,
+// NOT the JWT-based verifyToken used by the admin/customer UIs —
+// this is a server-to-server call, not a logged-in session.
+// ============================================================
+const EXTERNAL_ORDERS_API_KEY = process.env.EXTERNAL_ORDERS_API_KEY;
+
+function requireApiKey(req, res, next) {
+    const key = req.headers['x-api-key'];
+    if (!EXTERNAL_ORDERS_API_KEY || key !== EXTERNAL_ORDERS_API_KEY) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+    next();
+}
+
+// Website diet type -> customers.diet_preference (personal identity used
+// for item selection). Keys match the website's dietType values exactly,
+// which also match subscription_plans.diet_type exactly ('Veg','Mixed','Non-Veg').
+const DIET_PREFERENCE_MAP = {
+    'Veg': 'pure_veg',
+    'Mixed': 'non_veg',
+    'Non-Veg': 'non_veg',
+};
+
+// Website meals object -> mealbox's comma meal_types string.
+function mealsToMealTypes(meals) {
+    const order = ['breakfast', 'lunch', 'dinner'];
+    return order.filter(m => meals && meals[m]).join(',');
+}
+
+app.post('/api/external/subscriptions', requireApiKey, async (req, res) => {
+    const {
+        name, phone, email, address,
+        dietType,       // 'Veg' | 'Mixed' | 'Non-Veg'
+        meals,          // { breakfast, lunch, dinner }
+        durationDays,   // 7 | 12 | 24 | 30
+        amountPaid, razorpayOrderId, razorpayPaymentId, referralCode,
+    } = req.body;
+
+    if (!name || !phone || !durationDays) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    try {
+        // ---- Find the plan first — fail fast if it doesn't exist ----
+        const mealTypesStr = mealsToMealTypes(meals);
+        const plan = await db.one(
+            `SELECT * FROM subscription_plans
+             WHERE diet_type = $1 AND meal_types = $2 AND duration_days = $3 AND status = 'active'
+             LIMIT 1`,
+            [dietType, mealTypesStr, durationDays]
+        );
+        if (!plan) {
+            console.error(`No matching plan for diet_type=${dietType} meal_types=${mealTypesStr} duration_days=${durationDays}`);
+            return res.status(404).json({
+                error: 'No matching plan configured in mealbox for this diet/meal/duration combination — set it up in Admin > Subscription Plans first.',
+            });
         }
 
-        res.status(201).json({
-            message: 'Order created', orderId: ord.id,
-            deliveries: dates.length * mealTypes.length,
-            vegCustomer, nextStartSlot,
-            startSlot: startSlotNum, endDate: end_date
+        // ---- Find or create the user + customer ----
+        let userId;
+        const existingUser = await db.one(`SELECT id FROM users WHERE phone=$1`, [phone]);
+        if (existingUser) {
+            userId = existingUser.id;
+        } else {
+            const hashedPhone = bcrypt.hashSync(phone, 10); // same default-password convention as admin/customers
+            const newUser = await db.one(
+                `INSERT INTO users (name,phone,email,password,authority) VALUES ($1,$2,$3,$4,'customer') RETURNING id`,
+                [name, phone, email || null, hashedPhone]
+            );
+            userId = newUser.id;
+        }
+
+        let customerId;
+        const existingCustomer = await db.one(`SELECT id FROM customers WHERE phone=$1`, [phone]);
+        if (existingCustomer) {
+            customerId = existingCustomer.id;
+        } else {
+            const dietPreference = DIET_PREFERENCE_MAP[dietType] || 'non_veg';
+            const newCustomer = await db.one(
+                `INSERT INTO customers (user_id,name,phone,email,address,diet_preference)
+                 VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
+                [userId, name, phone, email || null, address || null, dietPreference]
+            );
+            customerId = newCustomer.id;
+        }
+
+        // ---- Create the order + real deliveries via the shared function ----
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const startDate = tomorrow.toISOString().split('T')[0];
+
+        const result = await createOrderWithDeliveries({
+            customer_id: customerId,
+            plan_id: plan.id,
+            kitchen_id: null, // admin assigns a kitchen later, same as walk-in orders with no kitchen picked yet
+            start_date: startDate,
+            paid_amount: amountPaid || 0,
+            notes: `Website order. Referral: ${referralCode || ''}. Razorpay: ${razorpayOrderId}/${razorpayPaymentId}`,
         });
-    } catch(e) { console.error(e); res.status(400).json({ error: e.message }); }
+
+        res.status(201).json({ success: true, customerId, planId: plan.id, ...result });
+    } catch (err) {
+        console.error('External subscription creation failed:', err);
+        res.status(err.statusCode || 500).json({ error: err.message || 'Could not create subscription' });
+    }
 });
 
 // Edit order — change plan, kitchen, notes, paid_amount
