@@ -902,9 +902,9 @@ app.get('/api/admin/stats', verifyToken, async (req, res) => {
     try {
         const [tc,to,ao,tr,pd,td,tm,tp,ro] = await Promise.all([
             db.one(`SELECT COUNT(*)::int as c FROM customers WHERE status='active'`),
-            db.one(`SELECT COUNT(*)::int as c FROM orders`),
+            db.one(`SELECT COUNT(*)::int as c FROM orders WHERE order_status NOT IN ('website_pending','website_assigned')`),
             db.one(`SELECT COUNT(*)::int as c FROM orders WHERE order_status='active'`),
-            db.one(`SELECT COALESCE(SUM(paid_amount),0) as t FROM orders`),
+            db.one(`SELECT COALESCE(SUM(paid_amount),0) as t FROM orders WHERE order_status NOT IN ('website_pending','website_assigned')`),
             db.one(`SELECT COUNT(*)::int as c FROM deliveries WHERE status='pending' AND delivery_date=CURRENT_DATE AND is_sunday_skip=0`),
             db.one(`SELECT COUNT(*)::int as c FROM deliveries WHERE delivery_date=CURRENT_DATE AND is_sunday_skip=0`),
             db.one(`SELECT COUNT(*)::int as c FROM meal_items WHERE status='active'`),
