@@ -1356,7 +1356,8 @@ app.post('/api/external/subscriptions', requireApiKey, async (req, res) => {
         durationDays,   // 7 | 12 | 24 | 30
         location,       // 'Trivandrum' | 'Kochi' — matched against territories.name
         preferredStartDate, // 'YYYY-MM-DD', customer-chosen on the website (never a Sunday)
-        amountPaid, razorpayOrderId, razorpayPaymentId, referralCode,
+        amountPaid, amountDue, paymentMethod, // paymentMethod: 'online' (default) | 'cod'
+        razorpayOrderId, razorpayPaymentId, referralCode,
     } = req.body;
 
     if (!name || !phone) {
@@ -1366,6 +1367,8 @@ app.post('/api/external/subscriptions', requireApiKey, async (req, res) => {
         console.error('WEBSITE_PENDING_PLAN_ID env var not set — run the one-time SQL setup first.');
         return res.status(500).json({ error: 'Server not configured for website orders yet' });
     }
+
+    const isCod = paymentMethod === 'cod';
 
     try {
         // ---- Look up territory_id from the website's location name ----
@@ -1431,16 +1434,28 @@ app.post('/api/external/subscriptions', requireApiKey, async (req, res) => {
             tomorrow.setDate(tomorrow.getDate() + 1);
             orderDate = tomorrow.toISOString().split('T')[0];
         }
-        const noteText = `WEBSITE ORDER — needs plan assignment.\n`
+
+        // COD orders have NOT been paid — total_amount records what's owed,
+        // paid_amount stays 0, and payment_status is flagged distinctly so
+        // nobody mistakes this for money already collected.
+        const totalAmount = isCod ? (amountDue || 0) : (amountPaid || 0);
+        const paidAmount = isCod ? 0 : (amountPaid || 0);
+        const paymentStatus = isCod ? 'cod_pending' : 'paid';
+
+        const noteText = (isCod
+                ? `WEBSITE ORDER (CASH ON DELIVERY) — needs plan assignment.\n`
+                : `WEBSITE ORDER — needs plan assignment.\n`)
             + `Diet: ${dietType} | Meals: ${mealTypesStr} | Duration: ${durationDays} days | Location: ${location || ''} (territory_id: ${territoryId || 'none'})\n`
             + `Customer's preferred start date: ${orderDate}\n`
-            + `Amount paid: Rs.${amountPaid} | Referral: ${referralCode || ''}\n`
-            + `Razorpay: ${razorpayOrderId} / ${razorpayPaymentId}`;
+            + (isCod
+                ? `Amount due on delivery: Rs.${totalAmount} | Referral: ${referralCode || ''}\n`
+                : `Amount paid: Rs.${totalAmount} | Referral: ${referralCode || ''}\n`
+                  + `Razorpay: ${razorpayOrderId} / ${razorpayPaymentId}`);
 
         const ord = await db.one(
             `INSERT INTO orders (customer_id,plan_id,start_date,end_date,total_amount,paid_amount,payment_status,order_status,notes)
-             VALUES ($1,$2,$3,$3,$4,$4,'paid','website_pending',$5) RETURNING id`,
-            [customerId, WEBSITE_PENDING_PLAN_ID, orderDate, amountPaid || 0, noteText]
+             VALUES ($1,$2,$3,$3,$4,$5,$6,'website_pending',$7) RETURNING id`,
+            [customerId, WEBSITE_PENDING_PLAN_ID, orderDate, totalAmount, paidAmount, paymentStatus, noteText]
         );
 
         res.status(201).json({ success: true, customerId, orderId: ord.id });
