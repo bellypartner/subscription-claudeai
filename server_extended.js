@@ -1354,7 +1354,8 @@ app.post('/api/external/subscriptions', requireApiKey, async (req, res) => {
         dietType,       // 'Veg' | 'Mixed' | 'Non-Veg'
         meals,          // { breakfast, lunch, dinner }
         durationDays,   // 7 | 12 | 24 | 30
-        location,
+        location,       // 'Trivandrum' | 'Kochi' — matched against territories.name
+        preferredStartDate, // 'YYYY-MM-DD', customer-chosen on the website (never a Sunday)
         amountPaid, razorpayOrderId, razorpayPaymentId, referralCode,
     } = req.body;
 
@@ -1367,6 +1368,20 @@ app.post('/api/external/subscriptions', requireApiKey, async (req, res) => {
     }
 
     try {
+        // ---- Look up territory_id from the website's location name ----
+        // Falls back to NULL if no match — logged so it's easy to spot a
+        // naming mismatch (e.g. website says "Trivandrum" but the
+        // territories table has "Thiruvananthapuram").
+        let territoryId = null;
+        if (location) {
+            const territory = await db.one(`SELECT id FROM territories WHERE name ILIKE $1 LIMIT 1`, [location]);
+            if (territory) {
+                territoryId = territory.id;
+            } else {
+                console.error(`No territory match for location="${location}" — customer will be created with no territory.`);
+            }
+        }
+
         // ---- Find or create the user + customer ----
         let userId;
         const existingUser = await db.one(`SELECT id FROM users WHERE phone=$1`, [phone]);
@@ -1385,12 +1400,16 @@ app.post('/api/external/subscriptions', requireApiKey, async (req, res) => {
         const existingCustomer = await db.one(`SELECT id FROM customers WHERE phone=$1`, [phone]);
         if (existingCustomer) {
             customerId = existingCustomer.id;
+            // Backfill territory if the existing record doesn't have one yet
+            if (territoryId) {
+                await db.query(`UPDATE customers SET territory_id=COALESCE(territory_id,$1) WHERE id=$2`, [territoryId, customerId]);
+            }
         } else {
             const dietPreference = DIET_PREFERENCE_MAP[dietType] || 'non_veg';
             const newCustomer = await db.one(
-                `INSERT INTO customers (user_id,name,phone,email,address,diet_preference)
-                 VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
-                [userId, name, phone, email || null, address || null, dietPreference]
+                `INSERT INTO customers (user_id,name,phone,email,address,diet_preference,territory_id)
+                 VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`,
+                [userId, name, phone, email || null, address || null, dietPreference, territoryId]
             );
             customerId = newCustomer.id;
         }
@@ -1398,21 +1417,30 @@ app.post('/api/external/subscriptions', requireApiKey, async (req, res) => {
         // ---- Log a placeholder order for manual review/assignment ----
         // No deliveries are generated here at all — deliberately. Once you
         // (admin) look at this and create the real order via the existing
-        // "New Order" flow (picking this same customer + the real plan),
-        // update THIS order's status to 'website_assigned' via Update, so
-        // it stays as a record of the original website transaction rather
-        // than being deleted or double-counted.
+        // "New Order" flow (picking this same customer + the real plan +
+        // the right kitchen, which still needs a human — territory alone
+        // doesn't determine kitchen), update THIS order's status to
+        // 'website_assigned' via Update, so it stays as a record of the
+        // original website transaction rather than being deleted.
         const mealTypesStr = mealsToMealTypes(meals);
-        const today = new Date().toISOString().split('T')[0];
+        // Fall back to tomorrow if the website didn't send a preferred date
+        // for some reason; the website itself should never offer a Sunday.
+        let orderDate = preferredStartDate;
+        if (!orderDate) {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            orderDate = tomorrow.toISOString().split('T')[0];
+        }
         const noteText = `WEBSITE ORDER — needs plan assignment.\n`
-            + `Diet: ${dietType} | Meals: ${mealTypesStr} | Duration: ${durationDays} days | Location: ${location || ''}\n`
+            + `Diet: ${dietType} | Meals: ${mealTypesStr} | Duration: ${durationDays} days | Location: ${location || ''} (territory_id: ${territoryId || 'none'})\n`
+            + `Customer's preferred start date: ${orderDate}\n`
             + `Amount paid: Rs.${amountPaid} | Referral: ${referralCode || ''}\n`
             + `Razorpay: ${razorpayOrderId} / ${razorpayPaymentId}`;
 
         const ord = await db.one(
             `INSERT INTO orders (customer_id,plan_id,start_date,end_date,total_amount,paid_amount,payment_status,order_status,notes)
              VALUES ($1,$2,$3,$3,$4,$4,'paid','website_pending',$5) RETURNING id`,
-            [customerId, WEBSITE_PENDING_PLAN_ID, today, amountPaid || 0, noteText]
+            [customerId, WEBSITE_PENDING_PLAN_ID, orderDate, amountPaid || 0, noteText]
         );
 
         res.status(201).json({ success: true, customerId, orderId: ord.id });
