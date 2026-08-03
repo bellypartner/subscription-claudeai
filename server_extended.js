@@ -1343,35 +1343,30 @@ function mealsToMealTypes(meals) {
     return order.filter(m => meals && meals[m]).join(',');
 }
 
+// The plan admin creates once via the SQL snippet handed over separately —
+// a 0-delivery placeholder plan that just satisfies orders.plan_id's
+// NOT NULL constraint. Set as a Railway env var once created.
+const WEBSITE_PENDING_PLAN_ID = parseInt(process.env.WEBSITE_PENDING_PLAN_ID, 10);
+
 app.post('/api/external/subscriptions', requireApiKey, async (req, res) => {
     const {
         name, phone, email, address,
         dietType,       // 'Veg' | 'Mixed' | 'Non-Veg'
         meals,          // { breakfast, lunch, dinner }
         durationDays,   // 7 | 12 | 24 | 30
+        location,
         amountPaid, razorpayOrderId, razorpayPaymentId, referralCode,
     } = req.body;
 
-    if (!name || !phone || !durationDays) {
+    if (!name || !phone) {
         return res.status(400).json({ error: 'Missing required fields' });
+    }
+    if (!WEBSITE_PENDING_PLAN_ID) {
+        console.error('WEBSITE_PENDING_PLAN_ID env var not set — run the one-time SQL setup first.');
+        return res.status(500).json({ error: 'Server not configured for website orders yet' });
     }
 
     try {
-        // ---- Find the plan first — fail fast if it doesn't exist ----
-        const mealTypesStr = mealsToMealTypes(meals);
-        const plan = await db.one(
-            `SELECT * FROM subscription_plans
-             WHERE diet_type = $1 AND meal_types = $2 AND duration_days = $3 AND status = 'active'
-             LIMIT 1`,
-            [dietType, mealTypesStr, durationDays]
-        );
-        if (!plan) {
-            console.error(`No matching plan for diet_type=${dietType} meal_types=${mealTypesStr} duration_days=${durationDays}`);
-            return res.status(404).json({
-                error: 'No matching plan configured in mealbox for this diet/meal/duration combination — set it up in Admin > Subscription Plans first.',
-            });
-        }
-
         // ---- Find or create the user + customer ----
         let userId;
         const existingUser = await db.one(`SELECT id FROM users WHERE phone=$1`, [phone]);
@@ -1400,24 +1395,30 @@ app.post('/api/external/subscriptions', requireApiKey, async (req, res) => {
             customerId = newCustomer.id;
         }
 
-        // ---- Create the order + real deliveries via the shared function ----
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        const startDate = tomorrow.toISOString().split('T')[0];
+        // ---- Log a placeholder order for manual review/assignment ----
+        // No deliveries are generated here at all — deliberately. Once you
+        // (admin) look at this and create the real order via the existing
+        // "New Order" flow (picking this same customer + the real plan),
+        // update THIS order's status to 'website_assigned' via Update, so
+        // it stays as a record of the original website transaction rather
+        // than being deleted or double-counted.
+        const mealTypesStr = mealsToMealTypes(meals);
+        const today = new Date().toISOString().split('T')[0];
+        const noteText = `WEBSITE ORDER — needs plan assignment.\n`
+            + `Diet: ${dietType} | Meals: ${mealTypesStr} | Duration: ${durationDays} days | Location: ${location || ''}\n`
+            + `Amount paid: Rs.${amountPaid} | Referral: ${referralCode || ''}\n`
+            + `Razorpay: ${razorpayOrderId} / ${razorpayPaymentId}`;
 
-        const result = await createOrderWithDeliveries({
-            customer_id: customerId,
-            plan_id: plan.id,
-            kitchen_id: null, // admin assigns a kitchen later, same as walk-in orders with no kitchen picked yet
-            start_date: startDate,
-            paid_amount: amountPaid || 0,
-            notes: `Website order. Referral: ${referralCode || ''}. Razorpay: ${razorpayOrderId}/${razorpayPaymentId}`,
-        });
+        const ord = await db.one(
+            `INSERT INTO orders (customer_id,plan_id,start_date,end_date,total_amount,paid_amount,payment_status,order_status,notes)
+             VALUES ($1,$2,$3,$3,$4,$4,'paid','website_pending',$5) RETURNING id`,
+            [customerId, WEBSITE_PENDING_PLAN_ID, today, amountPaid || 0, noteText]
+        );
 
-        res.status(201).json({ success: true, customerId, planId: plan.id, ...result });
+        res.status(201).json({ success: true, customerId, orderId: ord.id });
     } catch (err) {
         console.error('External subscription creation failed:', err);
-        res.status(err.statusCode || 500).json({ error: err.message || 'Could not create subscription' });
+        res.status(500).json({ error: 'Could not create subscription record' });
     }
 });
 
@@ -1434,7 +1435,7 @@ app.put('/api/admin/orders/:id', verifyToken, async (req, res) => {
             kitchen_id=COALESCE($2,kitchen_id),
             notes=COALESCE($3,notes),
             paid_amount=COALESCE($4,paid_amount),
-            status=COALESCE($5,status)
+            order_status=COALESCE($5,order_status)
             WHERE id=$6`,
             [plan_id||null, kitchen_id||null, notes||null, paid_amount||null, status||null, req.params.id]);
         res.json({ message: 'Order updated' });
@@ -1521,23 +1522,6 @@ app.post('/api/admin/orders/:id/adjust-deliveries', verifyToken, async (req, res
             return res.json({ message: `Added ${diff} pending deliveries. ${target} pending total.` });
         }
     } catch(e) { res.status(500).json({ error: e.message }); }
-});
-
-// Edit order — change plan, status, paid amount, notes
-app.put('/api/admin/orders/:id', verifyToken, async (req, res) => {
-    try {
-        if (!['super_admin','admin','sales_manager'].includes(req.user.authority))
-            return res.status(403).json({ error: 'Not authorized' });
-        const { plan_id, status, paid_amount, notes } = req.body;
-        await db.query(`UPDATE orders SET
-            plan_id=COALESCE($1,plan_id),
-            order_status=COALESCE($2,order_status),
-            paid_amount=COALESCE($3,paid_amount),
-            notes=COALESCE($4,notes)
-            WHERE id=$5`,
-            [plan_id||null, status||null, paid_amount||null, notes||null, req.params.id]);
-        res.json({ message: 'Order updated' });
-    } catch(e) { res.status(400).json({ error: e.message }); }
 });
 
 // Renew order — creates a new order starting from next slot window
