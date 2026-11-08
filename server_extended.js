@@ -257,7 +257,18 @@ async function initDB() {
         `ALTER TABLE plan_menu_slots ADD COLUMN IF NOT EXISTS dinner_item_id INTEGER REFERENCES meal_items(id)`,
         `ALTER TABLE plan_menu_slots ADD COLUMN IF NOT EXISTS dinner_veg_item_id INTEGER REFERENCES meal_items(id)`,
     ];
+    alters.push(
+        `ALTER TABLE users ADD COLUMN IF NOT EXISTS territory_id INTEGER`,
+        `ALTER TABLE users ADD COLUMN IF NOT EXISTS created_by INTEGER`,
+        `ALTER TABLE customers ADD COLUMN IF NOT EXISTS terms_accepted_version INTEGER DEFAULT 0`,
+        `ALTER TABLE customers ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMPTZ`
+    );
     for (const sql of alters) { try { await db.query(sql); } catch(e) {} }
+    // One-time cleanup: cancelled orders must not keep scheduled deliveries
+    try {
+        await db.query(`DELETE FROM deliveries WHERE status='pending' AND order_id IN (SELECT id FROM orders WHERE order_status='cancelled')`);
+        await db.query(`DELETE FROM deliveries WHERE status='skipped' AND skipped_reason='Cancelled by customer' AND delivery_date>=CURRENT_DATE AND order_id IN (SELECT id FROM orders WHERE order_status='cancelled')`);
+    } catch(e) { console.error('cancel cleanup', e.message); }
 
     // Seed super admin — uses env vars for white-label deployments
     const sa = await db.one(`SELECT id FROM users WHERE phone::text=$1`, [SEED.adminPhone]);
@@ -372,6 +383,49 @@ function pickItemForCustomer(slot, customerDiet, dayType) {
 
 function isVegCustomer(diet) {
     return ['pure_veg', 'vegan', 'eggetarian'].includes(diet);
+}
+
+// ==================== DATE-ANCHORED MENU SCHEDULE ====================
+// Every customer gets the SAME menu slot on the same calendar date.
+// Slot = f(date) only (4-week rotation from a fixed Monday). Diet only picks primary vs alternate.
+const MENU_ANCHOR = '2026-01-05'; // a Monday — do not change after go-live
+function slotForDate(ds) {
+    const d = new Date(ds + 'T12:00:00Z');
+    const dow = d.getUTCDay();
+    if (dow === 0) return null; // Sunday
+    const a = new Date(MENU_ANCHOR + 'T12:00:00Z');
+    const weeks = Math.floor((d - a) / (7 * 86400000));
+    const wk = ((weeks % 4) + 4) % 4;
+    return wk * 6 + (dow - 1) + 1; // 1..24
+}
+// Resolve {slot_number, meal_item_id} for a plan + meal type + date + customer diet
+async function resolveMenuForDelivery(plan, mt, ds, diet, vegWeekdays) {
+    const slotNum = slotForDate(ds);
+    if (!slotNum || !plan) return { slot_number: null, meal_item_id: null };
+    let menuId = plan.plan_menu_id;
+    if (mt === 'breakfast' && plan.breakfast_menu_id) menuId = plan.breakfast_menu_id;
+    if (mt === 'dinner' && plan.dinner_menu_id) menuId = plan.dinner_menu_id;
+    if (!menuId) return { slot_number: slotNum, meal_item_id: null };
+    const slot = await db.one(`SELECT * FROM plan_menu_slots WHERE plan_menu_id=$1 AND slot_number=$2`, [menuId, slotNum]);
+    if (!slot) return { slot_number: slotNum, meal_item_id: null };
+    const dayType = getDayTypeForDate(ds, vegWeekdays);
+    let item = null;
+    const combo = (plan.meal_types || '').includes('lunch') && (plan.meal_types || '').includes('dinner');
+    if (mt === 'dinner' && !plan.dinner_menu_id && combo) {
+        const v = isVegCustomer(diet);
+        item = v ? slot.dinner_veg_item_id : slot.dinner_item_id;
+    }
+    if (!item) item = pickItemForCustomer(slot, diet, dayType);
+    return { slot_number: slotNum, meal_item_id: item || null };
+}
+async function resolveForOrder(order, mt, ds) {
+    const plan = await db.one(`SELECT * FROM subscription_plans WHERE id=$1`, [order.plan_id]);
+    const cust = await db.one(`SELECT diet_preference FROM customers WHERE id=$1`, [order.customer_id]);
+    return resolveMenuForDelivery(plan, mt, ds, cust?.diet_preference, await getVegWeekdays());
+}
+// Remove every not-yet-delivered row of a cancelled order so it vanishes from all views
+async function cancelOrderDeliveries(orderId) {
+    await db.query(`DELETE FROM deliveries WHERE order_id=$1 AND status='pending'`, [orderId]);
 }
 
 // ==================== MIDDLEWARE ====================
@@ -500,7 +554,7 @@ app.post('/api/auth/login', async (req, res) => {
         if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
         // Support login by phone OR email (cast phone to text for comparison)
         const user = await db.one(`SELECT * FROM users WHERE email=$1 OR phone::text=$1`, [email.toString().trim()]);
-        if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+        if (!user || user.status === 'inactive') return res.status(401).json({ error: 'Invalid credentials' });
         const passOk = bcrypt.compareSync(password, user.password);
         console.log('Login attempt:', email, '| user found:', !!user, '| pass ok:', passOk);
         if (!passOk) return res.status(401).json({ error: 'Invalid credentials' });
@@ -516,7 +570,9 @@ app.post('/api/auth/login', async (req, res) => {
         let kitchenInfo = null;
         if (['kitchen_manager','kitchen_staff'].includes(user.authority)) {
             // Kitchen is linked by user — for now, return all kitchens if super
-            kitchenInfo = await db.one(`SELECT k.* FROM kitchens k WHERE k.status='active' LIMIT 1`);
+            kitchenInfo = user.kitchen_id
+                ? await db.one(`SELECT k.* FROM kitchens k WHERE k.id=$1`, [user.kitchen_id])
+                : await db.one(`SELECT k.* FROM kitchens k WHERE k.status='active' LIMIT 1`);
         }
 
         const redirectMap = {
@@ -525,6 +581,7 @@ app.post('/api/auth/login', async (req, res) => {
             kitchen_staff: '/kitchen',
             delivery_boy: '/delivery',
             sales_manager: '/sales',
+            territory_manager: '/',
         };
 
         res.json({
@@ -687,12 +744,13 @@ app.post('/api/customer/skip-meal/:id', verifyToken, reqCust, async (req, res) =
         if (order && order.extended_days < 45) {
             const ne = nextWorkDay(toDS(order.end_date));
             await db.query(`UPDATE orders SET end_date=$1,extended_days=extended_days+1 WHERE id=$2`, [ne, order.id]);
+            const rr = await resolveForOrder(order, d.meal_type, ne);
             await db.query(
     `INSERT INTO deliveries (order_id,customer_id,kitchen_id,delivery_date,meal_type,
      slot_number,meal_item_id,is_veg_customer,status,is_sunday_skip,delivery_boy_id)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending',0,$9)`,
     [d.order_id, c.id, d.kitchen_id, ne, d.meal_type,
-     d.slot_number, d.meal_item_id, d.is_veg_customer, d.delivery_boy_id||null]
+     rr.slot_number, rr.meal_item_id, d.is_veg_customer, d.delivery_boy_id||null]
 );
         }
         res.json({ message: `Meal skipped. Subscription extended by 1 working day. No refund.` });
@@ -740,12 +798,13 @@ app.post('/api/customer/pause-subscription/:id', verifyToken, reqCust, async (re
             insertDate.setUTCDate(insertDate.getUTCDate() + 1);
             while (insertDate.getUTCDay() === 0) insertDate.setUTCDate(insertDate.getUTCDate() + 1);
             const ds = insertDate.toISOString().split('T')[0];
+            const rr = await resolveForOrder(order, skipped.meal_type, ds);
             await db.query(
                 `INSERT INTO deliveries (order_id,customer_id,kitchen_id,delivery_date,meal_type,
                  slot_number,meal_item_id,is_veg_customer,status,is_sunday_skip,delivery_boy_id)
                  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending',0,$9)`,
                 [order.id, c.id, skipped.kitchen_id, ds, skipped.meal_type,
-                 skipped.slot_number, skipped.meal_item_id, skipped.is_veg_customer, skipped.delivery_boy_id||null]
+                 rr.slot_number, rr.meal_item_id, skipped.is_veg_customer, skipped.delivery_boy_id||null]
             );
         }
 
@@ -761,7 +820,7 @@ app.post('/api/customer/cancel-subscription/:id', verifyToken, reqCust, async (r
         if (['cancelled','completed'].includes(order.order_status))
             return res.status(400).json({ error: 'Already ' + order.order_status });
         await db.query(`UPDATE orders SET order_status='cancelled' WHERE id=$1`, [order.id]);
-        await db.query(`UPDATE deliveries SET status='skipped',skipped_reason='Cancelled by customer' WHERE order_id=$1 AND status='pending'`, [order.id]);
+        await cancelOrderDeliveries(order.id);
         res.json({ message: 'Cancelled. No refund as per policy.' });
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
@@ -1229,65 +1288,14 @@ async function createOrderWithDeliveries({ customer_id, plan_id, kitchen_id, sta
         [customer_id, plan_id, kitchen_id||null, start_date, end_date, startSlotNum, plan.price, paid_amount||0, notes||'']
     );
 
-    // Insert deliveries — align startIdx to actual weekday of start_date
-    // so Friday order gets Friday's slot, not Monday's slot
+    // Date-anchored: item depends only on the calendar date (same for every customer)
     const vegWeekdays = await getVegWeekdays();
-
-    // Find which slot number corresponds to the start_date's weekday position
-    // Slot 1 = first delivery day of the menu cycle
-    // We need to find the right slot based on how many days from start of week
-
-    for (let i = 0; i < dates.length; i++) {
-        const ds = dates[i];
-        const slotIdx = (startIdx + i) % (planSlots.length || 1);
-        const slot = planSlots.length > 0 ? planSlots[slotIdx] : null;
-        // Use actual delivery date to determine veg/non-veg, not slot.day_type
-        const actualDayType = getDayTypeForDate(ds, vegWeekdays);
-
-        const isCombo = mealTypes.includes('lunch') && mealTypes.includes('dinner');
+    for (const ds of dates) {
         for (const mt of mealTypes) {
-            let mealItemId = null;
-
-            // Pick correct slots for this meal type
-            let mtPlanSlots;
-            if (mt === 'breakfast') {
-                const bSlots = breakfastSlots.length ? breakfastSlots : lunchSlots;
-                mtPlanSlots = bSlots.filter(s => deliveryDays.includes(s.weekday));
-            } else if (mt === 'dinner' && dinnerSlots !== lunchSlots) {
-                mtPlanSlots = dinnerSlots.filter(s => deliveryDays.includes(s.weekday));
-            } else {
-                mtPlanSlots = planSlots; // lunch (default)
-            }
-
-            const mtSlot = mtPlanSlots.length > 0
-                ? mtPlanSlots[(startIdx + i) % mtPlanSlots.length]
-                : slot;
-
-            if (mtSlot) {
-                if (mt === 'dinner' && plan.dinner_menu_id) {
-                    // Exclusive dinner menu — use primary/alternate like lunch
-                    mealItemId = pickItemForCustomer(mtSlot, customer.diet_preference, actualDayType);
-                } else if (mt === 'breakfast' && plan.breakfast_menu_id) {
-                    // Exclusive breakfast menu
-                    mealItemId = pickItemForCustomer(mtSlot, customer.diet_preference, actualDayType);
-                } else if (mt === 'dinner' && isCombo) {
-                    // No exclusive dinner menu — use dinner_item_id fields from lunch slot
-                    const isVeg = isVegCustomer(customer.diet_preference);
-                    if (isVeg && mtSlot.dinner_veg_item_id) {
-                        mealItemId = mtSlot.dinner_veg_item_id;
-                    } else if (!isVeg && mtSlot.dinner_item_id) {
-                        mealItemId = mtSlot.dinner_item_id;
-                    } else {
-                        mealItemId = pickItemForCustomer(mtSlot, customer.diet_preference, actualDayType);
-                    }
-                } else {
-                    mealItemId = pickItemForCustomer(mtSlot, customer.diet_preference, actualDayType);
-                }
-            }
-
+            const r = await resolveMenuForDelivery(plan, mt, ds, customer.diet_preference, vegWeekdays);
             await db.query(
                 `INSERT INTO deliveries (order_id,customer_id,kitchen_id,delivery_date,meal_type,slot_number,meal_item_id,is_veg_customer,status,is_sunday_skip) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending',0)`,
-                [ord.id, customer_id, kitchen_id||null, ds, mt, mtSlot?.slot_number||null, mealItemId, vegCustomer?1:0]
+                [ord.id, customer_id, kitchen_id||null, ds, mt, r.slot_number, r.meal_item_id, vegCustomer?1:0]
             );
         }
     }
@@ -1481,6 +1489,7 @@ app.put('/api/admin/orders/:id', verifyToken, async (req, res) => {
             order_status=COALESCE($5,order_status)
             WHERE id=$6`,
             [plan_id||null, kitchen_id||null, notes||null, paid_amount||null, status||null, req.params.id]);
+        if (status === 'cancelled') await cancelOrderDeliveries(req.params.id);
         res.json({ message: 'Order updated' });
     } catch(e) { res.status(400).json({ error: e.message }); }
 });
@@ -1548,12 +1557,13 @@ app.post('/api/admin/orders/:id/adjust-deliveries', verifyToken, async (req, res
                 while (insertDate.getUTCDay() === 0) insertDate.setUTCDate(insertDate.getUTCDate() + 1);
                 const ds = insertDate.toISOString().split('T')[0];
                 for (const mt of mealTypes) {
+                    const rr = await resolveForOrder(order, mt.meal_type, ds);
                     await db.query(
                         `INSERT INTO deliveries (order_id, customer_id, kitchen_id, delivery_date, meal_type,
                          slot_number, meal_item_id, is_veg_customer, status, is_sunday_skip, delivery_boy_id)
                          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending',0,$9)`,
                         [req.params.id, order.customer_id, mt.kitchen_id, ds, mt.meal_type,
-                         mt.slot_number, mt.meal_item_id, mt.is_veg_customer, mt.delivery_boy_id||null]
+                         rr.slot_number, rr.meal_item_id, mt.is_veg_customer, mt.delivery_boy_id||null]
                     );
                 }
             }
@@ -1617,6 +1627,7 @@ app.put('/api/admin/orders/:id/status', verifyToken, async (req, res) => {
         const { order_status, payment_status, paid_amount } = req.body;
         await db.query(`UPDATE orders SET order_status=COALESCE($1,order_status),payment_status=COALESCE($2,payment_status),paid_amount=COALESCE($3,paid_amount) WHERE id=$4`,
             [order_status || null, payment_status || null, paid_amount || null, req.params.id]);
+        if (order_status === 'cancelled') await cancelOrderDeliveries(req.params.id);
         res.json({ message: 'Updated' });
     } catch(e) { res.status(400).json({ error: e.message }); }
 });
@@ -2578,6 +2589,8 @@ app.get('/api/admin/settings', verifyToken, async (req, res) => {
             veg_weekdays: s.veg_weekdays || '1,3,5',
             lunch_show: s.lunch_show || '07:00',
             dinner_show: s.dinner_show || '13:00',
+            terms_and_conditions: s.terms_and_conditions || '',
+            terms_version: parseInt(s.terms_version || '0'),
         });
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
@@ -2594,8 +2607,131 @@ app.post('/api/admin/settings', verifyToken, async (req, res) => {
                     ON CONFLICT (key) DO UPDATE SET value=$2, updated_at=NOW()`, [key, req.body[key]]);
             }
         }
+        if (req.body.terms_and_conditions !== undefined) {
+            if (!['super_admin','admin'].includes(req.user.authority)) return res.status(403).json({ error: 'Not authorized' });
+            const cur = await db.one(`SELECT value FROM system_settings WHERE key='terms_and_conditions'`);
+            if ((cur?.value || '') !== req.body.terms_and_conditions) {
+                await db.query(`INSERT INTO system_settings (key,value) VALUES ('terms_and_conditions',$1) ON CONFLICT (key) DO UPDATE SET value=$1, updated_at=NOW()`, [req.body.terms_and_conditions]);
+                await db.query(`INSERT INTO system_settings (key,value) VALUES ('terms_version','1') ON CONFLICT (key) DO UPDATE SET value=(COALESCE(NULLIF(system_settings.value,''),'0')::int+1)::text, updated_at=NOW()`);
+            }
+        }
         res.json({ message: 'Settings saved' });
     } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+
+// ==================== RESYNC SCHEDULES (existing customers) ====================
+app.post('/api/admin/resync-schedules', verifyToken, async (req, res) => {
+    try {
+        if (!['super_admin','admin'].includes(req.user.authority)) return res.status(403).json({ error: 'Not authorized' });
+        const vw = await getVegWeekdays();
+        const rows = await db.all(`SELECT d.id, d.delivery_date, d.meal_type, o.plan_id, c.diet_preference
+            FROM deliveries d JOIN orders o ON d.order_id=o.id JOIN customers c ON d.customer_id=c.id
+            WHERE d.status='pending' AND o.order_status IN ('active','paused') AND d.delivery_date>=CURRENT_DATE`);
+        const plans = {}; let n = 0;
+        for (const r of rows) {
+            if (!plans[r.plan_id]) plans[r.plan_id] = await db.one(`SELECT * FROM subscription_plans WHERE id=$1`, [r.plan_id]);
+            const x = await resolveMenuForDelivery(plans[r.plan_id], r.meal_type, toDS(r.delivery_date), r.diet_preference, vw);
+            await db.query(`UPDATE deliveries SET slot_number=$1, meal_item_id=$2 WHERE id=$3`, [x.slot_number, x.meal_item_id, r.id]);
+            n++;
+        }
+        res.json({ message: `Re-synced ${n} upcoming deliveries` });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ==================== TERMS & CONDITIONS (customer) ====================
+app.get('/api/terms', async (req, res) => {
+    try {
+        const rows = await db.all(`SELECT key,value FROM system_settings WHERE key IN ('terms_and_conditions','terms_version')`).catch(()=>[]);
+        const s = {}; rows.forEach(r => s[r.key] = r.value);
+        res.json({ terms: s.terms_and_conditions || '', version: parseInt(s.terms_version || '0') });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.get('/api/customer/onboarding', verifyToken, reqCust, async (req, res) => {
+    try {
+        const c = await db.one(`SELECT terms_accepted_version FROM customers WHERE user_id=$1`, [req.user.id]);
+        const u = await db.one(`SELECT password, phone FROM users WHERE id=$1`, [req.user.id]);
+        const rows = await db.all(`SELECT key,value FROM system_settings WHERE key IN ('terms_and_conditions','terms_version')`).catch(()=>[]);
+        const s = {}; rows.forEach(r => s[r.key] = r.value);
+        const version = parseInt(s.terms_version || '0');
+        res.json({
+            terms: s.terms_and_conditions || '', version,
+            needs_terms: !!(s.terms_and_conditions) && (c?.terms_accepted_version || 0) < version,
+            needs_password: !!u && bcrypt.compareSync(String(u.phone || ''), u.password)
+        });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/customer/accept-terms', verifyToken, reqCust, async (req, res) => {
+    try {
+        const { new_password } = req.body;
+        const rows = await db.all(`SELECT value FROM system_settings WHERE key='terms_version'`).catch(()=>[]);
+        const version = parseInt(rows[0]?.value || '0');
+        await db.query(`UPDATE customers SET terms_accepted_version=$1, terms_accepted_at=NOW() WHERE user_id=$2`, [version, req.user.id]);
+        if (new_password) {
+            if (String(new_password).length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
+            await db.query(`UPDATE users SET password=$1 WHERE id=$2`, [bcrypt.hashSync(String(new_password), 10), req.user.id]);
+        }
+        res.json({ message: 'Saved' });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ==================== MANAGERS (kitchen / territory / sales) ====================
+// super_admin/admin create territory_manager, kitchen_manager, sales_manager.
+// territory_manager can create kitchen_manager only inside own territory.
+const MANAGER_ROLES = ['admin','territory_manager','kitchen_manager','sales_manager'];
+function canCreateRole(creator, role) {
+    if (['super_admin','admin'].includes(creator)) return role !== 'admin' || creator === 'super_admin';
+    if (creator === 'territory_manager') return role === 'kitchen_manager';
+    return false;
+}
+app.get('/api/admin/managers', verifyToken, async (req, res) => {
+    try {
+        if (!['super_admin','admin','territory_manager'].includes(req.user.authority)) return res.status(403).json({ error: 'Not authorized' });
+        let where = `u.authority = ANY($1)`; const p = [MANAGER_ROLES];
+        if (req.user.authority === 'territory_manager') {
+            const me = await db.one(`SELECT territory_id FROM users WHERE id=$1`, [req.user.id]);
+            p.push(me?.territory_id || 0); where += ` AND u.territory_id=$2 AND u.authority='kitchen_manager'`;
+        }
+        res.json(await db.all(`SELECT u.id,u.name,u.phone,u.email,u.authority,u.status,u.kitchen_id,u.territory_id,
+            k.name AS kitchen_name, t.name AS territory_name FROM users u
+            LEFT JOIN kitchens k ON u.kitchen_id=k.id LEFT JOIN territories t ON u.territory_id=t.id
+            WHERE ${where} ORDER BY u.authority,u.name`, p));
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/admin/managers', verifyToken, async (req, res) => {
+    try {
+        const { name, phone, email, password, authority, kitchen_id, territory_id } = req.body;
+        if (!canCreateRole(req.user.authority, authority)) return res.status(403).json({ error: 'You cannot create this role' });
+        if (!name || !phone || !password || password.length < 6) return res.status(400).json({ error: 'Name, phone and password (min 6) required' });
+        let terr = territory_id || null, kit = kitchen_id || null;
+        if (req.user.authority === 'territory_manager') {
+            const me = await db.one(`SELECT territory_id FROM users WHERE id=$1`, [req.user.id]);
+            terr = me?.territory_id;
+            const k = kit && await db.one(`SELECT territory_id FROM kitchens WHERE id=$1`, [kit]);
+            if (!k || k.territory_id !== terr) return res.status(403).json({ error: 'Kitchen is outside your territory' });
+        }
+        if (authority === 'territory_manager' && !terr) return res.status(400).json({ error: 'Territory required' });
+        if (authority === 'kitchen_manager' && !kit) return res.status(400).json({ error: 'Kitchen required' });
+        if (authority === 'kitchen_manager' && !terr) {
+            const k = await db.one(`SELECT territory_id FROM kitchens WHERE id=$1`, [kit]); terr = k?.territory_id || null;
+        }
+        const u = await db.one(`INSERT INTO users (name,phone,email,password,authority,kitchen_id,territory_id,created_by)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
+            [name, phone, email||null, bcrypt.hashSync(password, 10), authority, kit, terr, req.user.id]);
+        res.status(201).json({ message: 'Created', id: u.id });
+    } catch(e) { res.status(400).json({ error: e.message }); }
+});
+app.delete('/api/admin/managers/:id', verifyToken, async (req, res) => {
+    try {
+        const t = await db.one(`SELECT authority,territory_id FROM users WHERE id=$1`, [req.params.id]);
+        if (!t || !canCreateRole(req.user.authority, t.authority)) return res.status(403).json({ error: 'Not authorized' });
+        if (req.user.authority === 'territory_manager') {
+            const me = await db.one(`SELECT territory_id FROM users WHERE id=$1`, [req.user.id]);
+            if (me?.territory_id !== t.territory_id) return res.status(403).json({ error: 'Outside your territory' });
+        }
+        await db.query(`UPDATE users SET status='inactive' WHERE id=$1`, [req.params.id]);
+        res.json({ message: 'Deactivated' });
+    } catch(e) { res.status(400).json({ error: e.message }); }
 });
 
 // ==================== FIND USER (for password reset) ====================
@@ -3127,12 +3263,13 @@ app.post('/api/customer/skip-meal/:id', verifyToken, reqCust, async (req, res) =
         if (order && order.extended_days < 45) {
             const ne = nextWorkDay(toDS(order.end_date));
             await db.query(`UPDATE orders SET end_date=$1,extended_days=extended_days+1 WHERE id=$2`, [ne, order.id]);
+            const rr = await resolveForOrder(order, d.meal_type, ne);
             await db.query(
     `INSERT INTO deliveries (order_id,customer_id,kitchen_id,delivery_date,meal_type,
      slot_number,meal_item_id,is_veg_customer,status,is_sunday_skip,delivery_boy_id)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending',0,$9)`,
     [d.order_id, c.id, d.kitchen_id, ne, d.meal_type,
-     d.slot_number, d.meal_item_id, d.is_veg_customer, d.delivery_boy_id||null]
+     rr.slot_number, rr.meal_item_id, d.is_veg_customer, d.delivery_boy_id||null]
 );
         }
         res.json({ message: `Meal skipped. Subscription extended by 1 working day. No refund.` });
@@ -3180,12 +3317,13 @@ app.post('/api/customer/pause-subscription/:id', verifyToken, reqCust, async (re
             insertDate.setUTCDate(insertDate.getUTCDate() + 1);
             while (insertDate.getUTCDay() === 0) insertDate.setUTCDate(insertDate.getUTCDate() + 1);
             const ds = insertDate.toISOString().split('T')[0];
+            const rr = await resolveForOrder(order, skipped.meal_type, ds);
             await db.query(
                 `INSERT INTO deliveries (order_id,customer_id,kitchen_id,delivery_date,meal_type,
                  slot_number,meal_item_id,is_veg_customer,status,is_sunday_skip,delivery_boy_id)
                  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending',0,$9)`,
                 [order.id, c.id, skipped.kitchen_id, ds, skipped.meal_type,
-                 skipped.slot_number, skipped.meal_item_id, skipped.is_veg_customer, skipped.delivery_boy_id||null]
+                 rr.slot_number, rr.meal_item_id, skipped.is_veg_customer, skipped.delivery_boy_id||null]
             );
         }
 
@@ -3201,7 +3339,7 @@ app.post('/api/customer/cancel-subscription/:id', verifyToken, reqCust, async (r
         if (['cancelled','completed'].includes(order.order_status))
             return res.status(400).json({ error: 'Already ' + order.order_status });
         await db.query(`UPDATE orders SET order_status='cancelled' WHERE id=$1`, [order.id]);
-        await db.query(`UPDATE deliveries SET status='skipped',skipped_reason='Cancelled by customer' WHERE order_id=$1 AND status='pending'`, [order.id]);
+        await cancelOrderDeliveries(order.id);
         res.json({ message: 'Cancelled. No refund as per policy.' });
     } catch(e) { res.status(500).json({ error: e.message }); }
 });

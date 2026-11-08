@@ -222,16 +222,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--dk);font-
         <div style="font-size:11px;color:#92400e;margin-top:6px;opacity:.8;">Skips after these times will not be accepted by the system.</div>
       </div>
 
-      <!-- TERMS & CONDITIONS -->
+      <!-- TERMS & CONDITIONS (admin-editable) -->
       <div style="background:white;border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;">
-        <div style="font-weight:700;font-size:13px;margin-bottom:10px;">📋 Terms & Conditions</div>
-        <div style="font-size:12px;color:#374151;line-height:1.9;">
-          <div style="margin-bottom:6px;">✅ <strong>Pricing:</strong> Subscription price is <strong>all-inclusive</strong> of GST and delivery charges.</div>
-          <div style="margin-bottom:6px;">💰 <strong>Refund Policy:</strong> Cancellations are refundable. Refund amount is calculated at <strong>regular MRP</strong> of items delivered + ₹50 delivery charge per delivery — not the discounted subscription price.</div>
-          <div style="margin-bottom:6px;">🚚 <strong>Group Delivery:</strong> We operate group deliveries. Delivery times may vary due to traffic, weather, or unforeseen circumstances. For dedicated sharp-time delivery, additional charges apply — contact us.</div>
-          <div style="margin-bottom:6px;">⏭️ <strong>Skip Policy:</strong> Skipped meals extend your subscription by 1 working day. No refund is issued for skipped meals.</div>
-          <div>📦 <strong>Subscription Discount:</strong> Your subscription price is a discounted bundle rate. Any refund will be at regular MRP rates, not the subscription price.</div>
-        </div>
+        <div style="font-weight:700;font-size:13px;margin-bottom:10px;">&#128203; Terms &amp; Conditions</div>
+        <div id="homeTerms" style="font-size:12px;color:#374151;line-height:1.8;white-space:pre-wrap;"></div>
+        <button onclick="showHowTo()" style="margin-top:10px;background:none;border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-size:12px;cursor:pointer;">&#10067; How to use &amp; install this app</button>
       </div>
     </div>
 
@@ -355,6 +350,36 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--dk);font-
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
+
+<div id="onbModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#fff;border-radius:18px;max-width:420px;width:100%;max-height:90vh;overflow:auto;padding:20px;">
+    <div id="onbTerms" style="display:none;">
+      <div style="font-weight:700;font-size:16px;margin-bottom:10px;">&#128203; Terms &amp; Conditions</div>
+      <div id="onbTermsText" style="font-size:12.5px;line-height:1.7;white-space:pre-wrap;max-height:40vh;overflow:auto;border:1px solid #e5e7eb;border-radius:10px;padding:10px;"></div>
+      <label style="display:flex;gap:8px;align-items:flex-start;margin-top:12px;font-size:13px;"><input type="checkbox" id="onbAgree"> I have read and agree to these terms</label>
+    </div>
+    <div id="onbPass" style="display:none;margin-top:14px;">
+      <div style="font-weight:700;font-size:14px;margin-bottom:6px;">&#128274; Set your own password</div>
+      <div style="font-size:12px;color:#6b7280;margin-bottom:6px;">Your starting password is your phone number. Choose a new one (min 6 characters).</div>
+      <input id="onbNewPass" type="password" placeholder="New password" style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:10px;">
+    </div>
+    <div id="onbErr" style="color:#dc2626;font-size:12px;margin-top:8px;display:none;"></div>
+    <button id="onbBtn" onclick="submitOnboarding()" style="margin-top:14px;width:100%;padding:12px;border:0;border-radius:12px;background:#16a34a;color:#fff;font-weight:700;">Continue</button>
+  </div>
+</div>
+<div id="howModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9998;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#fff;border-radius:18px;max-width:420px;width:100%;max-height:90vh;overflow:auto;padding:20px;font-size:13px;line-height:1.7;">
+    <div style="font-weight:700;font-size:16px;margin-bottom:8px;">&#128241; Install on your phone</div>
+    <div><b>Android (Chrome):</b> tap &#8942; menu &rarr; <i>Install app</i> / <i>Add to Home screen</i>.</div>
+    <div><b>iPhone (Safari):</b> tap Share &rarr; <i>Add to Home Screen</i>.</div>
+    <div style="font-weight:700;font-size:16px;margin:14px 0 6px;">&#127869; Using your subscription</div>
+    <div>&bull; <b>Home / Deliveries</b> &ndash; see today's and upcoming meals.</div>
+    <div>&bull; <b>Skip a meal</b> &ndash; open Deliveries, tap Skip before the deadline shown on Home. Your plan extends by 1 working day.</div>
+    <div>&bull; <b>Pause</b> &ndash; My Plan &rarr; Pause, choose dates. Meals move to the end of your plan.</div>
+    <div>&bull; <b>Cancel</b> &ndash; My Plan &rarr; Cancel subscription (as per our terms).</div>
+    <button onclick="closeHow()" style="margin-top:14px;width:100%;padding:12px;border:0;border-radius:12px;background:#16a34a;color:#fff;font-weight:700;">Got it</button>
+  </div>
+</div>
 <script>
 const API="/api";
 let token=null,profile=null;
@@ -429,6 +454,40 @@ async function doSignup(){
   }catch(e){showErr("Connection error. Please try again.");}
 }
 
+
+// ===== ONBOARDING: terms + password + how-to =====
+let _onb=null;
+function showHowTo(){document.getElementById("howModal").style.display="flex";}
+function closeHow(){document.getElementById("howModal").style.display="none";try{localStorage.setItem("howSeen","1");}catch(e){}}
+async function runOnboarding(){
+  try{
+    const d=await api(`${API}/customer/onboarding`);
+    if(!d||d.error)return;
+    _onb=d;
+    const ht=document.getElementById("homeTerms");
+    if(ht)ht.textContent=d.terms||"Terms not published yet.";
+    if(d.needs_terms||d.needs_password){
+      document.getElementById("onbTerms").style.display=d.needs_terms?"block":"none";
+      document.getElementById("onbPass").style.display=d.needs_password?"block":"none";
+      document.getElementById("onbTermsText").textContent=d.terms;
+      document.getElementById("onbModal").style.display="flex";
+    }else{
+      let seen=false;try{seen=localStorage.getItem("howSeen")==="1";}catch(e){}
+      if(!seen)showHowTo();
+    }
+  }catch(e){}
+}
+async function submitOnboarding(){
+  const err=document.getElementById("onbErr");err.style.display="none";
+  if(_onb.needs_terms&&!document.getElementById("onbAgree").checked){err.textContent="Please tick the box to accept the terms.";err.style.display="block";return;}
+  const np=document.getElementById("onbNewPass").value;
+  if(_onb.needs_password&&np.length<6){err.textContent="Password must be at least 6 characters.";err.style.display="block";return;}
+  const r=await api(`${API}/customer/accept-terms`,{method:"POST",body:JSON.stringify(_onb.needs_password?{new_password:np}:{})});
+  if(r.error){err.textContent=r.error;err.style.display="block";return;}
+  document.getElementById("onbModal").style.display="none";
+  showHowTo();
+}
+
 function doLogout(){sessionStorage.removeItem("cToken");location.reload();}
 
 // ===== APP =====
@@ -437,6 +496,7 @@ async function showApp(){
   document.getElementById("app").classList.add("show");
   await loadProfile();
   loadHome();
+  runOnboarding();
 }
 
 function switchTab(name,idx){

@@ -215,6 +215,7 @@ select[multiple].fc{height:120px;}
       <button class="sb-item" onclick="showPage('territories',this)"><i class="fas fa-map-marker-alt"></i> Territories</button>
       <button class="sb-item" onclick="showPage('kitchens',this)"><i class="fas fa-store"></i> Kitchens</button>
       <button class="sb-item" onclick="showPage('deliveryboys',this)"><i class="fas fa-motorcycle"></i> Delivery Boys</button>
+      <button class="sb-item" onclick="showPage('managers',this)"><i class="fas fa-user-shield"></i> Managers</button>
       <button class="sb-item" onclick="showPage('settings',this)"><i class="fas fa-cog"></i> Settings</button>
     </nav>
     <div class="sb-footer">
@@ -454,9 +455,41 @@ select[multiple].fc{height:120px;}
         </div></div>
       </div>
 
+      <div id="page-managers" class="page">
+        <div class="sec-hd"><span class="sec-title">Managers</span></div>
+        <div class="alert as" id="mgrOk"></div><div class="alert ae" id="mgrErr"></div>
+        <div class="card" style="margin-bottom:16px;">
+          <div style="font-weight:700;margin-bottom:10px;">Add manager</div>
+          <div class="frow">
+            <div class="fg"><label class="fl">Role</label><select class="fc" id="mgRole" onchange="mgrRoleChange()"></select></div>
+            <div class="fg"><label class="fl">Name</label><input class="fc" id="mgName"></div>
+            <div class="fg"><label class="fl">Phone (login)</label><input class="fc" id="mgPhone"></div>
+          </div>
+          <div class="frow">
+            <div class="fg"><label class="fl">Password (min 6)</label><input class="fc" id="mgPass" type="text"></div>
+            <div class="fg" id="mgTerrBox"><label class="fl">Territory</label><select class="fc" id="mgTerr" onchange="mgrFillKitchens()"></select></div>
+            <div class="fg" id="mgKitBox"><label class="fl">Kitchen</label><select class="fc" id="mgKit"></select></div>
+          </div>
+          <button class="btn btn-p" onclick="saveManager()">Create</button>
+        </div>
+        <div class="card"><div id="mgrList">Loading…</div></div>
+      </div>
+
       <div id="page-settings" class="page">
         <div class="sec-hd"><span class="sec-title">Settings</span></div>
         <div class="alert as" id="settOk"></div><div class="alert ae" id="settErr"></div>
+
+        <div class="card" style="margin-bottom:16px;">
+          <div style="font-weight:700;font-size:15px;margin-bottom:6px;">📋 Customer Terms & Conditions</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Plain text. Customers must accept on first login — and again whenever you change this text.</div>
+          <textarea class="fc" id="settTerms" rows="8" placeholder="Enter terms, one point per line..."></textarea>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px;" id="settTermsVer"></div>
+        </div>
+        <div class="card" style="margin-bottom:16px;">
+          <div style="font-weight:700;font-size:15px;margin-bottom:6px;">🔄 Menu Schedule Sync</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Every customer gets the same item on the same date. Run this once after deploying, or after editing a menu, to realign all upcoming deliveries.</div>
+          <button class="btn btn-p" onclick="resyncSchedules()">Re-sync all upcoming deliveries</button>
+        </div>
 
         <div class="card" style="margin-bottom:16px;">
           <div style="font-weight:700;font-size:15px;margin-bottom:14px;">⏰ Skip Deadlines & Delivery Times</div>
@@ -1020,12 +1053,12 @@ function showApp(){
   document.getElementById("sbName").textContent=user.name||"Admin";
   document.getElementById("sbRole").textContent=user.authority||"admin";
 }
-const pageMeta={dashboard:["Dashboard","Overview"],categories:["Categories","Meal categories"],meals:["Meal Items","Menu management"],planmenu:["Plan Menu Generator","Auto-create schedules"],plans:["Subscription Plans","Plan catalogue"],territories:["Territories","Delivery zones"],kitchens:["Kitchens","Kitchen management"],customers:["Customers","Customer base"],orders:["Orders","Subscription orders"],deliveries:["Deliveries","Daily deliveries"],settings:["Settings","System configuration"]};
+const pageMeta={dashboard:["Dashboard","Overview"],categories:["Categories","Meal categories"],meals:["Meal Items","Menu management"],planmenu:["Plan Menu Generator","Auto-create schedules"],plans:["Subscription Plans","Plan catalogue"],territories:["Territories","Delivery zones"],kitchens:["Kitchens","Kitchen management"],customers:["Customers","Customer base"],orders:["Orders","Subscription orders"],deliveries:["Deliveries","Daily deliveries"],settings:["Settings","System configuration"],managers:["Managers","Territory & kitchen managers"]};
 function showPage(name,btn){
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));document.getElementById("page-"+name)?.classList.add("active");
   document.querySelectorAll(".sb-item").forEach(b=>b.classList.remove("active"));btn?.classList.add("active");
   const m=pageMeta[name]||[name,""];document.getElementById("pgTitle").textContent=m[0];document.getElementById("pgSub").textContent=m[1];
-  if(name==="orders")loadOrders();if(name==="deliveries")loadDeliveries();if(name==="planmenu"){initCatPicker();loadSavedMenus();}if(name==="deliveryboys")loadDeliveryBoys();if(name==="map"){initMap();loadMapTerritories();}if(name==="settings")loadSettings();
+  if(name==="orders")loadOrders();if(name==="deliveries")loadDeliveries();if(name==="planmenu"){initCatPicker();loadSavedMenus();}if(name==="deliveryboys")loadDeliveryBoys();if(name==="map"){initMap();loadMapTerritories();}if(name==="settings")loadSettings();if(name==="managers")loadManagers();
   if(name==="plans")loadSavedMenusForPlan();
 }
 function openModal(id){
@@ -2117,6 +2150,8 @@ async function saveEditDeliveryBoy() {
 async function loadSettings() {
   try {
     const s = await api(`${API}/admin/settings`);
+    document.getElementById('settTerms').value = s.terms_and_conditions || '';
+    document.getElementById('settTermsVer').textContent = 'Current version: v' + (s.terms_version||0);
     if (s.breakfast_time) document.getElementById('settBreakfastTime').value = s.breakfast_time;
     if (s.lunch_time) document.getElementById('settLunchTime').value = s.lunch_time;
     if (s.dinner_time) document.getElementById('settDinnerTime').value = s.dinner_time;
@@ -2205,6 +2240,53 @@ async function saveBrandSettings() {
   setTimeout(() => { if(window.loadBrand) loadBrand(); }, 800);
 }
 
+
+// ===== T&C + RESYNC =====
+async function resyncSchedules(){
+  if(!confirm('Recompute menu items for all upcoming deliveries?'))return;
+  const d=await api(`${API}/admin/resync-schedules`,{method:'POST'});
+  if(d.error){showErr2('settErr',d.error);return;}
+  showOk('settOk','✅ '+d.message);
+}
+// ===== MANAGERS =====
+let _mgTerr=[],_mgKit=[];
+async function loadManagers(){
+  const role=(user&&user.authority)||'';
+  const roles=role==='territory_manager'?['kitchen_manager']:['territory_manager','kitchen_manager','sales_manager'].concat(role==='super_admin'?['admin']:[]);
+  document.getElementById('mgRole').innerHTML=roles.map(r=>`<option value="${r}">${r.replace('_',' ')}</option>`).join('');
+  [_mgTerr,_mgKit]=await Promise.all([api(`${API}/admin/territories`),api(`${API}/admin/kitchens`)]);
+  document.getElementById('mgTerr').innerHTML=(_mgTerr||[]).map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');
+  mgrFillKitchens();mgrRoleChange();
+  const list=await api(`${API}/admin/managers`);
+  document.getElementById('mgrList').innerHTML=Array.isArray(list)&&list.length
+    ?'<table class="tbl"><tr><th>Name</th><th>Phone</th><th>Role</th><th>Territory</th><th>Kitchen</th><th>Status</th><th></th></tr>'+list.map(u=>`<tr><td>${esc(u.name)}</td><td>${esc(u.phone||'')}</td><td>${esc(u.authority)}</td><td>${esc(u.territory_name||'—')}</td><td>${esc(u.kitchen_name||'—')}</td><td>${esc(u.status)}</td><td>${u.status==='active'?`<button class="btn btn-d btn-sm" onclick="delManager(${u.id})">Deactivate</button>`:''}</td></tr>`).join('')+'</table>'
+    :'<div style="color:var(--muted)">No managers yet.</div>';
+}
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function mgrFillKitchens(){
+  const t=document.getElementById('mgTerr').value;
+  document.getElementById('mgKit').innerHTML=(_mgKit||[]).filter(k=>!t||String(k.territory_id)===String(t)).map(k=>`<option value="${k.id}">${esc(k.name)}</option>`).join('');
+}
+function mgrRoleChange(){
+  const r=document.getElementById('mgRole').value;
+  document.getElementById('mgKitBox').style.display=r==='kitchen_manager'?'':'none';
+  document.getElementById('mgTerrBox').style.display=(r==='kitchen_manager'||r==='territory_manager')?'':'none';
+}
+async function saveManager(){
+  const body={authority:document.getElementById('mgRole').value,name:document.getElementById('mgName').value.trim(),phone:document.getElementById('mgPhone').value.trim(),password:document.getElementById('mgPass').value,
+    territory_id:document.getElementById('mgTerr').value||null,kitchen_id:document.getElementById('mgKit').value||null};
+  const d=await api(`${API}/admin/managers`,{method:'POST',body:JSON.stringify(body)});
+  if(d.error){showErr2('mgrErr',d.error);return;}
+  showOk('mgrOk','✅ Manager created');
+  ['mgName','mgPhone','mgPass'].forEach(i=>document.getElementById(i).value='');
+  loadManagers();
+}
+async function delManager(id){
+  if(!confirm('Deactivate this manager?'))return;
+  const d=await api(`${API}/admin/managers/${id}`,{method:'DELETE'});
+  if(d.error){showErr2('mgrErr',d.error);return;}
+  loadManagers();
+}
 async function saveSettings() {
   const body = {
     breakfast_time: document.getElementById('settBreakfastTime').value,
@@ -2217,6 +2299,7 @@ async function saveSettings() {
     lunch_show: document.getElementById('settLunchShow').value,
     dinner_show: document.getElementById('settDinnerShow').value,
     veg_weekdays: [1,2,3,4,5,6].filter(d=>document.getElementById('vd'+d)?.checked).join(',') || '1,3,5',
+    terms_and_conditions: document.getElementById('settTerms').value,
   };
   const d = await api(`${API}/admin/settings`, {method:'POST', body:JSON.stringify(body)});
   if (d.error) { showErr2('settErr', d.error); return; }
